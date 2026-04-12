@@ -34,19 +34,23 @@ public class ApiPrismRegistrationClient {
                     .retrieve()
                     .body(ApiRegistrationResponse.class);
             if (response == null) {
-                throw new ApiPrismRegistrationException("Center registration failed with empty response body.");
+                throw new ApiPrismRegistrationException(
+                    "Center registration failed with empty response body.", false);
             }
             return response;
         } catch (RestClientResponseException exception) {
+            boolean retryable = exception.getStatusCode().is5xxServerError();
             throw new ApiPrismRegistrationException(
                     "Center registration failed with status "
                             + exception.getStatusCode().value()
                             + ": "
                             + exception.getResponseBodyAsString(),
-                    exception
+                    exception,
+                    retryable
             );
         } catch (RestClientException exception) {
-            throw new ApiPrismRegistrationException("Unable to register with APIPrism center", exception);
+            throw new ApiPrismRegistrationException(
+                    "Unable to register with APIPrism center", exception, true);
         }
     }
 

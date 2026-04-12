@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,10 +66,10 @@ class ApiPrismRegistrationClientTest {
     }
 
     @Test
-    void throwsReadableExceptionForNon2xxResponse() throws IOException {
+    void throwsRetryableExceptionFor5xxResponse() throws IOException {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/api/v1/registrations", exchange -> {
-            byte[] responseBody = "boom".getBytes(StandardCharsets.UTF_8);
+            byte[] responseBody = "internal error".getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(500, responseBody.length);
             exchange.getResponseBody().write(responseBody);
             exchange.close();
@@ -82,7 +83,41 @@ class ApiPrismRegistrationClientTest {
                 () -> client.register(baseUrl(), sampleRequest())
         );
         assertTrue(exception.getMessage().contains("500"));
-        assertTrue(exception.getMessage().contains("boom"));
+        assertTrue(exception.getMessage().contains("internal error"));
+        assertTrue(exception.isRetryable());
+    }
+
+    @Test
+    void throwsNonRetryableExceptionFor4xxResponse() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/v1/registrations", exchange -> {
+            byte[] responseBody = "bad request".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(400, responseBody.length);
+            exchange.getResponseBody().write(responseBody);
+            exchange.close();
+        });
+        server.start();
+
+        ApiPrismRegistrationClient client = new ApiPrismRegistrationClient(RestClient.builder().build());
+
+        ApiPrismRegistrationException exception = assertThrows(
+                ApiPrismRegistrationException.class,
+                () -> client.register(baseUrl(), sampleRequest())
+        );
+        assertTrue(exception.getMessage().contains("400"));
+        assertFalse(exception.isRetryable());
+    }
+
+    @Test
+    void throwsRetryableExceptionForConnectionError() {
+        ApiPrismRegistrationClient client = new ApiPrismRegistrationClient(RestClient.builder().build());
+
+        // 连接一个不存在的端口，触发连接异常
+        ApiPrismRegistrationException exception = assertThrows(
+                ApiPrismRegistrationException.class,
+                () -> client.register(URI.create("http://127.0.0.1:1"), sampleRequest())
+        );
+        assertTrue(exception.isRetryable());
     }
 
     private URI baseUrl() {

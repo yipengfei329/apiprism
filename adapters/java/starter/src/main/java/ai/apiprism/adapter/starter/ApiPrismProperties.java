@@ -49,4 +49,48 @@ public class ApiPrismProperties {
 
     /** OpenAPI 规格文档路径（默认 {@code /v3/api-docs}）。 */
     private String openapiPath = "/v3/api-docs";
+
+    /** 注册重试策略配置。 */
+    private Retry retry = new Retry();
+
+    /** 注册 HTTP 客户端配置。 */
+    private HttpClient httpClient = new HttpClient();
+
+    /**
+     * 注册请求的指数退避重试策略。
+     * <p>
+     * 前 5 分钟内以较高频率重试（3s → 6s → 12s → …），之后逐步退避至最大 30 分钟间隔。
+     * 仅对可重试异常（5xx、连接/超时错误）生效，4xx 等客户端错误不会重试。
+     */
+    @Data
+    public static class Retry {
+
+        /** 是否启用重试（默认启用）。 */
+        private boolean enabled = true;
+
+        /** 最大尝试次数（含首次调用，默认 15）。 */
+        private int maxAttempts = 15;
+
+        /** 初始退避间隔，毫秒（默认 3000）。 */
+        private long initialIntervalMs = 3000;
+
+        /** 退避倍率（默认 2.0）。 */
+        private double multiplier = 2.0;
+
+        /** 最大退避间隔，毫秒（默认 1800000，即 30 分钟）。 */
+        private long maxIntervalMs = 1800000;
+    }
+
+    /**
+     * 注册 HTTP 客户端超时配置。
+     */
+    @Data
+    public static class HttpClient {
+
+        /** 连接超时，毫秒（默认 5000）。 */
+        private int connectTimeoutMs = 5000;
+
+        /** 读取超时，毫秒（默认 10000）。 */
+        private int readTimeoutMs = 10000;
+    }
 }

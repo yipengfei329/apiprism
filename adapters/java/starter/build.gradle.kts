@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.jackson.databind)
     implementation(libs.spring.web)
+    implementation(libs.spring.retry)
     implementation(libs.springdoc.webmvc)
 
     annotationProcessor(libs.spring.boot.config.processor)

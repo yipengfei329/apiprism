@@ -8,6 +8,7 @@ springdoc                 = "2.6.0"
 springWeb                 = "6.1.15"
 lombok                    = "1.18.38"
 guava                     = "33.4.8-jre"
+springRetry               = "2.0.11"
 
 [libraries]
 # Jackson
@@ -25,6 +26,7 @@ junit-platform-launcher          = { module = "org.junit.platform:junit-platform
 # 工具库
 lombok                           = { module = "org.projectlombok:lombok",                                version.ref = "lombok" }
 guava                            = { module = "com.google.guava:guava",                                  version.ref = "guava" }
+spring-retry                     = { module = "org.springframework.retry:spring-retry",                   version.ref = "springRetry" }
 
 # Spring Boot 相关
 spring-boot-autoconfigure        = { module = "org.springframework.boot:spring-boot-autoconfigure",      version.ref = "springBoot" }

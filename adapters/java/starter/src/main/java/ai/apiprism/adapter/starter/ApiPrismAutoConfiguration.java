@@ -1,5 +1,6 @@
 package ai.apiprism.adapter.starter;
 
+import ai.apiprism.adapter.starter.exceptions.ApiPrismRegistrationException;
 import ai.apiprism.adapter.starter.inspection.ApiPrismMappingInspector;
 import ai.apiprism.adapter.starter.registration.ApiPrismRegistrationClient;
 import ai.apiprism.adapter.starter.openapi.ApiPrismOpenApiSupplier;
@@ -7,6 +8,8 @@ import ai.apiprism.adapter.starter.openapi.SpringDocOpenApiSupplier;
 import ai.apiprism.adapter.starter.registration.ApiPrismRegistrationListener;
 import ai.apiprism.adapter.starter.registration.RegistrationRequestFactory;
 import ai.apiprism.adapter.starter.registration.ServiceMetadataResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springdoc.webmvc.api.OpenApiResource;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -18,8 +21,16 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.retry.RetryContext;
+import org.springframework.retry.RetryListener;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+
+import java.util.Map;
 
 @AutoConfiguration
 @ConditionalOnClass(WebServerApplicationContext.class)
@@ -27,13 +38,21 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @EnableConfigurationProperties(ApiPrismProperties.class)
 public class ApiPrismAutoConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(ApiPrismAutoConfiguration.class);
+
     @Bean
     @ConditionalOnMissingBean
     public ApiPrismRegistrationClient apiPrismRegistrationClient(
+            ApiPrismProperties properties,
             ObjectProvider<RestClient.Builder> restClientBuilderProvider
     ) {
+        ApiPrismProperties.HttpClient httpClientConfig = properties.getHttpClient();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(httpClientConfig.getConnectTimeoutMs());
+        requestFactory.setReadTimeout(httpClientConfig.getReadTimeoutMs());
+
         RestClient.Builder restClientBuilder = restClientBuilderProvider.getIfAvailable(RestClient::builder);
-        return new ApiPrismRegistrationClient(restClientBuilder.build());
+        return new ApiPrismRegistrationClient(restClientBuilder.requestFactory(requestFactory).build());
     }
 
     @Bean
@@ -71,6 +90,54 @@ public class ApiPrismAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(name = "apiPrismRetryTemplate")
+    public RetryTemplate apiPrismRetryTemplate(ApiPrismProperties properties) {
+        ApiPrismProperties.Retry retryConfig = properties.getRetry();
+
+        if (!retryConfig.isEnabled()) {
+            return RetryTemplate.builder().maxAttempts(1).noBackoff().build();
+        }
+
+        // 自定义重试策略：仅对 retryable 异常重试，4xx 等不可重试异常立即终止
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(
+                retryConfig.getMaxAttempts(),
+                Map.of(ApiPrismRegistrationException.class, true)
+        ) {
+            @Override
+            public boolean canRetry(RetryContext context) {
+                Throwable lastException = context.getLastThrowable();
+                if (lastException instanceof ApiPrismRegistrationException ex && !ex.isRetryable()) {
+                    return false;
+                }
+                return super.canRetry(context);
+            }
+        };
+
+        ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
+        backOffPolicy.setInitialInterval(retryConfig.getInitialIntervalMs());
+        backOffPolicy.setMultiplier(retryConfig.getMultiplier());
+        backOffPolicy.setMaxInterval(retryConfig.getMaxIntervalMs());
+
+        int maxAttempts = retryConfig.getMaxAttempts();
+        RetryTemplate retryTemplate = new RetryTemplate();
+        retryTemplate.setRetryPolicy(retryPolicy);
+        retryTemplate.setBackOffPolicy(backOffPolicy);
+        retryTemplate.registerListener(new RetryListener() {
+            @Override
+            public <T, E extends Throwable> void onError(
+                    RetryContext context,
+                    org.springframework.retry.RetryCallback<T, E> callback,
+                    Throwable throwable
+            ) {
+                log.warn("APIPrism registration attempt {}/{} failed: {}",
+                        context.getRetryCount(), maxAttempts, throwable.getMessage());
+            }
+        });
+
+        return retryTemplate;
+    }
+
+    @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "apiprism", name = "enabled", havingValue = "true", matchIfMissing = true)
     public ApiPrismRegistrationListener apiPrismRegistrationListener(
@@ -79,11 +146,13 @@ public class ApiPrismAutoConfiguration {
             ApiPrismOpenApiSupplier openApiSupplier,
             ApiPrismMappingInspector mappingInspector,
             ServiceMetadataResolver metadataResolver,
-            RegistrationRequestFactory requestFactory
+            RegistrationRequestFactory requestFactory,
+            RetryTemplate apiPrismRetryTemplate
     ) {
         return new ApiPrismRegistrationListener(
                 properties, registrationClient, openApiSupplier,
-                mappingInspector, metadataResolver, requestFactory
+                mappingInspector, metadataResolver, requestFactory,
+                apiPrismRetryTemplate
         );
     }
 }
