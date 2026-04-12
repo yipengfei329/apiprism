@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { JsonSchema } from "../lib/api";
+import { HtmlText } from "./HtmlText";
 import { schemaTypeLabel } from "./schemaUtils";
 
 export { schemaTypeLabel };
@@ -101,13 +102,13 @@ function PropertyRow({
 
           {/* 第二行：description */}
           {schema.description && (
-            <p
-              className={`mt-1.5 text-[13px] leading-[1.65] ${
+            <HtmlText
+              as="div"
+              text={schema.description}
+              className={`mt-1.5 text-[13px] leading-[1.65] [&>p]:mt-1 [&>p:first-child]:mt-0 ${
                 schema.deprecated ? "text-[#8E8E93]" : "text-[#636366]"
               }`}
-            >
-              {schema.description}
-            </p>
+            />
           )}
 
           {/* 枚举值 */}

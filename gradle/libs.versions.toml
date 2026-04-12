@@ -5,6 +5,7 @@ jackson                   = "2.18.2"
 swaggerParser             = "2.1.24"
 junitBom                  = "5.11.3"
 springdoc                 = "2.6.0"
+therapiJavadoc            = "0.15.0"
 springWeb                 = "6.1.15"
 lombok                    = "1.18.38"
 guava                     = "33.4.8-jre"
@@ -43,6 +44,9 @@ spring-web                       = { module = "org.springframework:spring-web", 
 
 # SpringDoc OpenAPI
 springdoc-webmvc                 = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api",      version.ref = "springdoc" }
+# Javadoc → OpenAPI：编译期注解处理器 + 运行时读取
+therapi-javadoc-scribe           = { module = "com.github.therapi:therapi-runtime-javadoc-scribe",        version.ref = "therapiJavadoc" }
+therapi-javadoc-runtime          = { module = "com.github.therapi:therapi-runtime-javadoc",               version.ref = "therapiJavadoc" }
 
 [plugins]
 spring-boot                      = { id = "org.springframework.boot",        version.ref = "springBoot" }

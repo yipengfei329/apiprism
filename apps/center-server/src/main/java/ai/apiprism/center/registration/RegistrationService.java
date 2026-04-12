@@ -58,7 +58,8 @@ public class RegistrationService {
         }
 
         String registrationId = TSID.Factory.getTsid().toString();
-        String specHash = sha256(request.getSpec().getContent());
+        // hash 包含 normalizer 版本号，逻辑变更时强制重写 snapshot
+        String specHash = sha256(OpenApiNormalizer.VERSION + "\n" + request.getSpec().getContent());
         repository.save(StoredRegistration.builder()
                 .id(registrationId)
                 .rawSpec(request.getSpec().getContent())

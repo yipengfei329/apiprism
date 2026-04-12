@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import type { CanonicalResponse } from "../lib/api";
+import { HtmlText } from "./HtmlText";
 import { StatusBadge } from "./StatusBadge";
 import { SchemaTable } from "./SchemaTable";
 
@@ -44,7 +45,7 @@ export function ResponseTabs({
         {/* 描述与 content type */}
         <div className="mb-3 flex flex-wrap items-center gap-3">
           {active.description && (
-            <span className="text-[13px] text-v-gray-600">{active.description}</span>
+            <HtmlText text={active.description} className="text-[13px] text-v-gray-600" />
           )}
           {active.contentType && (
             <code className="ml-auto font-mono text-[11px] text-v-gray-400">

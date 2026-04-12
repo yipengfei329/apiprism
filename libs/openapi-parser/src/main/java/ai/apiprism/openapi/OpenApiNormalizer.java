@@ -36,6 +36,13 @@ import java.util.Set;
 
 public class OpenApiNormalizer {
 
+    /**
+     * 规范化逻辑版本号。
+     * 当 normalize 产出的结构因逻辑变更而不同于旧版本时递增此值，
+     * 使注册端的 specHash 失效，强制重写已持久化的 snapshot。
+     */
+    public static final int VERSION = 2;
+
     private static final int MAX_SCHEMA_DEPTH = 8;
 
     public NormalizationResult normalize(
@@ -146,8 +153,8 @@ public class OpenApiNormalizer {
                 .operationId(operationId)
                 .method(method.name())
                 .path(path)
-                .summary(operation.getSummary())
-                .description(operation.getDescription())
+                .summary(stripToNull(operation.getSummary()))
+                .description(deduplicateDescription(operation.getSummary(), operation.getDescription()))
                 .tags(Optional.ofNullable(operation.getTags()).orElseGet(List::of))
                 .securityRequirements(securityRequirements)
                 .parameters(parameters)
@@ -273,6 +280,41 @@ public class OpenApiNormalizer {
         }
     }
 
+    /**
+     * 去除 description 中与 summary 重复的前缀。
+     * <p>
+     * Javadoc 经 therapi + SpringDoc 处理后，实际输出格式为：
+     * <ul>
+     *   <li>summary: {@code "查询用户通知列表。\n "} — 尾部带换行+空格</li>
+     *   <li>description: {@code "查询用户通知列表。\n <p>\n 支持按..."} — summary 原文 + 段落分隔 + 后续内容</li>
+     * </ul>
+     * 规则：先对两端 strip，再判断 description 是否以 summary 开头；
+     * 若是，仅在后续为空或以 HTML 段落标签/空行分隔时去重，避免误裁同一句的延续。
+     */
+    private String deduplicateDescription(String summary, String description) {
+        if (summary == null || summary.isBlank() || description == null || description.isBlank()) {
+            return description;
+        }
+        // therapi 生成的文本两端可能有 \n 和空格，统一 strip 后比较
+        String normSummary = summary.strip();
+        String normDesc = description.strip();
+        if (!normDesc.startsWith(normSummary)) {
+            return description;
+        }
+        String tail = normDesc.substring(normSummary.length()).strip();
+        // 完全相同 → 描述无额外信息
+        if (tail.isEmpty()) {
+            return null;
+        }
+        // summary 后必须以 HTML 段落标签分隔，才认定为 Javadoc 风格的重复前缀
+        if (tail.matches("^<[pP]>[\\s\\S]*")) {
+            String remaining = tail.replaceFirst("^<[pP]>\\s*", "").strip();
+            return remaining.isEmpty() ? null : remaining;
+        }
+        // 非段落分隔（如同一句延续），保持原样
+        return description;
+    }
+
     private String fallbackOperationId(PathItem.HttpMethod method, String path) {
         return method.name().toLowerCase(Locale.ROOT) + "_" + path
                 .replace('/', '_')
@@ -280,6 +322,12 @@ public class OpenApiNormalizer {
                 .replace('}', '_')
                 .replaceAll("_+", "_")
                 .replaceAll("^_|_$", "");
+    }
+
+    private String stripToNull(String value) {
+        if (value == null) return null;
+        String stripped = value.strip();
+        return stripped.isEmpty() ? null : stripped;
     }
 
     private String firstNonBlank(String... candidates) {

@@ -9,6 +9,7 @@ import {
 import { type ReactNode } from "react";
 import { CanonicalOperation } from "../lib/api";
 import { AgentPanel } from "./AgentPanel";
+import { HtmlText } from "./HtmlText";
 import { MethodBadge } from "./MethodBadge";
 
 type TabKey = "doc" | "debug" | "agent";
@@ -87,9 +88,11 @@ export function OperationDetail({
 
           {/* 描述 */}
           {op.description && (
-            <p className="mt-4 max-w-[68ch] text-[15px] leading-[1.8] text-v-gray-600 v-slide-up v-delay-1">
-              {op.description}
-            </p>
+            <HtmlText
+              as="div"
+              text={op.description}
+              className="mt-4 max-w-[68ch] text-[15px] leading-[1.8] text-v-gray-600 v-slide-up v-delay-1 [&>p]:mt-2 [&>p:first-child]:mt-0 [&_ul]:mt-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mt-0.5 [&_code]:rounded [&_code]:bg-v-gray-50 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[13px]"
+            />
           )}
 
           {/* ── Tab 栏 — 毛玻璃风格 ── */}

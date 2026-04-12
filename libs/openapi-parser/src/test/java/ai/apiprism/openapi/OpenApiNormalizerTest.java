@@ -297,6 +297,66 @@ class OpenApiNormalizerTest {
     }
 
     @Test
+    void deduplicatesDescriptionWhenItStartsWithSummary() {
+        // 模拟 therapi + SpringDoc 的实际输出格式：summary/description 可能带 \n 和空格
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                paths:
+                  /notifications:
+                    get:
+                      operationId: listNotifications
+                      summary: "查询用户通知列表。\n "
+                      description: "查询用户通知列表。\n <p>\n 支持按通知类型、状态过滤，返回分页结果。"
+                      responses:
+                        '200':
+                          description: Success
+                    post:
+                      operationId: sendNotification
+                      summary: "Send notification"
+                      description: "Send notification to target users, up to 1000 per request."
+                      responses:
+                        '201':
+                          description: Created
+                    delete:
+                      operationId: deleteNotification
+                      summary: "标记单条通知为已读。"
+                      description: "标记单条通知为已读。"
+                      responses:
+                        '204':
+                          description: Deleted
+                    patch:
+                      operationId: updateNotification
+                      summary: "更新通知"
+                      description: "更新通知内容和状态，支持部分字段修改。"
+                      responses:
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("ntf-service", "dev", null, null, null, spec);
+        var ops = result.getSnapshot().getGroups().getFirst().getOperations();
+
+        // Javadoc 风格：description 以 summary 开头 + <p> 分隔，去重并去掉前导 <p>
+        var listOp = ops.stream().filter(o -> o.getOperationId().equals("listNotifications")).findFirst().orElseThrow();
+        assertEquals("支持按通知类型、状态过滤，返回分页结果。", listOp.getDescription());
+
+        // 注解风格：summary 与 description 是不同句子，保持原样
+        var sendOp = ops.stream().filter(o -> o.getOperationId().equals("sendNotification")).findFirst().orElseThrow();
+        assertEquals("Send notification to target users, up to 1000 per request.", sendOp.getDescription());
+
+        // summary 与 description 完全相同，description 应置空
+        var deleteOp = ops.stream().filter(o -> o.getOperationId().equals("deleteNotification")).findFirst().orElseThrow();
+        assertNull(deleteOp.getDescription());
+
+        // summary 是 description 的前缀但后续不是 <p> 分隔（同一句延续），保持原样
+        var updateOp = ops.stream().filter(o -> o.getOperationId().equals("updateNotification")).findFirst().orElseThrow();
+        assertEquals("更新通知内容和状态，支持部分字段修改。", updateOp.getDescription());
+    }
+
+    @Test
     void extractsSimpleTypeParameterSchema() {
         String spec = """
                 openapi: 3.0.1

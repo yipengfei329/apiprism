@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServiceSnapshot } from "../../lib/api";
 import { Breadcrumb, type BreadcrumbItem } from "../../components/Breadcrumb";
+import { HtmlText } from "../../components/HtmlText";
 
 
 type Props = {
@@ -91,9 +92,11 @@ export default async function ServiceOverviewPage({ params }: Props) {
                   {group.name}
                 </h3>
                 {group.description && (
-                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[#636366]">
-                    {group.description}
-                  </p>
+                  <HtmlText
+                    as="p"
+                    text={group.description}
+                    className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[#636366]"
+                  />
                 )}
                 <div className="mt-4 flex items-center justify-between">
                   <p className="font-mono text-[12px] text-[#8E8E93]">

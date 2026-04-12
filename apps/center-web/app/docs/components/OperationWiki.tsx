@@ -1,4 +1,5 @@
 import { CanonicalOperation, CanonicalParameter } from "../lib/api";
+import { HtmlText } from "./HtmlText";
 import { MethodBadge } from "./MethodBadge";
 import { SchemaTable } from "./SchemaTable";
 import { schemaTypeLabel } from "./schemaUtils";
@@ -58,9 +59,11 @@ function ParameterList({ parameters }: { parameters: CanonicalParameter[] }) {
           </div>
           {/* 第二行：description */}
           {p.description && (
-            <p className="mt-1.5 text-[13px] leading-[1.65] text-v-gray-500">
-              {p.description}
-            </p>
+            <HtmlText
+              as="div"
+              text={p.description}
+              className="mt-1.5 text-[13px] leading-[1.65] text-v-gray-500 [&>p]:mt-1 [&>p:first-child]:mt-0"
+            />
           )}
         </div>
       ))}

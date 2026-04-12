@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGroup } from "../../../../lib/api";
+import { HtmlText } from "../../../../components/HtmlText";
 import { MethodBadge } from "../../../../components/MethodBadge";
 import { Breadcrumb, type BreadcrumbItem } from "../../../../components/Breadcrumb";
 
@@ -49,9 +50,11 @@ export default async function GroupPage({ params }: Props) {
             {data.name}
           </h1>
           {data.description && (
-            <p className="mt-3 max-w-[65ch] text-[15px] leading-[1.8] text-v-gray-500">
-              {data.description}
-            </p>
+            <HtmlText
+              as="div"
+              text={data.description}
+              className="mt-3 max-w-[65ch] text-[15px] leading-[1.8] text-v-gray-500 [&>p]:mt-2 [&>p:first-child]:mt-0 [&_ul]:mt-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mt-0.5 [&_code]:rounded [&_code]:bg-v-gray-50 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[13px]"
+            />
           )}
           <div className="mt-6 font-mono text-[13px] font-medium text-v-gray-400">
             {data.operations.length} 个接口
@@ -85,9 +88,11 @@ export default async function GroupPage({ params }: Props) {
                       {op.summary || op.operationId}
                     </p>
                     {op.description && (
-                      <p className="mt-1 line-clamp-1 text-[13px] leading-[1.5] text-v-gray-500">
-                        {op.description}
-                      </p>
+                      <HtmlText
+                        as="p"
+                        text={op.description}
+                        className="mt-1 line-clamp-1 text-[13px] leading-[1.5] text-v-gray-500"
+                      />
                     )}
                   </div>
                   <svg
