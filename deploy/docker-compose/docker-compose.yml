@@ -3,6 +3,10 @@ services:
     build:
       context: ../..
       dockerfile: apps/center-server/Dockerfile
+    environment:
+      APIPRISM_STORAGE_DATA_DIR: /app/data
+    volumes:
+      - center-data:/app/data
     ports:
       - "8080:8080"
     healthcheck:
@@ -31,3 +35,6 @@ services:
       retries: 3
       start_period: 30s
     restart: unless-stopped
+
+volumes:
+  center-data:

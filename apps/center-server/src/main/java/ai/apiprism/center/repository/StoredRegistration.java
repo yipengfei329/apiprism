@@ -34,4 +34,7 @@ public class StoredRegistration {
 
     /** 来自适配器的扩展字段 */
     private final Map<String, Object> extensions;
+
+    /** 原始规范内容的 SHA-256 哈希，用于快速判断规范是否变化 */
+    private final String specHash;
 }

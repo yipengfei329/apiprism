@@ -1,6 +1,7 @@
 package ai.apiprism.center.repository;
 
 import ai.apiprism.model.ServiceRef;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -8,7 +9,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 内存实现，仅在 apiprism.storage.type=memory 时激活，用于测试或无持久化需求场景。
+ */
 @Repository
+@ConditionalOnProperty(name = "apiprism.storage.type", havingValue = "memory")
 public class InMemoryRegistrationRepository implements RegistrationRepository {
 
     private final Map<String, StoredRegistration> registrations = new ConcurrentHashMap<>();

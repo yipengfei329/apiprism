@@ -6,11 +6,15 @@ import ai.apiprism.protocol.registration.ApiRegistrationRequest;
 import ai.apiprism.protocol.registration.ApiRegistrationResponse;
 import ai.apiprism.openapi.NormalizationResult;
 import ai.apiprism.openapi.OpenApiNormalizer;
+import io.hypersistence.tsid.TSID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 /**
  * 注册服务：负责接收注册请求、调用规范化流水线、持久化注册快照。
@@ -53,12 +57,14 @@ public class RegistrationService {
                     result.getWarnings().size(), serviceName, environment, result.getWarnings());
         }
 
-        String registrationId = UUID.randomUUID().toString();
+        String registrationId = TSID.Factory.getTsid().toString();
+        String specHash = sha256(request.getSpec().getContent());
         repository.save(StoredRegistration.builder()
                 .id(registrationId)
                 .rawSpec(request.getSpec().getContent())
                 .specFormat(request.getSpec().getFormat())
                 .adapterType(request.getService().getAdapterType())
+                .specHash(specHash)
                 .snapshot(result.getSnapshot())
                 .warnings(result.getWarnings())
                 .extensions(request.getExtensions())
@@ -74,5 +80,15 @@ public class RegistrationService {
                 .message("Registration accepted")
                 .warnings(result.getWarnings())
                 .build();
+    }
+
+    private static String sha256(String content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 }
