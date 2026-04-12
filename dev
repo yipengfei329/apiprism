@@ -106,6 +106,9 @@ clear_port() {
     fi
 }
 
+# ── 后台就绪检测的 PID 列表 ──
+WAIT_PIDS=()
+
 # ── 等待服务就绪并打印访问地址（后台轮询日志） ──
 wait_and_announce() {
     local svc="$1"
@@ -117,7 +120,7 @@ wait_and_announce() {
     # 后台等待，不阻塞后续服务启动
     (
         local waited=0
-        while (( waited < 60 )); do
+        while (( waited < 120 )); do
             if grep -qE "$pattern" "$log_file" 2>/dev/null; then
                 echo -e "  ${GREEN}🟢 $svc 已就绪${NC}  →  端口 ${BOLD}$port${NC}  |  $url"
                 exit 0
@@ -133,8 +136,9 @@ wait_and_announce() {
             sleep 2
             (( waited += 2 ))
         done
-        echo -e "  ${YELLOW}⚠  $svc 启动超时（60s），请手动检查日志${NC}"
+        echo -e "  ${YELLOW}⚠  $svc 启动超时（120s），请手动检查日志${NC}"
     ) &
+    WAIT_PIDS+=($!)
 }
 
 # ── 启动单个服务 ──
@@ -297,13 +301,24 @@ case "$CMD" in
             echo -e "${BOLD}重启 [$TARGET]${NC}"
             for svc in $SERVICES; do stop_service "$svc"; done
             echo ""
+            WAIT_PIDS=()
             for svc in $SERVICES; do start_service "$svc"; done
         elif [[ "$CMD" == "start" ]]; then
             echo -e "${BOLD}启动 [$TARGET]${NC}"
+            WAIT_PIDS=()
             for svc in $SERVICES; do start_service "$svc"; done
         else
             echo -e "${BOLD}停止 [$TARGET]${NC}"
             for svc in $SERVICES; do stop_service "$svc"; done
+        fi
+
+        # 等待所有后台就绪检测完成后再打印状态
+        if [[ ${#WAIT_PIDS[@]} -gt 0 ]]; then
+            echo ""
+            echo -e "  ${CYAN}▸${NC} 等待所有服务就绪..."
+            for pid in "${WAIT_PIDS[@]}"; do
+                wait "$pid" 2>/dev/null || true
+            done
         fi
         echo ""
         print_status
