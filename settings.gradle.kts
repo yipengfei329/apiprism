@@ -7,6 +7,15 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/central/") }
+        maven { url = uri("https://maven.aliyun.com/repository/spring/") }
+        mavenCentral()
+    }
+}
+
 rootProject.name = "apiprism"
 
 include(":libs:registration-protocol")

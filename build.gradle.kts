@@ -22,11 +22,6 @@ allprojects {
 subprojects {
     apply(plugin = "java-library")
 
-    repositories {
-        maven { url = uri("https://maven.aliyun.com/repository/central/") }
-        maven { url = uri("https://maven.aliyun.com/repository/spring/") }
-    }
-
     extensions.configure<JavaPluginExtension>("java") {
         toolchain {
             languageVersion = JavaLanguageVersion.of(21)
