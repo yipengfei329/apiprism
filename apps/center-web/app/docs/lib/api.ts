@@ -100,7 +100,7 @@ export async function getServiceSnapshot(
 ): Promise<CanonicalServiceSnapshot | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/environments/${encodeURIComponent(environment)}`,
+      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -117,7 +117,7 @@ export async function getGroup(
 ): Promise<CanonicalGroup | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/environments/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
+      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -134,7 +134,7 @@ export async function getOperation(
 ): Promise<CanonicalOperation | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/environments/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}`,
+      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -151,7 +151,7 @@ export async function getAgentMarkdown(
 ): Promise<string | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/agent-markdown/services/${encodeURIComponent(service)}/environments/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}`,
+      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}/agent-markdown.md`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;

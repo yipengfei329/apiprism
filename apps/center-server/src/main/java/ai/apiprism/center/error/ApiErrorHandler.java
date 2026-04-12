@@ -1,4 +1,4 @@
-package ai.apiprism.center.catalog;
+package ai.apiprism.center.error;
 
 import ai.apiprism.center.exceptions.RegistrationNotFoundException;
 import ai.apiprism.openapi.exceptions.NormalizationException;
@@ -29,4 +29,3 @@ public class ApiErrorHandler {
         return detail;
     }
 }
-

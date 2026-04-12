@@ -122,7 +122,7 @@ function GroupItem({
     setLoading(true);
     try {
       const res = await fetch(
-        `${apiBase}/api/v1/services/${encodeURIComponent(service)}/environments/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
+        `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
         { cache: "no-store" }
       );
       if (res.ok) {

@@ -1,4 +1,4 @@
-package ai.apiprism.center.catalog;
+package ai.apiprism.center.repository;
 
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import lombok.Builder;
