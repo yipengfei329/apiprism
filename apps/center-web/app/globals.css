@@ -63,15 +63,92 @@
     box-shadow: 1px 0 0 0 rgba(60, 60, 67, 0.18);
   }
   /* hover 增强 */
+  .v-card-full-hover {
+    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   .v-card-full-hover:hover {
     box-shadow:
       rgba(60, 60, 67, 0.14) 0px 0px 0px 1px,
-      rgba(0, 0, 0, 0.05) 0px 4px 8px,
-      rgba(0, 0, 0, 0.03) 0px 12px 20px -8px,
+      rgba(0, 0, 0, 0.06) 0px 4px 8px,
+      rgba(0, 0, 0, 0.04) 0px 16px 24px -8px,
       rgba(255, 255, 255, 0.9) 0px 1px 0px inset;
-    transform: translateY(-1px);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transform: translateY(-2px);
   }
+
+  /* ── 毛玻璃面板 ── */
+  .v-glass {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 8px 24px -8px rgba(0, 0, 0, 0.06);
+  }
+  .v-glass-subtle {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(16px) saturate(1.6);
+    -webkit-backdrop-filter: blur(16px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+  .v-glass-dark {
+    background: rgba(15, 15, 17, 0.8);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  /* ── 入场动画 ── */
+  .v-fade-in {
+    animation: v-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .v-slide-up {
+    animation: v-slide-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* ── 动画延迟阶梯（用于列表交错） ── */
+  .v-delay-1 { animation-delay: 80ms; }
+  .v-delay-2 { animation-delay: 160ms; }
+  .v-delay-3 { animation-delay: 240ms; }
+  .v-delay-4 { animation-delay: 320ms; }
+  .v-delay-5 { animation-delay: 400ms; }
+
+  /* ── 微光扫描（用于装饰线条或 loading） ── */
+  .v-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 99, 204, 0) 0%,
+      rgba(0, 99, 204, 0.08) 50%,
+      rgba(0, 99, 204, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: v-shimmer 2.4s ease-in-out infinite;
+  }
+}
+
+/* ── 关键帧 ── */
+@keyframes v-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes v-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes v-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes v-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 html {
@@ -85,7 +162,7 @@ html {
 
 body {
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: #fafafa;
   color: #1C1C1E;
 }
 

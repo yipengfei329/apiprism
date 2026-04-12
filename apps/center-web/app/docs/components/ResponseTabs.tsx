@@ -27,11 +27,12 @@ export function ResponseTabs({
           <button
             key={r.statusCode}
             onClick={() => setActiveIndex(i)}
-            className={`cursor-pointer rounded-lg px-3 py-1.5 font-mono text-[13px] font-medium transition-all duration-150 ${
+            className={`cursor-pointer rounded-lg px-3 py-1.5 font-mono text-[13px] font-medium transition-all duration-300 ${
               i === activeIndex
-                ? "bg-v-gray-50 text-v-black"
-                : "text-v-gray-400 hover:text-v-gray-600"
+                ? "bg-white text-v-black v-glass-subtle"
+                : "text-v-gray-400 hover:text-v-gray-600 hover:bg-v-gray-50/50"
             }`}
+            style={i === activeIndex ? { borderRadius: "0.5rem" } : undefined}
           >
             <StatusBadge code={r.statusCode} />
           </button>

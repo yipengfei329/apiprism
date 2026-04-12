@@ -23,8 +23,8 @@ export default async function OperationPage({ params }: Props) {
 
   return (
     <div>
-      {/* 面包屑导航：sticky，白底毛玻璃，下边框 */}
-      <div className="sticky top-0 z-10 bg-white/80 px-8 py-3 backdrop-blur-xl v-border-b">
+      {/* 面包屑导航：sticky，毛玻璃 */}
+      <div className="sticky top-0 z-10 px-8 py-3 v-glass" style={{ borderRadius: 0, borderLeft: "none", borderRight: "none", borderTop: "none" }}>
         <div className="mx-auto max-w-[1100px]">
           <Breadcrumb
             items={[

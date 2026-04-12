@@ -32,40 +32,50 @@ export default async function HomePage() {
   const services = await getServices();
 
   return (
-    <main className="min-h-[100dvh] bg-v-white">
-      {/* 顶栏 */}
-      <header className="sticky top-0 z-10 flex h-12 items-center border-b border-v-gray-100 bg-v-white/90 px-6 backdrop-blur-md">
+    <main className="min-h-[100dvh]" style={{ background: "linear-gradient(180deg, #f8f9fb 0%, #ffffff 40%, #fafafa 100%)" }}>
+      {/* 顶栏 — 毛玻璃 */}
+      <header className="sticky top-0 z-10 flex h-12 items-center px-6 v-glass" style={{ borderRadius: 0, borderLeft: "none", borderRight: "none", borderTop: "none" }}>
         <span className="text-sm font-semibold tracking-tight text-v-black">
           APIPrism
         </span>
         <nav className="ml-auto flex items-center gap-1">
           <Link
             href="/docs"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-v-gray-600 transition-colors hover:bg-v-gray-50 hover:text-v-black"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-v-gray-600 transition-colors hover:bg-v-gray-50/80 hover:text-v-black"
           >
             文档中心
           </Link>
         </nav>
       </header>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-[1200px] px-6 pt-20 pb-16">
-        <p className="mb-5 font-mono text-xs font-medium uppercase tracking-[0.2em] text-v-gray-500">
+      {/* Hero — 带渐变装饰 */}
+      <section className="relative mx-auto max-w-[1200px] px-6 pt-20 pb-16 overflow-hidden">
+        {/* 装饰渐变圆 */}
+        <div
+          className="pointer-events-none absolute -top-24 -right-24 h-[400px] w-[400px] rounded-full opacity-[0.07]"
+          style={{ background: "radial-gradient(circle, #0063CC 0%, transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none absolute -bottom-32 -left-32 h-[300px] w-[300px] rounded-full opacity-[0.05]"
+          style={{ background: "radial-gradient(circle, #C0148A 0%, transparent 70%)" }}
+        />
+
+        <p className="mb-5 font-mono text-xs font-medium uppercase tracking-[0.2em] text-v-gray-500 v-fade-in">
           APIPrism Center
         </p>
         <h1
-          className="max-w-[20ch] text-[clamp(2.4rem,5vw,3rem)] font-semibold leading-[1.1] text-v-black"
+          className="max-w-[20ch] text-[clamp(2.4rem,5vw,3rem)] font-semibold leading-[1.1] text-v-black v-slide-up"
           style={{ letterSpacing: "-0.05em" }}
         >
           OpenAPI 规范，为人与智能体重新构建
         </h1>
-        <p className="mt-6 max-w-[52ch] text-lg font-normal leading-[1.9] text-v-gray-600">
+        <p className="mt-6 max-w-[52ch] text-lg font-normal leading-[1.9] text-v-gray-600 v-slide-up v-delay-1">
           Center 从各语言适配器接收 OpenAPI 快照，提供规范化的服务目录、分组文档浏览，以及面向智能体的 Markdown 视图。
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center gap-3 v-slide-up v-delay-2">
           <Link
             href="/docs"
-            className="inline-flex h-9 items-center gap-2 rounded-xl bg-v-black px-4 text-sm font-medium text-v-white transition-colors hover:bg-v-gray-600"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-v-black px-5 text-sm font-medium text-v-white transition-all duration-300 hover:bg-v-gray-600 hover:shadow-lg hover:shadow-black/10 active:scale-[0.98]"
           >
             浏览文档
             <svg className="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none">
@@ -76,20 +86,22 @@ export default async function HomePage() {
             href={`${apiBase}/api/v1/services`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-9 items-center gap-2 rounded-xl px-4 text-sm font-medium text-v-gray-600 transition-colors v-ring hover:bg-v-gray-50 hover:text-v-black"
+            className="inline-flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium text-v-gray-600 transition-all duration-300 v-glass-subtle hover:text-v-black active:scale-[0.98]"
           >
             API JSON
           </a>
         </div>
       </section>
 
-      {/* 分隔线 */}
-      <div className="border-t border-v-gray-100" />
+      {/* 微光分隔线 */}
+      <div className="mx-auto max-w-[1200px] px-6">
+        <div className="h-px v-shimmer rounded-full" />
+      </div>
 
       {/* 服务列表 */}
       <section className="mx-auto max-w-[1200px] px-6 py-16">
         {services.length === 0 ? (
-          <div className="rounded-2xl bg-v-gray-50 px-8 py-12 v-ring">
+          <div className="rounded-2xl px-8 py-12 v-glass">
             <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-v-gray-500">
               暂无服务
             </p>
@@ -101,20 +113,20 @@ export default async function HomePage() {
             </h2>
             <p className="mt-3 max-w-[56ch] leading-7 text-v-gray-600">
               启动 Center 服务端，在应用中引入 Spring Boot Starter，适配器将自动注册
-              <code className="rounded-lg bg-v-white px-1.5 py-0.5 font-mono text-sm v-ring-light">/v3/api-docs</code> 的输出。
+              <code className="rounded-lg bg-v-white/80 px-1.5 py-0.5 font-mono text-sm v-ring-light">/v3/api-docs</code> 的输出。
             </p>
           </div>
         ) : (
           <>
-            <p className="mb-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-v-gray-500">
+            <p className="mb-8 font-mono text-xs font-medium uppercase tracking-[0.2em] text-v-gray-500 v-fade-in">
               已注册服务 — {services.length}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
-              {services.map((service) => (
+              {services.map((service, idx) => (
                 <Link
                   key={`${service.name}-${service.environment}`}
                   href={`/docs/${encodeURIComponent(service.name)}/${encodeURIComponent(service.environment)}`}
-                  className="group flex flex-col rounded-xl border border-v-border bg-v-white p-6 transition-all v-card-full-hover"
+                  className={`group flex flex-col rounded-2xl bg-white/80 p-6 transition-all duration-300 v-card-full v-card-full-hover backdrop-blur-sm v-slide-up ${idx === 0 ? "v-delay-1" : idx === 1 ? "v-delay-2" : idx === 2 ? "v-delay-3" : "v-delay-4"}`}
                 >
                   {/* 服务名称 */}
                   <h2
@@ -147,7 +159,7 @@ export default async function HomePage() {
                       {service.groups.map((group) => (
                         <span
                           key={group}
-                          className="rounded-full bg-v-gray-50 px-2.5 py-0.5 text-xs text-v-gray-500 v-ring-light"
+                          className="rounded-full bg-v-gray-50/80 px-2.5 py-0.5 text-xs text-v-gray-500 v-ring-light"
                         >
                           {group}
                         </span>
@@ -159,7 +171,7 @@ export default async function HomePage() {
                   <div className="mt-auto flex items-center gap-1 pt-6 text-sm font-medium text-v-gray-600 transition-colors group-hover:text-v-black">
                     查看文档
                     <svg
-                      className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                      className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
                       viewBox="0 0 14 14"
                       fill="none"
                     >
@@ -173,8 +185,10 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* 分隔线 */}
-      <div className="border-t border-v-gray-100" />
+      {/* 微光分隔线 */}
+      <div className="mx-auto max-w-[1200px] px-6">
+        <div className="h-px v-shimmer rounded-full" />
+      </div>
 
       {/* 工作原理 */}
       <section className="mx-auto max-w-[1200px] px-6 py-16">
@@ -186,23 +200,34 @@ export default async function HomePage() {
             {
               step: "01",
               hex: "#0063CC",
+              glow: "rgba(0, 99, 204, 0.06)",
               title: "适配",
               body: "语言适配器捕获服务的 OpenAPI 规范与元数据，在启动时将注册载荷推送到 Center。",
             },
             {
               step: "02",
               hex: "#C0148A",
+              glow: "rgba(192, 20, 138, 0.06)",
               title: "规范化",
               body: "Center 将原始 OpenAPI 解析并规范化为稳定的标准模型 — 服务、分组、接口 — 跨所有适配器保持一致。",
             },
             {
               step: "03",
               hex: "#E0341A",
+              glow: "rgba(224, 52, 26, 0.06)",
               title: "探索",
               body: "在可读性良好的界面中浏览分组目录，或获取针对性的 Markdown 切片供智能体消费，无需加载完整规范。",
             },
-          ].map(({ step, hex, title, body }) => (
-            <div key={step} className="rounded-xl border border-v-border bg-v-white p-6">
+          ].map(({ step, hex, glow, title, body }) => (
+            <div
+              key={step}
+              className="group relative overflow-hidden rounded-2xl bg-white/80 p-6 transition-all duration-300 v-card-full v-card-full-hover backdrop-blur-sm"
+            >
+              {/* 顶部色条 */}
+              <div
+                className="absolute inset-x-0 top-0 h-[2px] opacity-60 transition-opacity duration-300 group-hover:opacity-100"
+                style={{ background: `linear-gradient(90deg, transparent, ${hex}, transparent)` }}
+              />
               <p className="font-mono text-xs font-medium" style={{ color: hex }}>
                 {step}
               </p>
@@ -219,7 +244,7 @@ export default async function HomePage() {
       </section>
 
       {/* 页脚 */}
-      <footer className="border-t border-v-gray-100 px-6 py-8">
+      <footer className="px-6 py-8" style={{ borderTop: "1px solid rgba(60, 60, 67, 0.08)" }}>
         <p className="mx-auto max-w-[1200px] font-mono text-xs text-v-gray-400">
           APIPrism Center — 面向人类与智能体的 OpenAPI 目录
         </p>

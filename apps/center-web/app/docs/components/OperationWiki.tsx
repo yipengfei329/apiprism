@@ -131,7 +131,7 @@ export async function OperationWiki({ op }: { op: CanonicalOperation }) {
       {/* ── 左侧：主内容 ── */}
       <article className="min-w-0 flex-1 [&>section+section]:border-t [&>section+section]:border-[#F0F0F3] [&>section]:pb-8 [&>section+section]:pt-8 [&>section:last-of-type]:pb-0">
         {/* ── 元信息 ── */}
-        <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl bg-v-gray-50/60 px-5 py-4">
+        <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl px-5 py-4 v-glass-subtle" style={{ borderRadius: "1rem" }}>
           <MetaItem
             label="方法"
             value={<MethodBadge method={op.method} size="sm" />}

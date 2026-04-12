@@ -82,7 +82,7 @@ export default async function ServiceOverviewPage({ params }: Props) {
               <Link
                 key={group.name}
                 href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/groups/${encodeURIComponent(group.name)}`}
-                className="group rounded-xl border border-[#E8E8EC] bg-white p-5 transition-all v-card-full-hover"
+                className="group rounded-xl bg-white/90 p-5 backdrop-blur-sm transition-all v-card-full v-card-full-hover"
               >
                 <h3
                   className="font-semibold text-[#1C1C1E]"

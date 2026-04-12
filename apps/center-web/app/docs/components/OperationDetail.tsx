@@ -62,10 +62,10 @@ export function OperationDetail({
   return (
     <div>
       {/* ── 头部区域 ── */}
-      <div className="bg-v-gray-50/60">
+      <div style={{ background: "linear-gradient(180deg, rgba(242,242,247,0.6) 0%, rgba(242,242,247,0.3) 100%)" }}>
         <div className="mx-auto max-w-[1100px] px-8 pb-0 pt-14">
           {/* Method + Path */}
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="mb-5 flex flex-wrap items-center gap-3 v-fade-in">
             <MethodBadge method={op.method} size="lg" />
             <code className="font-mono text-[14px] font-medium text-v-gray-500">
               {op.path}
@@ -74,7 +74,7 @@ export function OperationDetail({
 
           {/* 标题 */}
           <h1
-            className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-[1.15] text-v-black"
+            className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-[1.15] text-v-black v-slide-up"
             style={{ letterSpacing: "-0.025em" }}
           >
             {op.summary || op.operationId}
@@ -82,18 +82,18 @@ export function OperationDetail({
 
           {/* operationId */}
           {op.operationId && (
-            <p className="mt-2.5 font-mono text-[12px] text-v-gray-400">{op.operationId}</p>
+            <p className="mt-2.5 font-mono text-[12px] text-v-gray-400 v-fade-in v-delay-1">{op.operationId}</p>
           )}
 
           {/* 描述 */}
           {op.description && (
-            <p className="mt-4 max-w-[68ch] text-[15px] leading-[1.8] text-v-gray-600">
+            <p className="mt-4 max-w-[68ch] text-[15px] leading-[1.8] text-v-gray-600 v-slide-up v-delay-1">
               {op.description}
             </p>
           )}
 
-          {/* ── Tab 栏 ── */}
-          <div className="mt-8 flex items-end gap-1">
+          {/* ── Tab 栏 — 毛玻璃风格 ── */}
+          <div className="mt-8 flex items-end gap-0.5">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = active === tab.key;
@@ -101,18 +101,30 @@ export function OperationDetail({
                 <button
                   key={tab.key}
                   onClick={() => setActive(tab.key)}
-                  className={`relative flex items-center gap-1.5 rounded-t-lg px-4 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+                  className={`relative flex cursor-pointer items-center gap-1.5 rounded-t-xl px-4 py-2.5 text-[13px] font-medium transition-all duration-300 ${
                     isActive
-                      ? "bg-white text-v-link"
-                      : "text-v-gray-400 hover:text-v-gray-600"
+                      ? "text-v-link"
+                      : "text-v-gray-400 hover:text-v-gray-600 hover:bg-white/40"
                   }`}
+                  style={isActive ? {
+                    background: "rgba(255, 255, 255, 0.85)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6), 0 -1px 3px rgba(0,0,0,0.03)",
+                  } : undefined}
                 >
                   <Icon
                     size={15}
                     weight={isActive ? "fill" : "regular"}
-                    className={isActive ? "text-v-link" : "text-v-gray-400/60"}
+                    className={`transition-colors duration-200 ${isActive ? "text-v-link" : "text-v-gray-400/60"}`}
                   />
                   {tab.label}
+                  {/* 激活指示条 */}
+                  {isActive && (
+                    <span
+                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-v-link/50"
+                    />
+                  )}
                 </button>
               );
             })}

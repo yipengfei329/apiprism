@@ -32,7 +32,7 @@ export function SidebarLayout({
       </div>
 
       {/* ── 主内容区 ── */}
-      <main className="relative flex-1 overflow-hidden bg-white">
+      <main className="relative flex-1 overflow-hidden" style={{ background: "linear-gradient(180deg, #fafbfc 0%, #ffffff 120px)" }}>
         {/* 展开按钮（仅折叠时显示），置于滚动容器之外以避免被滚动或遮挡 */}
         <button
           onClick={() => setCollapsed(false)}

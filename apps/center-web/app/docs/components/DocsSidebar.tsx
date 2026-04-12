@@ -163,10 +163,11 @@ function GroupItem({
         }}
       >
         <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all duration-200"
           style={{
             backgroundColor: isHighlighted ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.05)",
             color: isHighlighted ? "#93C5FD" : "rgba(255,255,255,0.35)",
+            boxShadow: isHighlighted ? "0 0 12px rgba(96,165,250,0.12)" : "none",
           }}
         >
           <GroupIcon size={14} weight={isHighlighted ? "fill" : "regular"} />
@@ -290,6 +291,7 @@ export function DocsSidebar({
       style={{
         backgroundColor: "#0f0f11",
         borderRight: "1px solid rgba(255,255,255,0.07)",
+        backgroundImage: "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59,130,246,0.04) 0%, transparent 70%)",
       }}
     >
       {/* ── 头部：品牌 + 服务信息 ── */}
