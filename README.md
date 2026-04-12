@@ -97,4 +97,4 @@ Java 17+ / Spring Boot 3 / Gradle — Next.js / Tailwind CSS / pnpm
 
 ## License
 
-MIT
+Apache License 2.0
