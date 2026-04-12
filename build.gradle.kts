@@ -22,10 +22,6 @@ allprojects {
 subprojects {
     apply(plugin = "java-library")
 
-    repositories {
-        mavenCentral()
-    }
-
     extensions.configure<JavaPluginExtension>("java") {
         toolchain {
             languageVersion = JavaLanguageVersion.of(21)
