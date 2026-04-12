@@ -1,0 +1,115 @@
+package ai.apiprism.center.registration;
+
+import ai.apiprism.center.catalog.InMemoryRegistrationRepository;
+import ai.apiprism.center.catalog.ServiceCatalogItem;
+import ai.apiprism.center.catalog.StoredRegistration;
+import ai.apiprism.center.exceptions.RegistrationNotFoundException;
+import ai.apiprism.protocol.registration.ApiRegistrationRequest;
+import ai.apiprism.protocol.registration.ApiRegistrationResponse;
+import ai.apiprism.model.CanonicalGroup;
+import ai.apiprism.model.CanonicalServiceSnapshot;
+import ai.apiprism.openapi.NormalizationResult;
+import ai.apiprism.openapi.OpenApiNormalizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * 注册服务：负责接收注册请求、调用规范化流水线、持久化注册快照，并提供目录查询能力。
+ */
+@Service
+public class RegistrationService {
+
+    private static final Logger log = LoggerFactory.getLogger(RegistrationService.class);
+
+    private final InMemoryRegistrationRepository repository;
+    private final OpenApiNormalizer normalizer;
+
+    public RegistrationService(InMemoryRegistrationRepository repository, OpenApiNormalizer normalizer) {
+        this.repository = repository;
+        this.normalizer = normalizer;
+    }
+
+    /**
+     * 接收注册请求，规范化 OpenAPI 规范并保存到注册库。
+     * 若规范无法解析，{@link ai.apiprism.openapi.exceptions.NormalizationException} 向上抛出，由错误处理器转换为 422。
+     */
+    public ApiRegistrationResponse register(ApiRegistrationRequest request) {
+        String serviceName = request.getService().getName();
+        String environment = request.getService().getEnvironment();
+
+        log.info("Registering service {} ({}) via adapter {}",
+                serviceName, environment, request.getService().getAdapterType());
+
+        NormalizationResult result = normalizer.normalize(
+                serviceName,
+                environment,
+                request.getService().getTitle(),
+                request.getService().getVersion(),
+                request.getService().getServerUrls(),
+                request.getSpec().getContent()
+        );
+
+        if (!result.getWarnings().isEmpty()) {
+            log.warn("Normalization produced {} warning(s) for service {} ({}): {}",
+                    result.getWarnings().size(), serviceName, environment, result.getWarnings());
+        }
+
+        String registrationId = UUID.randomUUID().toString();
+        repository.save(StoredRegistration.builder()
+                .id(registrationId)
+                .rawSpec(request.getSpec().getContent())
+                .specFormat(request.getSpec().getFormat())
+                .adapterType(request.getService().getAdapterType())
+                .snapshot(result.getSnapshot())
+                .warnings(result.getWarnings())
+                .extensions(request.getExtensions())
+                .build());
+
+        log.info("Registered service {} ({}) with id {} ({} group(s), {} warning(s))",
+                serviceName, environment, registrationId,
+                result.getSnapshot().getGroups().size(), result.getWarnings().size());
+
+        return ApiRegistrationResponse.builder()
+                .accepted(true)
+                .registrationId(registrationId)
+                .message("Registration accepted")
+                .warnings(result.getWarnings())
+                .build();
+    }
+
+    public List<ServiceCatalogItem> listServices() {
+        return repository.findAll().stream()
+                .map(this::toCatalogItem)
+                .sorted((left, right) -> left.getName().compareToIgnoreCase(right.getName()))
+                .toList();
+    }
+
+    public CanonicalServiceSnapshot getService(String serviceName, String environment) {
+        return require(serviceName, environment).getSnapshot();
+    }
+
+    public StoredRegistration getRegistration(String serviceName, String environment) {
+        return require(serviceName, environment);
+    }
+
+    private StoredRegistration require(String serviceName, String environment) {
+        return repository.findByRef(serviceName, environment)
+                .orElseThrow(() -> new RegistrationNotFoundException(serviceName, environment));
+    }
+
+    private ServiceCatalogItem toCatalogItem(StoredRegistration registration) {
+        CanonicalServiceSnapshot snapshot = registration.getSnapshot();
+        return ServiceCatalogItem.builder()
+                .name(snapshot.getRef().getName())
+                .environment(snapshot.getRef().getEnvironment())
+                .title(snapshot.getTitle())
+                .version(snapshot.getVersion())
+                .updatedAt(snapshot.getUpdatedAt())
+                .groups(snapshot.getGroups().stream().map(CanonicalGroup::getName).toList())
+                .build();
+    }
+}

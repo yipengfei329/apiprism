@@ -1,0 +1,41 @@
+[versions]
+springBoot                = "3.3.6"
+springDependencyManagement = "1.1.6"
+jackson                   = "2.18.2"
+swaggerParser             = "2.1.24"
+junitBom                  = "5.11.3"
+springdoc                 = "2.6.0"
+springWeb                 = "6.1.15"
+lombok                    = "1.18.38"
+guava                     = "33.4.8-jre"
+
+[libraries]
+# Jackson
+jackson-annotations              = { module = "com.fasterxml.jackson.core:jackson-annotations",         version.ref = "jackson" }
+jackson-databind                 = { module = "com.fasterxml.jackson.core:jackson-databind",             version.ref = "jackson" }
+
+# OpenAPI 解析
+swagger-parser                   = { module = "io.swagger.parser.v3:swagger-parser",                    version.ref = "swaggerParser" }
+
+# JUnit 5（版本由 BOM 管理，不单独指定）
+junit-bom                        = { module = "org.junit:junit-bom",                                     version.ref = "junitBom" }
+junit-jupiter                    = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher          = { module = "org.junit.platform:junit-platform-launcher" }
+
+# 工具库
+lombok                           = { module = "org.projectlombok:lombok",                                version.ref = "lombok" }
+guava                            = { module = "com.google.guava:guava",                                  version.ref = "guava" }
+
+# Spring Boot 相关
+spring-boot-autoconfigure        = { module = "org.springframework.boot:spring-boot-autoconfigure",      version.ref = "springBoot" }
+spring-boot-config-processor     = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "springBoot" }
+spring-boot-starter-web          = { module = "org.springframework.boot:spring-boot-starter-web",        version.ref = "springBoot" }
+spring-boot-starter-test         = { module = "org.springframework.boot:spring-boot-starter-test",       version.ref = "springBoot" }
+spring-web                       = { module = "org.springframework:spring-web",                          version.ref = "springWeb" }
+
+# SpringDoc OpenAPI
+springdoc-webmvc                 = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api",      version.ref = "springdoc" }
+
+[plugins]
+spring-boot                      = { id = "org.springframework.boot",        version.ref = "springBoot" }
+spring-dependency-management     = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }

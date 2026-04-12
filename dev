@@ -1,0 +1,328 @@
+#!/usr/bin/env bash
+# =============================================================
+#  APIPrism 本地开发启动脚本
+#  用法:  ./dev <command> [group|service]
+#
+#  命令:   start | stop | restart | status | logs
+#  分组:   center  — center-server + center-web
+#          demo    — java-java-demo-service
+#          all     — 以上全部
+#  单服务: center-server | center-web | java-java-demo-service
+#
+#  示例:
+#    ./dev start center        # 启动中心服务前后端
+#    ./dev stop demo           # 停止 demo 服务
+#    ./dev restart all         # 重启所有服务
+#    ./dev status              # 查看运行状态
+#    ./dev logs center-server  # 查看 center-server 日志
+# =============================================================
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+RUN_DIR="$ROOT_DIR/.dev"
+PID_DIR="$RUN_DIR/pids"
+LOG_DIR="$RUN_DIR/logs"
+
+mkdir -p "$PID_DIR" "$LOG_DIR"
+
+# ── 颜色 ──
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+
+# ── 分组定义 ──
+GROUP_CENTER="center-server center-web"
+GROUP_DEMO="java-demo-service"
+GROUP_ALL="$GROUP_CENTER $GROUP_DEMO"
+
+# ── 服务端口与访问地址 ──
+svc_port() {
+    case "$1" in
+        center-server) echo "8080" ;;
+        center-web)    echo "3000" ;;
+        java-demo-service)  echo "8081" ;;
+    esac
+}
+
+svc_url() {
+    case "$1" in
+        center-server) echo "http://localhost:8080" ;;
+        center-web)    echo "http://localhost:3000" ;;
+        java-demo-service)  echo "http://localhost:8081" ;;
+    esac
+}
+
+# ── 服务启动成功的日志特征（用于等待就绪） ──
+svc_ready_pattern() {
+    case "$1" in
+        center-server) echo "Started CenterServerApplication" ;;
+        center-web)    echo "Local:.*http://localhost" ;;
+        java-demo-service)  echo "Started DemoApplication" ;;
+    esac
+}
+
+# ── 将 group 名称解析为服务列表 ──
+resolve_services() {
+    case "$1" in
+        center)         echo "$GROUP_CENTER" ;;
+        demo)           echo "$GROUP_DEMO" ;;
+        all)            echo "$GROUP_ALL" ;;
+        center-server|center-web|java-demo-service) echo "$1" ;;
+        *) echo ""; return 1 ;;
+    esac
+}
+
+# ── 检查进程是否存活 ──
+is_running() {
+    local svc="$1"
+    local pid_file="$PID_DIR/$svc.pid"
+    if [[ -f "$pid_file" ]]; then
+        local pid
+        pid=$(cat "$pid_file")
+        if kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+        rm -f "$pid_file"
+    fi
+    return 1
+}
+
+# ── 检查端口是否被占用，占用则提示并强杀 ──
+clear_port() {
+    local svc="$1"
+    local port; port=$(svc_port "$svc")
+    local occupying_pid
+    occupying_pid=$(lsof -ti :"$port" 2>/dev/null || true)
+    if [[ -n "$occupying_pid" ]]; then
+        echo -e "  ${YELLOW}⚠${NC}  端口 $port 被进程 $occupying_pid 占用，正在清理..."
+        echo "$occupying_pid" | xargs kill -9 2>/dev/null || true
+        # 等端口真正释放
+        local waited=0
+        while lsof -ti :"$port" &>/dev/null && (( waited < 5 )); do
+            sleep 1
+            (( waited++ ))
+        done
+        echo -e "  ${GREEN}✓${NC}  端口 $port 已释放"
+    fi
+}
+
+# ── 等待服务就绪并打印访问地址（后台轮询日志） ──
+wait_and_announce() {
+    local svc="$1"
+    local log_file="$LOG_DIR/$svc.log"
+    local pattern; pattern=$(svc_ready_pattern "$svc")
+    local url; url=$(svc_url "$svc")
+    local port; port=$(svc_port "$svc")
+
+    # 后台等待，不阻塞后续服务启动
+    (
+        local waited=0
+        while (( waited < 60 )); do
+            if grep -qE "$pattern" "$log_file" 2>/dev/null; then
+                echo -e "  ${GREEN}🟢 $svc 已就绪${NC}  →  端口 ${BOLD}$port${NC}  |  $url"
+                exit 0
+            fi
+            # 检查进程是否崩溃退出
+            if [[ -f "$PID_DIR/$svc.pid" ]]; then
+                local pid; pid=$(cat "$PID_DIR/$svc.pid")
+                if ! kill -0 "$pid" 2>/dev/null; then
+                    echo -e "  ${RED}✗  $svc 启动失败${NC}，查看日志: .dev/logs/$svc.log"
+                    exit 1
+                fi
+            fi
+            sleep 2
+            (( waited += 2 ))
+        done
+        echo -e "  ${YELLOW}⚠  $svc 启动超时（60s），请手动检查日志${NC}"
+    ) &
+}
+
+# ── 启动单个服务 ──
+start_service() {
+    local svc="$1"
+
+    if is_running "$svc"; then
+        local pid; pid=$(cat "$PID_DIR/$svc.pid")
+        echo -e "  ${YELLOW}●${NC} $svc 已在运行 (PID $pid)，跳过"
+        return 0
+    fi
+
+    # 启动前检查端口冲突
+    clear_port "$svc"
+
+    local log_file="$LOG_DIR/$svc.log"
+    # 清空旧日志，避免 ready_pattern 匹配到上次的记录
+    : > "$log_file"
+
+    case "$svc" in
+        center-server)
+            echo -e "  ${CYAN}▸${NC} 启动 center-server (Spring Boot, :8080) ..."
+            cd "$ROOT_DIR"
+            nohup ./gradlew :apps:center-server:bootRun --no-daemon \
+                > "$log_file" 2>&1 &
+            ;;
+        center-web)
+            echo -e "  ${CYAN}▸${NC} 启动 center-web (Next.js dev, :3000) ..."
+            cd "$ROOT_DIR"
+            nohup pnpm dev:web > "$log_file" 2>&1 &
+            ;;
+        java-demo-service)
+            echo -e "  ${CYAN}▸${NC} 启动 java-demo-service (Spring Boot, :8081) ..."
+            cd "$ROOT_DIR"
+            nohup ./gradlew :examples:java-demo-service:bootRun --no-daemon \
+                > "$log_file" 2>&1 &
+            ;;
+        *)
+            echo -e "  ${RED}✗${NC} 未知服务: $svc"
+            return 1
+            ;;
+    esac
+
+    local pid=$!
+    echo "$pid" > "$PID_DIR/$svc.pid"
+    echo -e "  ${GREEN}✓${NC} $svc 进程已启动 (PID $pid)，等待就绪..."
+    wait_and_announce "$svc"
+}
+
+# ── 停止单个服务（优雅终止整个进程树） ──
+stop_service() {
+    local svc="$1"
+
+    if ! is_running "$svc"; then
+        echo -e "  ${YELLOW}●${NC} $svc 未在运行"
+        return 0
+    fi
+
+    local pid; pid=$(cat "$PID_DIR/$svc.pid")
+    echo -e "  ${CYAN}▸${NC} 停止 $svc (PID $pid) ..."
+
+    local pgid
+    pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ') || true
+    if [[ -n "$pgid" && "$pgid" != "0" ]]; then
+        kill -- -"$pgid" 2>/dev/null || true
+    fi
+
+    local waited=0
+    while kill -0 "$pid" 2>/dev/null && (( waited < 10 )); do
+        sleep 1
+        (( waited++ ))
+    done
+
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+        if [[ -n "$pgid" && "$pgid" != "0" ]]; then
+            kill -9 -- -"$pgid" 2>/dev/null || true
+        fi
+    fi
+
+    rm -f "$PID_DIR/$svc.pid"
+    echo -e "  ${GREEN}✓${NC} $svc 已停止"
+}
+
+# ── 状态查询 ──
+print_status() {
+    echo -e "${BOLD}APIPrism 服务状态${NC}"
+    echo ""
+    for svc in $GROUP_ALL; do
+        local url; url=$(svc_url "$svc")
+        local port; port=$(svc_port "$svc")
+        if is_running "$svc"; then
+            local pid; pid=$(cat "$PID_DIR/$svc.pid")
+            echo -e "  ${GREEN}●${NC} $svc  — 运行中 (PID $pid)  :$port  $url"
+        else
+            echo -e "  ${RED}●${NC} $svc  — 未运行  :$port"
+        fi
+    done
+    echo ""
+}
+
+# ── 查看日志 ──
+show_logs() {
+    local svc="$1"
+    local log_file="$LOG_DIR/$svc.log"
+    if [[ ! -f "$log_file" ]]; then
+        echo -e "${YELLOW}暂无日志: $svc${NC}"
+        return 1
+    fi
+    echo -e "${BOLD}=== $svc 日志 (tail -f) ===${NC}"
+    echo -e "${YELLOW}按 Ctrl+C 退出${NC}"
+    echo ""
+    tail -f "$log_file"
+}
+
+# ── 用法提示 ──
+usage() {
+    echo -e "${BOLD}APIPrism 开发脚本${NC}"
+    echo ""
+    echo "用法:  ./dev <command> [target]"
+    echo ""
+    echo "命令:"
+    echo "  start   [target]   启动服务"
+    echo "  stop    [target]   停止服务"
+    echo "  restart [target]   重启服务"
+    echo "  status             查看所有服务状态"
+    echo "  logs    <service>  查看指定服务的日志 (tail -f)"
+    echo ""
+    echo "目标 (target):"
+    echo "  center             center-server + center-web"
+    echo "  demo               java-demo-service"
+    echo "  all                全部服务 (默认)"
+    echo "  <service-name>     指定单个服务"
+    echo ""
+    echo "示例:"
+    echo "  ./dev start center       启动中心服务前后端"
+    echo "  ./dev stop demo          停止 demo"
+    echo "  ./dev restart all        重启所有"
+    echo "  ./dev logs center-server 查看后端日志"
+}
+
+# ── 主入口 ──
+CMD="${1:-}"
+TARGET="${2:-all}"
+
+if [[ -z "$CMD" ]]; then
+    usage
+    exit 0
+fi
+
+case "$CMD" in
+    start|stop|restart)
+        SERVICES=$(resolve_services "$TARGET") || {
+            echo -e "${RED}未知目标: $TARGET${NC}"
+            echo "可选: center | demo | all | center-server | center-web | java-demo-service"
+            exit 1
+        }
+
+        if [[ "$CMD" == "restart" ]]; then
+            echo -e "${BOLD}重启 [$TARGET]${NC}"
+            for svc in $SERVICES; do stop_service "$svc"; done
+            echo ""
+            for svc in $SERVICES; do start_service "$svc"; done
+        elif [[ "$CMD" == "start" ]]; then
+            echo -e "${BOLD}启动 [$TARGET]${NC}"
+            for svc in $SERVICES; do start_service "$svc"; done
+        else
+            echo -e "${BOLD}停止 [$TARGET]${NC}"
+            for svc in $SERVICES; do stop_service "$svc"; done
+        fi
+        echo ""
+        print_status
+        ;;
+    status)
+        print_status
+        ;;
+    logs)
+        if [[ "$TARGET" == "all" ]]; then
+            echo -e "${RED}请指定一个服务名查看日志${NC}"
+            echo "可选: center-server | center-web | java-demo-service"
+            exit 1
+        fi
+        show_logs "$TARGET"
+        ;;
+    *)
+        echo -e "${RED}未知命令: $CMD${NC}"
+        echo ""
+        usage
+        exit 1
+        ;;
+esac

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: apiprism-demo-service
+
+server:
+  port: 8081
+
+# APIPrism starter 配置
+apiprism:
+  center-url: http://localhost:8080
+  project-name: apiprism-demo-service
+  env: dev
+
+# SpringDoc 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

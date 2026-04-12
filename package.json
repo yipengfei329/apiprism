@@ -1,0 +1,18 @@
+{
+  "name": "apiprism",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "prepare": "node scripts/setup-hooks.mjs",
+    "dev:web": "pnpm --filter @apiprism/center-web dev",
+    "build:web": "pnpm --filter @apiprism/center-web build",
+    "typecheck:web": "pnpm --filter @apiprism/center-web typecheck",
+    "lint:web": "pnpm --filter @apiprism/center-web lint && pnpm typecheck:web",
+    "dev": "bash dev.sh",
+    "lint:commit": "commitlint --from HEAD~1 --to HEAD"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1"
+  }
+}

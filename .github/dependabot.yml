@@ -1,0 +1,59 @@
+version: 2
+updates:
+  # Gradle 依赖（Java 全模块）
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "java"
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+          - "io.spring.dependency-management*"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson*"
+
+  # pnpm 依赖（前端）
+  - package-ecosystem: "npm"
+    directory: "/apps/center-web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "frontend"
+    groups:
+      next-react:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+      typescript-tooling:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "eslint*"
+          - "tailwindcss*"
+
+  # 后端镜像
+  - package-ecosystem: "docker"
+    directory: "/apps/center-server"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # 前端镜像
+  - package-ecosystem: "docker"
+    directory: "/apps/center-web"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "docker"

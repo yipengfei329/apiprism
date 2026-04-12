@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: apiprism-center-server
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+server:
+  port: 8080
+

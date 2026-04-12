@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* ── 基础中性色（Apple System Palette） ── */
+  --color-v-black:    #1C1C1E;   /* Apple label */
+  --color-v-gray-600: #3C3C43;   /* Apple secondary label */
+  --color-v-gray-500: #636366;   /* Apple tertiary label */
+  --color-v-gray-400: #8E8E93;   /* Apple quaternary label */
+  --color-v-gray-100: #E5E5EA;   /* Apple separator */
+  --color-v-gray-50:  #F2F2F7;   /* Apple system grouped bg */
+  --color-v-white:    #ffffff;
+  --color-v-link:     #0063CC;   /* Apple blue (refined) */
+
+  /* ── 侧边栏专属色（Arc + Apple macOS Sidebar） ── */
+  --color-sidebar-bg:          #F2F2F7;
+  --color-sidebar-header-bg:   #EAEAEF;
+  --color-sidebar-active-bg:   rgba(0, 99, 204, 0.10);
+  --color-sidebar-active-text: #0063CC;
+  --color-sidebar-separator:   rgba(60, 60, 67, 0.18);
+
+  /* ── 卡片 / 边框色 ── */
+  --color-v-border:   #E8E8EC;   /* 卡片边框 */
+
+  /* ── 工作流阶段色（仅用于对应流程语境） ── */
+  --color-ship-red:      #E0341A;
+  --color-preview-pink:  #C0148A;
+  --color-develop-blue:  #0063CC;
+
+  /* ── 字体族 ── */
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New";
+}
+
+/* ── Shadow-as-border 与卡片 shadow stack 工具类 ── */
+@layer utilities {
+  /* Level 1：ring border */
+  .v-ring {
+    box-shadow: rgba(60, 60, 67, 0.18) 0px 0px 0px 1px;
+  }
+  /* Level 1b：浅灰 ring（tabs / image borders） */
+  .v-ring-light {
+    box-shadow: rgba(60, 60, 67, 0.12) 0px 0px 0px 1px;
+  }
+  /* Level 2：subtle card（Apple 卡片深度） */
+  .v-card {
+    box-shadow:
+      rgba(60, 60, 67, 0.12) 0px 0px 0px 1px,
+      rgba(0, 0, 0, 0.04) 0px 2px 4px;
+  }
+  /* Level 3：featured card with inner glow */
+  .v-card-full {
+    box-shadow:
+      rgba(60, 60, 67, 0.10) 0px 0px 0px 1px,
+      rgba(0, 0, 0, 0.03) 0px 2px 4px,
+      rgba(0, 0, 0, 0.02) 0px 8px 16px -8px,
+      rgba(255, 255, 255, 0.8) 0px 1px 0px inset;
+  }
+  /* 方向性 shadow border */
+  .v-border-b {
+    box-shadow: 0 1px 0 0 rgba(60, 60, 67, 0.12);
+  }
+  .v-border-r {
+    box-shadow: 1px 0 0 0 rgba(60, 60, 67, 0.18);
+  }
+  /* hover 增强 */
+  .v-card-full-hover:hover {
+    box-shadow:
+      rgba(60, 60, 67, 0.14) 0px 0px 0px 1px,
+      rgba(0, 0, 0, 0.05) 0px 4px 8px,
+      rgba(0, 0, 0, 0.03) 0px 12px 20px -8px,
+      rgba(255, 255, 255, 0.9) 0px 1px 0px inset;
+    transform: translateY(-1px);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+}
+
+html {
+  color-scheme: light;
+  font-family: var(--font-sans);
+  font-feature-settings: "liga" 1, "cv11" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #1C1C1E;
+}
+
+/* 文字选中高亮（Apple 蓝色调） */
+::selection {
+  background: rgba(0, 99, 204, 0.15);
+  color: #1C1C1E;
+}
+
+/* 焦点环（Apple 蓝色） */
+:focus-visible {
+  outline: 2px solid rgba(0, 99, 204, 0.75);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 滚动条（细窄，仅 hover 显示） */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
