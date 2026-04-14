@@ -7,7 +7,7 @@ server:
 
 # APIPrism starter 配置
 apiprism:
-  center-url: http://localhost:8080
+  center-url: http://localhost:3000
   project-name: apiprism-demo-service
   env: dev
 
