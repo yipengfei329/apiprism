@@ -24,6 +24,7 @@ RUN apk add --no-cache gcompat
 
 COPY --from=web-deps /workspace/node_modules ./node_modules
 COPY . .
+COPY --from=web-deps /workspace/apps/center-web/node_modules ./apps/center-web/node_modules
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     corepack enable \
