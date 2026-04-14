@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useReducer } from "react";
-import { Robot, CircleNotch } from "@phosphor-icons/react";
+import { Robot, CircleNotch, ArrowSquareOut } from "@phosphor-icons/react";
 import { CopyButton } from "@/app/components/CopyButton";
-import { getAgentMarkdown } from "../lib/api";
 
 interface AgentPanelProps {
   service: string;
@@ -25,7 +24,9 @@ export function AgentPanel({ service, environment, operationId }: AgentPanelProp
 
   useEffect(() => {
     let cancelled = false;
-    getAgentMarkdown(service, environment, operationId)
+    const url = `/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(operationId)}/apidocs.md`;
+    fetch(url)
+      .then((res) => (res.ok ? res.text() : null))
       .then((md) => {
         if (cancelled) return;
         dispatch(md ? { status: "done", markdown: md } : { status: "error" });
@@ -66,7 +67,18 @@ export function AgentPanel({ service, environment, operationId }: AgentPanelProp
         <p className="text-[13px] text-v-gray-400">
           面向 AI Agent 的接口描述，可直接复制粘贴给 Agent 使用
         </p>
-        <CopyButton text={state.markdown} />
+        <div className="flex items-center gap-2">
+          <a
+            href={`/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(operationId)}/apidocs.md`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-v-gray-400 transition-colors hover:text-v-link"
+          >
+            <ArrowSquareOut size={13} />
+            打开原文
+          </a>
+          <CopyButton text={state.markdown} />
+        </div>
       </div>
 
       {/* Markdown 原文展示 */}

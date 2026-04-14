@@ -11,6 +11,7 @@ import { CanonicalOperation } from "../lib/api";
 import { AgentPanel } from "./AgentPanel";
 import { HtmlText } from "./HtmlText";
 import { MethodBadge } from "./MethodBadge";
+import { AgentDocLink } from "./AgentDocLink";
 
 type TabKey = "doc" | "debug" | "agent";
 
@@ -74,12 +75,15 @@ export function OperationDetail({
           </div>
 
           {/* 标题 */}
-          <h1
-            className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-[1.15] text-v-black v-slide-up"
-            style={{ letterSpacing: "-0.025em" }}
-          >
-            {op.summary || op.operationId}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1
+              className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-[1.15] text-v-black v-slide-up"
+              style={{ letterSpacing: "-0.025em" }}
+            >
+              {op.summary || op.operationId}
+            </h1>
+            <AgentDocLink path={`/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(op.operationId)}/apidocs.md`} />
+          </div>
 
           {/* operationId */}
           {op.operationId && (

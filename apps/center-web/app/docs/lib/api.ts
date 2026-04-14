@@ -1,8 +1,12 @@
 import { cache } from "react";
-
-const apiBase = process.env.NEXT_PUBLIC_APIPRISM_API_BASE ?? "http://localhost:8080";
+import { getInternalApiUrl } from "@/app/lib/internal-api";
 
 // ---- 类型定义 ----
+
+export type GroupRef = {
+  name: string;
+  slug: string;
+};
 
 export type ServiceCatalogItem = {
   name: string;
@@ -10,7 +14,7 @@ export type ServiceCatalogItem = {
   title: string;
   version: string;
   updatedAt: string;
-  groups: string[];
+  groups: GroupRef[];
 };
 
 /** 标准 JSON Schema 子集类型 */
@@ -63,6 +67,7 @@ export type CanonicalOperation = {
 
 export type CanonicalGroup = {
   name: string;
+  slug: string;
   description: string;
   operations: CanonicalOperation[];
 };
@@ -86,7 +91,7 @@ export type CanonicalServiceSnapshot = {
 // React.cache() 保证同一服务端渲染过程中多个组件调用时只发出一次 HTTP 请求
 export const getServices = cache(async (): Promise<ServiceCatalogItem[]> => {
   try {
-    const res = await fetch(`${apiBase}/api/v1/services`, { cache: "no-store" });
+    const res = await fetch(getInternalApiUrl("/api/v1/services"), { cache: "no-store" });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -100,7 +105,9 @@ export async function getServiceSnapshot(
 ): Promise<CanonicalServiceSnapshot | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}`,
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}`
+      ),
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -117,7 +124,9 @@ export async function getGroup(
 ): Promise<CanonicalGroup | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`
+      ),
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -134,7 +143,9 @@ export async function getOperation(
 ): Promise<CanonicalOperation | null> {
   try {
     const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}`,
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}`
+      ),
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -144,19 +155,3 @@ export async function getOperation(
   }
 }
 
-export async function getAgentMarkdown(
-  service: string,
-  environment: string,
-  operationId: string
-): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/operations/${encodeURIComponent(operationId)}/agent-markdown.md`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) return null;
-    return res.text();
-  } catch {
-    return null;
-  }
-}

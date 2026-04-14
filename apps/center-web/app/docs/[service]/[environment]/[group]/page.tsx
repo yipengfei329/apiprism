@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGroup } from "../../../../lib/api";
-import { HtmlText } from "../../../../components/HtmlText";
-import { MethodBadge } from "../../../../components/MethodBadge";
-import { Breadcrumb, type BreadcrumbItem } from "../../../../components/Breadcrumb";
+import { getGroup } from "../../../lib/api";
+import { HtmlText } from "../../../components/HtmlText";
+import { MethodBadge } from "../../../components/MethodBadge";
+import { Breadcrumb } from "../../../components/Breadcrumb";
+import { AgentDocLink } from "../../../components/AgentDocLink";
 
 
 type Props = {
@@ -14,9 +15,9 @@ export default async function GroupPage({ params }: Props) {
   const { service, environment, group } = await params;
   const svc = decodeURIComponent(service);
   const env = decodeURIComponent(environment);
-  const grp = decodeURIComponent(group);
+  const grpSlug = decodeURIComponent(group);
 
-  const data = await getGroup(svc, env, grp);
+  const data = await getGroup(svc, env, grpSlug);
   if (!data) notFound();
 
   return (
@@ -32,7 +33,7 @@ export default async function GroupPage({ params }: Props) {
                 icon: "service",
               },
               {
-                label: grp,
+                label: data.name,
                 icon: "group",
               },
             ]}
@@ -43,12 +44,15 @@ export default async function GroupPage({ params }: Props) {
       {/* 分组头部区域 */}
       <div style={{ background: "linear-gradient(180deg, rgba(242,242,247,0.6) 0%, rgba(242,242,247,0.2) 100%)" }}>
         <div className="mx-auto max-w-[1100px] px-8 pb-8 pt-14">
-          <h1
-            className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-tight text-v-black"
-            style={{ letterSpacing: "-0.025em" }}
-          >
-            {data.name}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1
+              className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-tight text-v-black"
+              style={{ letterSpacing: "-0.025em" }}
+            >
+              {data.name}
+            </h1>
+            <AgentDocLink path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/apidocs.md`} />
+          </div>
           {data.description && (
             <HtmlText
               as="div"
@@ -76,7 +80,7 @@ export default async function GroupPage({ params }: Props) {
               {data.operations.map((op) => (
                 <Link
                   key={op.operationId}
-                  href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/ops/${encodeURIComponent(op.operationId)}`}
+                  href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}/${encodeURIComponent(op.operationId)}`}
                   className="group flex items-start gap-4 rounded-xl bg-white/90 px-5 py-4 backdrop-blur-sm transition-all v-card-full v-card-full-hover"
                 >
                   <div className="shrink-0 pt-0.5">

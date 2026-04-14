@@ -27,8 +27,8 @@
   --color-develop-blue:  #0063CC;
 
   /* ── 字体族 ── */
-  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New";
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New", monospace;
 }
 
 /* ── Shadow-as-border 与卡片 shadow stack 工具类 ── */

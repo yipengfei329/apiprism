@@ -1,26 +1,36 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const siteUrl = "https://apiprism.ai";
+const description = "Every API deserves to be understood — by humans, by agents, by machines.";
 
 export const metadata: Metadata = {
-  title: "APIPrism Center",
-  description: "Human-friendly and agent-friendly OpenAPI catalog.",
+  title: {
+    default: "APIPrism — API Spectrum for Humans, Agents & Machines",
+    template: "%s | APIPrism",
+  },
+  description,
+  metadataBase: new URL(siteUrl),
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    url: siteUrl,
+    siteName: "APIPrism",
+    title: "APIPrism — 一份 API，折射完整光谱",
+    description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "APIPrism — 一份 API，折射完整光谱",
+    description,
+  },
+  alternates: { canonical: siteUrl },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

@@ -2,24 +2,22 @@ import { notFound } from "next/navigation";
 import { getOperation } from "../../../../lib/api";
 import { OperationDetail } from "../../../../components/OperationDetail";
 import { OperationWiki } from "../../../../components/OperationWiki";
-import { Breadcrumb, type BreadcrumbItem } from "../../../../components/Breadcrumb";
+import { Breadcrumb } from "../../../../components/Breadcrumb";
 
 
 type Props = {
-  params: Promise<{ service: string; environment: string; operationId: string }>;
+  params: Promise<{ service: string; environment: string; group: string; operationId: string }>;
 };
 
 export default async function OperationPage({ params }: Props) {
-  const { service, environment, operationId } = await params;
+  const { service, environment, group, operationId } = await params;
   const svc = decodeURIComponent(service);
   const env = decodeURIComponent(environment);
+  const grpSlug = decodeURIComponent(group);
   const opId = decodeURIComponent(operationId);
 
   const op = await getOperation(svc, env, opId);
   if (!op) notFound();
-
-  // 从第一个 tag 推断所属分组（用于面包屑）
-  const group = op.tags?.[0];
 
   return (
     <div>
@@ -33,15 +31,11 @@ export default async function OperationPage({ params }: Props) {
                 href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}`,
                 icon: "service",
               },
-              ...(group
-                ? [
-                    {
-                      label: group,
-                      href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/groups/${encodeURIComponent(group)}`,
-                      icon: "group" as const,
-                    },
-                  ]
-                : []),
+              {
+                label: grpSlug,
+                href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}`,
+                icon: "group",
+              },
               {
                 label: op.summary || opId,
                 icon: "operation",

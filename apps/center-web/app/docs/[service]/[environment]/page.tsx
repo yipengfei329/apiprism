@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServiceSnapshot } from "../../lib/api";
-import { Breadcrumb, type BreadcrumbItem } from "../../components/Breadcrumb";
+import { Breadcrumb } from "../../components/Breadcrumb";
 import { HtmlText } from "../../components/HtmlText";
 
 
@@ -48,6 +48,17 @@ export default async function ServiceOverviewPage({ params }: Props) {
           <span className="rounded-md bg-[#F4F4F5] px-2.5 py-0.5 font-mono text-[12px] font-medium text-[#636366]">
             {env}
           </span>
+          <a
+            href={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/apidocs.md`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 font-mono text-[12px] font-medium text-[#8E8E93] transition-colors hover:text-[#0063CC] hover:bg-[#EEF4FF]"
+          >
+            <svg className="h-3 w-3" viewBox="0 0 256 256" fill="currentColor">
+              <path d="M200,48H136V16a8,8,0,0,0-16,0V48H56A32,32,0,0,0,24,80V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32V80A32,32,0,0,0,200,48Zm16,144a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V80A16,16,0,0,1,56,64H200a16,16,0,0,1,16,16Zm-36-80a12,12,0,1,1-12-12A12,12,0,0,1,180,112Zm-44,0a12,12,0,1,1-12-12A12,12,0,0,1,136,112Zm-44,0a12,12,0,1,1-12-12A12,12,0,0,1,92,112Zm88,40H84a8,8,0,0,0-6.26,13l28,36a8,8,0,0,0,12.52,0L128,188.94,137.74,201a8,8,0,0,0,12.52,0l28-36A8,8,0,0,0,172,152Z" />
+            </svg>
+            Agent Docs
+          </a>
         </div>
 
         {snapshot.serverUrls?.length > 0 && (
@@ -82,7 +93,7 @@ export default async function ServiceOverviewPage({ params }: Props) {
             {snapshot.groups.map((group) => (
               <Link
                 key={group.name}
-                href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/groups/${encodeURIComponent(group.name)}`}
+                href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}`}
                 className="group rounded-xl bg-white/90 p-5 backdrop-blur-sm transition-all v-card-full v-card-full-hover"
               >
                 <h3

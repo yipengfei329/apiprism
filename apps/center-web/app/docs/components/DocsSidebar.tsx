@@ -30,8 +30,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
-const apiBase = process.env.NEXT_PUBLIC_APIPRISM_API_BASE ?? "http://localhost:8080";
-
 // 从 /docs/[service]/[environment]/... 中解析当前项目上下文
 function parseDocsRoute(pathname: string): { service: string | null; environment: string | null } {
   const match = pathname.match(/^\/docs\/([^/]+)\/([^/]+)/);
@@ -93,14 +91,16 @@ function GroupItem({
   service,
   environment,
   group,
+  groupDisplayName,
   currentPath,
 }: {
   service: string;
   environment: string;
   group: string;
+  groupDisplayName: string;
   currentPath: string;
 }) {
-  const groupHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`;
+  const groupHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}`;
 
   // isOpen 由两个信号共同决定：
   // 1. URL 命中分组路径（刷新页面也能保持展开）
@@ -122,7 +122,7 @@ function GroupItem({
     setLoading(true);
     try {
       const res = await fetch(
-        `${apiBase}/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
         { cache: "no-store" }
       );
       if (res.ok) {
@@ -144,12 +144,12 @@ function GroupItem({
 
   // 检查当前路径是否有激活的子项
   const hasActiveChild = operations?.some((op) => {
-    const opHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/ops/${encodeURIComponent(op.operationId)}`;
+    const opHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/${encodeURIComponent(op.operationId)}`;
     return currentPath === opHref;
   }) ?? false;
 
   const isHighlighted = isGroupPageActive || hasActiveChild;
-  const GroupIcon = getGroupIcon(group);
+  const GroupIcon = getGroupIcon(groupDisplayName);
 
   return (
     <li>
@@ -178,7 +178,7 @@ function GroupItem({
             color: isHighlighted ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)",
           }}
         >
-          {group}
+          {groupDisplayName}
         </span>
         {operations && operations.length > 0 && (
           <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/20">
@@ -224,7 +224,7 @@ function GroupItem({
             {/* 接口项 */}
             {!loading &&
               operations?.map((op) => {
-                const opHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/ops/${encodeURIComponent(op.operationId)}`;
+                const opHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/${encodeURIComponent(op.operationId)}`;
                 const isActive = currentPath === opHref;
                 return (
                   <li key={op.operationId}>
@@ -411,10 +411,11 @@ export function DocsSidebar({
               <ul className="space-y-0.5">
                 {activeService.groups.map((group) => (
                   <GroupItem
-                    key={group}
+                    key={group.slug}
                     service={activeService.name}
                     environment={activeService.environment}
-                    group={group}
+                    group={group.slug}
+                    groupDisplayName={group.name}
                     currentPath={pathname}
                   />
                 ))}
