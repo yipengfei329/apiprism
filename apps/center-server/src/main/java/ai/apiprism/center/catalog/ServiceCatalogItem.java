@@ -28,6 +28,16 @@ public class ServiceCatalogItem {
     /** 最近注册时间 */
     private final Instant updatedAt;
 
-    /** 所属 API 分组名称列表 */
-    private final List<String> groups;
+    /** 所属 API 分组摘要列表 */
+    private final List<GroupRef> groups;
+
+    /**
+     * 分组摘要：名称 + URL slug。
+     */
+    @Getter
+    @Builder
+    public static class GroupRef {
+        private final String name;
+        private final String slug;
+    }
 }

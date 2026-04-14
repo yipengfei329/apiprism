@@ -23,6 +23,12 @@ public class CanonicalGroup {
     String name;
 
     /**
+     * URL 安全的分组标识符，由 name 自动生成。
+     * ASCII 名称直接 slugify，CJK 等非 ASCII 名称先音译再 slugify。
+     */
+    String slug;
+
+    /**
      * 分组说明。
      */
     String description;

@@ -357,6 +357,94 @@ class OpenApiNormalizerTest {
     }
 
     @Test
+    void generatesSlugForAsciiGroupName() {
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                tags:
+                  - name: User Management
+                paths:
+                  /users:
+                    get:
+                      tags: [User Management]
+                      operationId: listUsers
+                      responses:
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("svc", "dev", null, null, null, spec);
+        var group = result.getSnapshot().getGroups().getFirst();
+        assertEquals("User Management", group.getName());
+        assertEquals("user-management", group.getSlug());
+    }
+
+    @Test
+    void generatesSlugForCjkGroupName() {
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                tags:
+                  - name: 用户管理
+                paths:
+                  /users:
+                    get:
+                      tags: [用户管理]
+                      operationId: listUsers
+                      responses:
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("svc", "dev", null, null, null, spec);
+        var group = result.getSnapshot().getGroups().getFirst();
+        assertEquals("用户管理", group.getName());
+        // slug 应为非空的 ASCII 字符串
+        assertNotNull(group.getSlug());
+        assertFalse(group.getSlug().isBlank());
+        assertTrue(group.getSlug().matches("^[a-z0-9-]+$"));
+    }
+
+    @Test
+    void deduplicatesSlugOnConflict() {
+        // 两个不同的 tag 名但 slug 可能相同的场景，用 ASCII 名模拟
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                tags:
+                  - name: orders
+                  - name: Orders
+                paths:
+                  /orders:
+                    get:
+                      tags: [orders]
+                      operationId: listOrders
+                      responses:
+                        '200':
+                          description: OK
+                  /orders/admin:
+                    get:
+                      tags: [Orders]
+                      operationId: listOrdersAdmin
+                      responses:
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("svc", "dev", null, null, null, spec);
+        var groups = result.getSnapshot().getGroups();
+        assertEquals(2, groups.size());
+        // slug 不应重复
+        assertNotEquals(groups.get(0).getSlug(), groups.get(1).getSlug());
+    }
+
+    @Test
     void extractsSimpleTypeParameterSchema() {
         String spec = """
                 openapi: 3.0.1

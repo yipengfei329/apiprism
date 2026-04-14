@@ -39,7 +39,7 @@ public class CatalogController {
             @PathVariable String environment,
             @PathVariable String group
     ) {
-        return catalogService.getGroup(service, environment, group);
+        return catalogService.getGroupBySlug(service, environment, group);
     }
 
     @GetMapping("/services/{service}/env/{environment}/operations/{operationId}")

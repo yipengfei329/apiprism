@@ -1,5 +1,7 @@
 package ai.apiprism.center.markdown;
 
+import ai.apiprism.center.catalog.ServiceCatalogItem;
+import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalParameter;
 import ai.apiprism.model.CanonicalResponse;
@@ -106,6 +108,90 @@ public class AgentMarkdownRenderer {
         md.append(buildCurlExample(snapshot, operation));
 
         return md.toString();
+    }
+
+    /**
+     * 渲染服务级 API 目录索引。
+     * @param baseUrl Center 对外根地址，用于生成完整链接
+     */
+    public String renderServiceIndex(CanonicalServiceSnapshot snapshot, String baseUrl) {
+        StringBuilder md = new StringBuilder();
+
+        md.append("# ").append(snapshot.getTitle()).append(" API Index\n\n");
+        md.append("> Service: `").append(snapshot.getRef().getName())
+                .append("` | Environment: `").append(snapshot.getRef().getEnvironment())
+                .append("` | Version: `").append(snapshot.getVersion()).append("`\n\n");
+        md.append("This document lists all available API operations.\n");
+        md.append("Follow the links to view detailed specifications for each operation.\n\n");
+
+        int totalOps = snapshot.getGroups().stream()
+                .mapToInt(g -> g.getOperations().size()).sum();
+        md.append("**").append(totalOps).append(" operations** across **")
+                .append(snapshot.getGroups().size()).append(" groups**\n\n");
+        md.append("---\n");
+
+        for (CanonicalGroup group : snapshot.getGroups()) {
+            md.append("\n## ").append(group.getName()).append('\n');
+            if (group.getDescription() != null && !group.getDescription().isBlank()) {
+                md.append('\n').append(group.getDescription()).append("\n\n");
+            } else {
+                md.append('\n');
+            }
+
+            if (!group.getOperations().isEmpty()) {
+                md.append("| Operation | Method | Path | Description |\n");
+                md.append("|-----------|--------|------|-------------|\n");
+                for (CanonicalOperation op : group.getOperations()) {
+                    String link = baseUrl + "/" + snapshot.getRef().getName()
+                            + "/" + snapshot.getRef().getEnvironment()
+                            + "/" + op.getOperationId() + "/apidocs.md";
+                    String desc = op.getSummary() != null ? escapePipe(op.getSummary()) : "";
+                    md.append("| [").append(op.getOperationId()).append("](").append(link).append(")")
+                            .append(" | ").append(op.getMethod())
+                            .append(" | `").append(op.getPath()).append("`")
+                            .append(" | ").append(desc)
+                            .append(" |\n");
+                }
+            }
+        }
+
+        return md.toString();
+    }
+
+    /**
+     * 渲染全局服务目录。
+     * @param baseUrl Center 对外根地址，用于生成完整链接
+     */
+    public String renderGlobalCatalog(List<ServiceCatalogItem> services, String baseUrl) {
+        StringBuilder md = new StringBuilder();
+
+        md.append("# API Catalog\n\n");
+        md.append("> ").append(services.size()).append(" registered services\n\n");
+        md.append("Browse the service index pages below for detailed API documentation.\n\n");
+
+        md.append("| Service | Environment | Title | Version | Groups | Docs |\n");
+        md.append("|---------|-------------|-------|---------|--------|------|\n");
+
+        for (ServiceCatalogItem item : services) {
+            String link = baseUrl + "/" + item.getName() + "/" + item.getEnvironment() + "/apidocs.md";
+            String groups = item.getGroups().stream()
+                    .map(ServiceCatalogItem.GroupRef::getName)
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("");
+            md.append("| ").append(item.getName())
+                    .append(" | ").append(item.getEnvironment())
+                    .append(" | ").append(item.getTitle())
+                    .append(" | ").append(item.getVersion())
+                    .append(" | ").append(escapePipe(groups))
+                    .append(" | [View](").append(link).append(")")
+                    .append(" |\n");
+        }
+
+        return md.toString();
+    }
+
+    private String escapePipe(String text) {
+        return text.replace("|", "\\|");
     }
 
     /**

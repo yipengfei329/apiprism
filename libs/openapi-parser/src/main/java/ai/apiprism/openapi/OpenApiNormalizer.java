@@ -21,10 +21,13 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
+import com.github.slugify.Slugify;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,6 +47,19 @@ public class OpenApiNormalizer {
     public static final int VERSION = 2;
 
     private static final int MAX_SCHEMA_DEPTH = 8;
+
+    private static final Slugify SLUGIFY = Slugify.builder()
+            .transliterator(true)
+            .lowerCase(true)
+            .build();
+
+    /**
+     * 将任意文本转为 URL 安全的 slug。
+     * 供外部模块为旧数据补全缺失的 slug 使用。
+     */
+    public static String slugify(String text) {
+        return SLUGIFY.slugify(text);
+    }
 
     public NormalizationResult normalize(
             String serviceName,
@@ -82,14 +98,21 @@ public class OpenApiNormalizer {
             });
         }
 
+        // 生成 slug 并处理同服务内 slug 冲突
+        Set<String> usedSlugs = new HashSet<>();
         List<CanonicalGroup> groups = groupedOperations.entrySet().stream()
-                .map(entry -> CanonicalGroup.builder()
-                        .name(entry.getKey())
-                        .description(tagDescriptions.get(entry.getKey()))
-                        .operations(entry.getValue().stream()
-                                .sorted(Comparator.comparing(CanonicalOperation::getPath).thenComparing(CanonicalOperation::getMethod))
-                                .toList())
-                        .build())
+                .map(entry -> {
+                    String slug = deduplicateSlug(SLUGIFY.slugify(entry.getKey()), usedSlugs);
+                    usedSlugs.add(slug);
+                    return CanonicalGroup.builder()
+                            .name(entry.getKey())
+                            .slug(slug)
+                            .description(tagDescriptions.get(entry.getKey()))
+                            .operations(entry.getValue().stream()
+                                    .sorted(Comparator.comparing(CanonicalOperation::getPath).thenComparing(CanonicalOperation::getMethod))
+                                    .toList())
+                            .build();
+                })
                 .toList();
 
         String title = firstNonBlank(requestedTitle, Optional.ofNullable(openApi.getInfo()).map(info -> info.getTitle()).orElse(null), serviceName);
@@ -313,6 +336,21 @@ public class OpenApiNormalizer {
         }
         // 非段落分隔（如同一句延续），保持原样
         return description;
+    }
+
+    /**
+     * slug 冲突时追加数字后缀。
+     */
+    private String deduplicateSlug(String slug, Set<String> usedSlugs) {
+        if (!usedSlugs.contains(slug)) {
+            return slug;
+        }
+        for (int i = 2; ; i++) {
+            String candidate = slug + "-" + i;
+            if (!usedSlugs.contains(candidate)) {
+                return candidate;
+            }
+        }
     }
 
     private String fallbackOperationId(PathItem.HttpMethod method, String path) {

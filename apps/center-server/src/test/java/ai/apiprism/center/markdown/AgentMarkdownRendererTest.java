@@ -1,5 +1,6 @@
 package ai.apiprism.center.markdown;
 
+import ai.apiprism.center.catalog.ServiceCatalogItem;
 import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalParameter;
@@ -161,6 +162,127 @@ class AgentMarkdownRendererTest {
         assertTrue(md.contains("size=<size>"));
         // curl 不应包含 -d
         assertFalse(md.contains("-d '"));
+    }
+
+    @Test
+    void rendersServiceIndexWithMultipleGroups() {
+        CanonicalServiceSnapshot snapshot = CanonicalServiceSnapshot.builder()
+                .ref(ServiceRef.builder().name("order-service").environment("prod").build())
+                .title("Order Service")
+                .version("2.1.0")
+                .group(CanonicalGroup.builder()
+                        .name("orders").slug("orders")
+                        .operation(CanonicalOperation.builder()
+                                .operationId("createOrder").method("POST").path("/orders").summary("Create a new order").build())
+                        .operation(CanonicalOperation.builder()
+                                .operationId("getOrder").method("GET").path("/orders/{id}").summary("Get order by ID").build())
+                        .build())
+                .group(CanonicalGroup.builder()
+                        .name("payments").slug("payments")
+                        .operation(CanonicalOperation.builder()
+                                .operationId("createPayment").method("POST").path("/payments").summary("Process a payment").build())
+                        .build())
+                .updatedAt(Instant.now())
+                .build();
+
+        String md = renderer.renderServiceIndex(snapshot, "http://localhost:8080");
+
+        // 标题和元信息
+        assertTrue(md.contains("# Order Service API Index"));
+        assertTrue(md.contains("order-service"));
+        assertTrue(md.contains("prod"));
+        assertTrue(md.contains("2.1.0"));
+
+        // 统计
+        assertTrue(md.contains("**3 operations**"));
+        assertTrue(md.contains("**2 groups**"));
+
+        // group heading
+        assertTrue(md.contains("## orders"));
+        assertTrue(md.contains("## payments"));
+
+        // 表格行和相对链接
+        assertTrue(md.contains("[createOrder](http://localhost:8080/order-service/prod/createOrder/apidocs.md)"));
+        assertTrue(md.contains("[getOrder](http://localhost:8080/order-service/prod/getOrder/apidocs.md)"));
+        assertTrue(md.contains("[createPayment](http://localhost:8080/order-service/prod/createPayment/apidocs.md)"));
+
+        // 方法和路径
+        assertTrue(md.contains("| POST | `/orders`"));
+        assertTrue(md.contains("| GET | `/orders/{id}`"));
+    }
+
+    @Test
+    void rendersServiceIndexWithEmptyGroup() {
+        CanonicalServiceSnapshot snapshot = CanonicalServiceSnapshot.builder()
+                .ref(ServiceRef.builder().name("svc").environment("dev").build())
+                .title("Empty Service")
+                .version("1.0.0")
+                .group(CanonicalGroup.builder().name("empty").slug("empty").build())
+                .updatedAt(Instant.now())
+                .build();
+
+        String md = renderer.renderServiceIndex(snapshot, "http://localhost:8080");
+
+        assertTrue(md.contains("## empty"));
+        assertTrue(md.contains("**0 operations**"));
+        // 不应包含表格头（无 operation 则无表格）
+        assertFalse(md.contains("| Operation |"));
+    }
+
+    @Test
+    void rendersGlobalCatalogWithMultipleServices() {
+        List<ServiceCatalogItem> services = List.of(
+                ServiceCatalogItem.builder()
+                        .name("order-service").environment("prod").title("Order Service").version("2.1.0")
+                        .updatedAt(Instant.now())
+                        .groups(List.of(
+                                ServiceCatalogItem.GroupRef.builder().name("orders").slug("orders").build(),
+                                ServiceCatalogItem.GroupRef.builder().name("payments").slug("payments").build()))
+                        .build(),
+                ServiceCatalogItem.builder()
+                        .name("user-service").environment("prod").title("User Service").version("1.5.0")
+                        .updatedAt(Instant.now())
+                        .groups(List.of(
+                                ServiceCatalogItem.GroupRef.builder().name("users").slug("users").build()))
+                        .build()
+        );
+
+        String md = renderer.renderGlobalCatalog(services, "http://localhost:8080");
+
+        assertTrue(md.contains("# API Catalog"));
+        assertTrue(md.contains("2 registered services"));
+        assertTrue(md.contains("[View](http://localhost:8080/order-service/prod/apidocs.md)"));
+        assertTrue(md.contains("[View](http://localhost:8080/user-service/prod/apidocs.md)"));
+        assertTrue(md.contains("orders, payments"));
+    }
+
+    @Test
+    void rendersGlobalCatalogEmpty() {
+        String md = renderer.renderGlobalCatalog(List.of(), "http://localhost:8080");
+
+        assertTrue(md.contains("# API Catalog"));
+        assertTrue(md.contains("0 registered services"));
+    }
+
+    @Test
+    void escapesPipeInSummary() {
+        CanonicalServiceSnapshot snapshot = CanonicalServiceSnapshot.builder()
+                .ref(ServiceRef.builder().name("svc").environment("dev").build())
+                .title("Test")
+                .version("1.0.0")
+                .group(CanonicalGroup.builder()
+                        .name("test").slug("test")
+                        .operation(CanonicalOperation.builder()
+                                .operationId("pipeOp").method("GET").path("/test")
+                                .summary("A | B choice").build())
+                        .build())
+                .updatedAt(Instant.now())
+                .build();
+
+        String md = renderer.renderServiceIndex(snapshot, "http://localhost:8080");
+
+        // pipe 应被转义，不会破坏 markdown 表格
+        assertTrue(md.contains("A \\| B choice"));
     }
 
     private CanonicalServiceSnapshot buildSnapshot(CanonicalOperation operation, String serverUrl) {
