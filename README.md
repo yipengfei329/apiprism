@@ -2,44 +2,41 @@
   <strong>English</strong> | <a href="./README_zh.md">中文</a>
 </p>
 
+<p align="center">
+  <a href="https://central.sonatype.com/artifact/ai.apiprism/apiprism-spring-boot-starter">
+    <img src="https://img.shields.io/maven-central/v/ai.apiprism/apiprism-spring-boot-starter?label=starter" alt="Maven Central">
+  </a>
+  <a href="https://hub.docker.com/r/apiprism/apiprism-center">
+    <img src="https://img.shields.io/docker/pulls/apiprism/apiprism-center?label=docker%20pulls" alt="Docker Pulls">
+  </a>
+  <a href="https://github.com/yipengfei329/apiprism/actions/workflows/docker-publish.yml">
+    <img src="https://github.com/yipengfei329/apiprism/actions/workflows/docker-publish.yml/badge.svg" alt="Build">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License">
+  </a>
+  <img src="https://img.shields.io/badge/Java-17%2B-orange" alt="Java 17+">
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.x-6db33f" alt="Spring Boot 3">
+</p>
+
 # APIPrism
 
-**Make every API in your organization discoverable — by humans and AI agents alike.**
+**Every API deserves to be understood — by humans, by agents, by machines.**
 
-APIPrism is a lightweight API catalog that automatically collects OpenAPI specs from running services, normalizes them into a unified model, and serves them as both a browsable UI and agent-friendly Markdown — so LLMs can understand and call your APIs without manual prompt engineering.
+A beam of light through a prism refracts into a full spectrum.
+So does an API through APIPrism.
 
-## Why
-
-Microservice teams produce dozens of OpenAPI specs scattered across repos and runtime endpoints. Developers search Confluence, Slack, or source code to find the right API. AI agents have it worse — they need structured, token-efficient descriptions they can act on.
-
-APIPrism solves both: drop in a starter dependency, and your service's API surfaces in a central catalog within seconds of boot.
-
-## How It Works
-
-```
-┌─────────────────┐         register          ┌──────────────────┐
-│  Your Service   │  ───── OpenAPI JSON ─────▶ │   APIPrism       │
-│  + starter dep  │      (on app ready)        │   Center Server  │
-└─────────────────┘                            └────────┬─────────┘
-                                                        │
-                                         ┌──────────────┼──────────────┐
-                                         ▼              ▼              ▼
-                                   Query APIs     Web Catalog    Agent Markdown
-                                  (JSON REST)     (Next.js UI)   (LLM-ready)
-```
-
-1. **Adapter** — A Spring Boot Starter that reads your service's OpenAPI doc on startup and pushes it to the center.
-2. **Center Server** — Receives registrations, normalizes specs into a canonical model, stores snapshots, and exposes query + rendering APIs.
-3. **Center Web** — A Next.js frontend for browsing services, groups, and operations.
-4. **Agent Markdown** — Renders each operation as Markdown aligned with LLM function-call conventions (operationId, JSON Schema params, curl examples).
+APIPrism is a lightweight, AI-native API platform for microservice teams. Add one Spring Boot
+Starter dependency, and your service's OpenAPI spec is automatically pushed to a central catalog
+on every startup — no manual uploads, no stale wikis. From there, APIPrism serves the same spec
+in two forms: a browsable web UI for developers, and token-efficient Markdown slices that let AI
+agents reason about, locate, and invoke your APIs without loading the full spec.
 
 ---
 
 ## Quick Start
 
-### Step 1 — Start the Center
-
-Pull and run the official image from Docker Hub:
+### 1 — Start the Center
 
 ```bash
 docker run -d \
@@ -47,19 +44,14 @@ docker run -d \
   -p 3000:3000 \
   -v apiprism-data:/app/data \
   --restart unless-stopped \
-  yipengfei329/apiprism-center:latest
+  apiprism/apiprism-center:latest
 ```
 
-Once healthy, open **http://localhost:3000** — you should see the APIPrism catalog UI.
+Open **http://localhost:3000** to confirm it's running.
 
-> **Data persistence** — `/app/data` holds the embedded database and spec snapshots.
-> Mount a host volume or named volume to keep data across container restarts.
+> `/app/data` holds the embedded database and spec snapshots. Mount a named volume to persist data across restarts.
 
----
-
-### Step 2 — Add the Starter to Your Service
-
-The adapter is published to Maven Central.
+### 2 — Add the Starter
 
 **Gradle (Kotlin DSL)**
 ```kotlin
@@ -80,55 +72,47 @@ implementation 'ai.apiprism:apiprism-spring-boot-starter:0.1.0'
 </dependency>
 ```
 
-> **Prerequisite** — Your service must expose an OpenAPI spec via [springdoc-openapi](https://springdoc.org/)
-> (the default path `/v3/api-docs` is used automatically).
+> Requires [springdoc-openapi](https://springdoc.org/) on the classpath — the starter reads `/v3/api-docs` automatically.
 
----
-
-### Step 3 — Configure the Center URL
-
-Add the following to your service's `application.yml`:
+### 3 — Configure
 
 ```yaml
 apiprism:
-  center-url: http://localhost:3000   # URL of the APIPrism Center
-  project-name: my-service            # Displayed in the catalog (falls back to spring.application.name)
-  env: dev                            # Environment label (falls back to the first active Spring profile)
+  center-url: http://localhost:3000   # APIPrism Center address
+  project-name: my-service            # Shown in the catalog (falls back to spring.application.name)
+  env: dev                            # Environment label (falls back to first active Spring profile)
 ```
 
-That's it. On the next `ApplicationReadyEvent`, your API is registered and appears in the catalog.
+That's it. On the next `ApplicationReadyEvent`, your API registers and appears in the catalog.
 
----
+### 4 — Use It
 
-### Step 4 — Verify
-
-| What | URL |
+| Output | URL |
 |---|---|
 | Web catalog | http://localhost:3000 |
-| All services (JSON) | http://localhost:3000/api/v1/services |
-| Agent Markdown (all) | http://localhost:3000/apidocs.md |
-| Agent Markdown (service) | http://localhost:3000/{service}/{env}/apidocs.md |
+| Services list (JSON) | http://localhost:3000/api/v1/services |
+| Agent Markdown — all services | http://localhost:3000/apidocs.md |
+| Agent Markdown — one service | http://localhost:3000/{service}/{env}/apidocs.md |
+| Agent Markdown — one operation | http://localhost:3000/{service}/{env}/{operationId}/apidocs.md |
 
 ---
 
 ## Configuration Reference
 
-All properties are under the `apiprism.*` namespace and are optional unless noted.
-
 | Property | Default | Description |
 |---|---|---|
 | `apiprism.center-url` | `http://localhost:8080` | **Required.** APIPrism Center address. |
-| `apiprism.project-name` | *(spring.application.name)* | Service name shown in the catalog. |
-| `apiprism.env` | *(first active profile or `default`)* | Environment label (e.g. `dev`, `staging`, `prod`). |
-| `apiprism.enabled` | `true` | Set to `false` to disable the adapter entirely. |
-| `apiprism.register-on-startup` | `true` | Set to `false` to skip auto-registration on startup. |
+| `apiprism.project-name` | *(spring.application.name)* | Service name in the catalog. |
+| `apiprism.env` | *(first active profile or `default`)* | Environment label, e.g. `dev`, `staging`, `prod`. |
+| `apiprism.enabled` | `true` | Set `false` to disable the adapter entirely. |
+| `apiprism.register-on-startup` | `true` | Set `false` to skip auto-registration on startup. |
 | `apiprism.openapi-path` | `/v3/api-docs` | Path to the OpenAPI JSON doc on your service. |
 | `apiprism.server-urls` | *(auto-detected)* | Public URLs for this service. Auto-detected as `http://127.0.0.1:{port}` if empty. |
-| `apiprism.retry.enabled` | `true` | Retry registration with exponential backoff on transient failures. |
-| `apiprism.retry.max-attempts` | `15` | Max attempts including the initial try. |
+| `apiprism.retry.enabled` | `true` | Retry with exponential backoff on transient failures. |
+| `apiprism.retry.max-attempts` | `15` | Max attempts (including first try). |
 | `apiprism.retry.initial-interval-ms` | `3000` | Initial backoff interval (ms). |
 | `apiprism.retry.multiplier` | `2.0` | Backoff multiplier per attempt. |
-| `apiprism.retry.max-interval-ms` | `1800000` | Maximum backoff cap (30 minutes). |
+| `apiprism.retry.max-interval-ms` | `1800000` | Max backoff cap (30 minutes). |
 | `apiprism.http-client.connect-timeout-ms` | `5000` | HTTP connect timeout (ms). |
 | `apiprism.http-client.read-timeout-ms` | `10000` | HTTP read timeout (ms). |
 
@@ -140,21 +124,19 @@ All properties are under the `apiprism.*` namespace and are optional unless note
 |---|---|
 | `latest` | Latest stable release |
 | `0.1.0` | Pinned release |
-| `sha-<git-sha>` | Immutable build from a specific commit |
+| `sha-<commit>` | Immutable build from a specific commit |
 
-**Environment variables for the center container:**
+**Environment variable:**
 
 | Variable | Default | Description |
 |---|---|---|
-| `APIPRISM_STORAGE_DATA_DIR` | `/app/data` | Data directory for the embedded database and spec snapshots. |
+| `APIPRISM_STORAGE_DATA_DIR` | `/app/data` | Database and spec snapshot storage path. |
 
 **Health check:** `GET http://localhost:3000/actuator/health`
 
 ---
 
 ## Self-Hosting with Docker Compose
-
-For local development or on-premise deployment, a ready-made Compose file is included:
 
 ```bash
 git clone https://github.com/yipengfei329/apiprism.git
@@ -164,30 +146,6 @@ docker compose -f deploy/docker-compose/docker-compose.yml up
 
 ---
 
-## Project Structure
-
-```
-adapters/java/starter        → Spring Boot Starter (auto-registration)
-apps/center-server           → Registration, normalization, query & Markdown APIs
-apps/center-web              → Next.js catalog UI
-libs/api-model               → Canonical API model
-libs/openapi-parser          → OpenAPI → canonical model transformer
-libs/registration-protocol   → Adapter ↔ Center DTO contract
-examples/java-demo-service   → Integration demo
-```
-
-## Roadmap
-
-- [ ] External database support (PostgreSQL / MySQL)
-- [ ] Multi-language adapters (Go, Python, Node.js)
-- [ ] Diff & changelog between spec versions
-- [ ] MCP server integration for AI agent tool-use
-- [ ] Authentication & multi-tenant support
-
-## Tech Stack
-
-Java 17+ / Spring Boot 3 / Gradle — Next.js / Tailwind CSS / pnpm
-
 ## License
 
-MIT
+[Apache 2.0](LICENSE)
