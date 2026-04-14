@@ -1,39 +1,18 @@
 services:
-  center-server:
+  center:
     build:
       context: ../..
-      dockerfile: apps/center-server/Dockerfile
-    environment:
-      APIPRISM_STORAGE_DATA_DIR: /app/data
+      dockerfile: deploy/center-image/Dockerfile
     volumes:
       - center-data:/app/data
     ports:
-      - "8080:8080"
+      - "3000:3000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    restart: unless-stopped
-
-  center-web:
-    build:
-      context: ../..
-      dockerfile: apps/center-web/Dockerfile
-    environment:
-      NEXT_PUBLIC_APIPRISM_API_BASE: http://center-server:8080
-    depends_on:
-      center-server:
-        condition: service_healthy
-    ports:
-      - "3000:3000"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     restart: unless-stopped
 
 volumes:

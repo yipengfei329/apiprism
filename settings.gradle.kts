@@ -1,4 +1,24 @@
+import org.gradle.api.initialization.resolve.RepositoriesMode
+
 rootProject.name = "apiprism"
+
+pluginManagement {
+    repositories {
+        maven("https://maven.aliyun.com/repository/public")
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+
+    repositories {
+        mavenLocal()
+        maven("https://maven.aliyun.com/repository/public")
+        mavenCentral()
+    }
+}
 
 include(":libs:registration-protocol")
 project(":libs:registration-protocol").projectDir = file("libs/registration-protocol")
@@ -17,4 +37,3 @@ project(":apps:center-server").projectDir = file("apps/center-server")
 
 include(":examples:java-demo-service")
 project(":examples:java-demo-service").projectDir = file("examples/java-demo-service")
-

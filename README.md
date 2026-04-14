@@ -41,6 +41,24 @@ APIPrism solves both: drop in a starter dependency, and your service's API surfa
 docker compose -f deploy/docker-compose/docker-compose.yml up --build
 ```
 
+Then visit:
+
+- Web UI: `http://localhost:3000`
+- Service list API: `http://localhost:3000/api/v1/services`
+- Agent Markdown: `http://localhost:3000/api/v1/apidocs.md`
+
+Build and run the single distribution image directly:
+
+```bash
+docker build -f deploy/center-image/Dockerfile -t apiprism-center:local .
+docker run -d \
+  --name apiprism-center \
+  -p 3000:3000 \
+  -v apiprism-center-data:/app/data \
+  --restart unless-stopped \
+  apiprism-center:local
+```
+
 Or run locally:
 
 ```bash
@@ -67,9 +85,16 @@ That's it. On application ready, your API is registered.
 
 ### 3. Browse
 
-- **Web UI**: `http://localhost:3000`
+- **Single entrypoint**: `http://localhost:3000`
 - **Service list API**: `GET /api/v1/services`
 - **Agent Markdown**: `GET /api/v1/services/{name}/markdown`
+
+## Runtime Notes
+
+- The official distribution image exposes only port `3000`, with `center-web` acting as the single entrypoint and proxying backend API traffic.
+- The default data directory is `/app/data`, which persists the embedded H2 database, normalized snapshots, and raw OpenAPI specs.
+- Override the data directory with `APIPRISM_STORAGE_DATA_DIR` when needed.
+- The container health endpoint is `GET /actuator/health`, reachable through the single entrypoint.
 
 ## Project Structure
 
@@ -85,7 +110,7 @@ examples/java-demo-service → Integration demo
 
 ## Roadmap
 
-- [ ] Persistent storage (currently in-memory)
+- [ ] External database support (PostgreSQL / MySQL)
 - [ ] Multi-language adapters (Go, Python, Node.js)
 - [ ] Diff & changelog between spec versions
 - [ ] MCP server integration for AI agent tool-use

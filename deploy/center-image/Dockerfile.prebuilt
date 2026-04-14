@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:22-alpine
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+ENV APIPRISM_SERVER_INTERNAL_BASE=http://127.0.0.1:8080
+ENV APIPRISM_STORAGE_DATA_DIR=/app/data
+
+RUN apk add --no-cache \
+        gcompat \
+        openjdk21-jre-headless \
+        tini
+
+COPY apps/center-web/.next/standalone /app/center-web
+COPY apps/center-web/.next/static /app/center-web/apps/center-web/.next/static
+COPY apps/center-web/public /app/center-web/apps/center-web/public
+COPY apps/center-server/build/libs/*.jar /app/center-server.jar
+COPY deploy/center-image/start.sh /usr/local/bin/start-apiprism-center.sh
+
+RUN chmod +x /usr/local/bin/start-apiprism-center.sh \
+    && mkdir -p /app/data \
+    && addgroup -S apiprism \
+    && adduser -S -G apiprism -h /app apiprism \
+    && chown -R apiprism:apiprism /app /usr/local/bin/start-apiprism-center.sh
+
+VOLUME ["/app/data"]
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:3000/actuator/health >/dev/null || exit 1
+
+USER apiprism
+ENTRYPOINT ["tini", "--", "/usr/local/bin/start-apiprism-center.sh"]
