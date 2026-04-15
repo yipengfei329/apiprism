@@ -10,6 +10,7 @@ import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider;
+import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
@@ -20,7 +21,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 每服务 MCP 路由管理器：为每个 service+environment 组合维护独立的 McpSyncServer 和传输层。
+ * 每服务 MCP 路由管理器：为每个 service+environment 组合维护独立的
+ * SSE 和 Streamable HTTP 两套 McpSyncServer 及传输层。
+ *
+ * <p>SSE 端点：/mcp/{service}/{env}/sse + /message
+ * <p>Streamable HTTP 端点：/mcp/{service}/{env}/mcp (GET/POST/DELETE)
  */
 public class PerServiceMcpRouter {
 
@@ -46,9 +51,9 @@ public class PerServiceMcpRouter {
     }
 
     /**
-     * 获取或创建指定服务的传输层提供者。懒创建：首次访问时从 SPI 加载快照并构建 MCP 服务端。
+     * 获取或创建指定服务的 MCP 入口。懒创建：首次访问时从 SPI 加载快照并构建双协议 MCP 服务端。
      *
-     * @return ServerEntry 包含传输层和服务端，若服务不存在则返回 null
+     * @return ServerEntry 包含 SSE 和 Streamable HTTP 两套传输层，若服务不存在则返回 null
      */
     public ServerEntry getOrCreateEntry(String serviceName, String environment, String basePath) {
         String key = cacheKey(serviceName, environment);
@@ -63,25 +68,14 @@ public class PerServiceMcpRouter {
     }
 
     /**
-     * 获取缓存中已有的 entry（不触发创建）。
-     */
-    public ServerEntry getCachedEntry(String serviceName, String environment) {
-        return serverCache.get(cacheKey(serviceName, environment));
-    }
-
-    /**
      * 服务重新注册后刷新 MCP 工具定义。
      */
     public void refreshServer(String serviceName, String environment) {
         String key = cacheKey(serviceName, environment);
         ServerEntry old = serverCache.remove(key);
         if (old != null) {
-            log.info("Evicting MCP server for service {} ({}) due to re-registration", serviceName, environment);
-            try {
-                old.server().close();
-            } catch (Exception e) {
-                log.warn("Error closing old MCP server for {} ({})", serviceName, environment, e);
-            }
+            log.info("Evicting MCP servers for service {} ({}) due to re-registration", serviceName, environment);
+            closeEntry(old);
         }
     }
 
@@ -89,36 +83,32 @@ public class PerServiceMcpRouter {
      * 关闭所有 MCP 服务端。
      */
     public void closeAll() {
-        serverCache.forEach((key, entry) -> {
-            try {
-                entry.server().close();
-            } catch (Exception e) {
-                log.warn("Error closing MCP server for {}", key, e);
-            }
-        });
+        serverCache.forEach((key, entry) -> closeEntry(entry));
         serverCache.clear();
     }
 
     private ServerEntry createEntry(CanonicalServiceSnapshot snapshot, String basePath) {
         String serviceName = snapshot.getRef().getName();
         String environment = snapshot.getRef().getEnvironment();
+        long toolCount = countOperations(snapshot);
 
-        log.info("Creating MCP server for service {} ({}) with {} tools",
-                serviceName, environment, countOperations(snapshot));
+        log.info("Creating MCP servers (SSE + Streamable HTTP) for service {} ({}) with {} tools",
+                serviceName, environment, toolCount);
 
-        // 创建传输层
-        HttpServletSseServerTransportProvider transport = HttpServletSseServerTransportProvider.builder()
-                .jsonMapper(new JacksonMcpJsonMapper(new com.fasterxml.jackson.databind.ObjectMapper()))
+        // 构建工具规格列表（SSE 和 Streamable HTTP 共用同一组工具定义）
+        List<McpServerFeatures.SyncToolSpecification> toolSpecs = buildToolSpecs(snapshot);
+        JacksonMcpJsonMapper jsonMapper = new JacksonMcpJsonMapper(
+                new com.fasterxml.jackson.databind.ObjectMapper());
+
+        // --- SSE 传输 ---
+        HttpServletSseServerTransportProvider sseTransport = HttpServletSseServerTransportProvider.builder()
+                .jsonMapper(jsonMapper)
                 .baseUrl(basePath)
                 .sseEndpoint("/sse")
                 .messageEndpoint("/message")
                 .build();
 
-        // 转换操作为工具定义
-        List<McpServerFeatures.SyncToolSpecification> toolSpecs = buildToolSpecs(snapshot);
-
-        // 构建 McpSyncServer
-        McpSyncServer server = McpServer.sync(transport)
+        McpSyncServer sseServer = McpServer.sync(sseTransport)
                 .serverInfo(properties.getServerName(), properties.getServerVersion())
                 .capabilities(McpSchema.ServerCapabilities.builder()
                         .tools(true)
@@ -126,7 +116,22 @@ public class PerServiceMcpRouter {
                 .tools(toolSpecs)
                 .build();
 
-        return new ServerEntry(transport, server, snapshot);
+        // --- Streamable HTTP 传输 ---
+        HttpServletStreamableServerTransportProvider streamableTransport =
+                HttpServletStreamableServerTransportProvider.builder()
+                        .jsonMapper(jsonMapper)
+                        .mcpEndpoint("/mcp")
+                        .build();
+
+        McpSyncServer streamableServer = McpServer.sync(streamableTransport)
+                .serverInfo(properties.getServerName(), properties.getServerVersion())
+                .capabilities(McpSchema.ServerCapabilities.builder()
+                        .tools(true)
+                        .build())
+                .tools(toolSpecs)
+                .build();
+
+        return new ServerEntry(sseTransport, sseServer, streamableTransport, streamableServer, snapshot);
     }
 
     private List<McpServerFeatures.SyncToolSpecification> buildToolSpecs(CanonicalServiceSnapshot snapshot) {
@@ -148,6 +153,19 @@ public class PerServiceMcpRouter {
         return forwardingService.forward(snapshot, operation, arguments);
     }
 
+    private void closeEntry(ServerEntry entry) {
+        try {
+            entry.sseServer().close();
+        } catch (Exception e) {
+            log.warn("Error closing SSE MCP server", e);
+        }
+        try {
+            entry.streamableServer().close();
+        } catch (Exception e) {
+            log.warn("Error closing Streamable HTTP MCP server", e);
+        }
+    }
+
     private long countOperations(CanonicalServiceSnapshot snapshot) {
         return snapshot.getGroups().stream()
                 .mapToLong(g -> g.getOperations().size())
@@ -159,11 +177,13 @@ public class PerServiceMcpRouter {
     }
 
     /**
-     * 缓存条目：包含传输层、MCP 服务端和对应的快照。
+     * 缓存条目：包含 SSE 和 Streamable HTTP 两套传输层、MCP 服务端及对应的快照。
      */
     public record ServerEntry(
-            HttpServletSseServerTransportProvider transport,
-            McpSyncServer server,
+            HttpServletSseServerTransportProvider sseTransport,
+            McpSyncServer sseServer,
+            HttpServletStreamableServerTransportProvider streamableTransport,
+            McpSyncServer streamableServer,
             CanonicalServiceSnapshot snapshot
     ) {}
 }
