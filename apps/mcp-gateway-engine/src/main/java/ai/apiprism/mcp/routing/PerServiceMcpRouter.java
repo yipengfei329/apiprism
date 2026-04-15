@@ -1,5 +1,6 @@
 package ai.apiprism.mcp.routing;
 
+import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import ai.apiprism.mcp.config.McpGatewayProperties;
@@ -18,14 +19,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 每服务 MCP 路由管理器：为每个 service+environment 组合维护独立的
- * SSE 和 Streamable HTTP 两套 McpSyncServer 及传输层。
+ * 每服务 MCP 路由管理器：为每个 service+environment（+可选 group）组合
+ * 维护独立的 SSE 和 Streamable HTTP 两套 McpSyncServer 及传输层。
  *
- * <p>SSE 端点：/mcp/{service}/{env}/sse + /message
- * <p>Streamable HTTP 端点：/mcp/{service}/{env}/mcp (GET/POST/DELETE)
+ * <p>缓存粒度：
+ * <ul>
+ *   <li>服务级: key = "service::env"，暴露该服务全部分组的所有 API</li>
+ *   <li>分组级: key = "service::env::groupSlug"，只暴露该分组下的 API</li>
+ * </ul>
  */
 public class PerServiceMcpRouter {
 
@@ -51,32 +56,53 @@ public class PerServiceMcpRouter {
     }
 
     /**
-     * 获取或创建指定服务的 MCP 入口。懒创建：首次访问时从 SPI 加载快照并构建双协议 MCP 服务端。
+     * 获取或创建指定服务（及可选分组）的 MCP 入口。
      *
-     * @return ServerEntry 包含 SSE 和 Streamable HTTP 两套传输层，若服务不存在则返回 null
+     * @param groupSlug 分组标识，null 表示服务级（全部 API）
+     * @return ServerEntry，若服务或分组不存在则返回 null
      */
-    public ServerEntry getOrCreateEntry(String serviceName, String environment, String basePath) {
-        String key = cacheKey(serviceName, environment);
+    public ServerEntry getOrCreateEntry(String serviceName, String environment,
+                                        String groupSlug, String basePath) {
+        String key = cacheKey(serviceName, environment, groupSlug);
         ServerEntry existing = serverCache.get(key);
         if (existing != null) {
             return existing;
         }
 
-        return serviceProvider.getServiceSnapshot(serviceName, environment)
-                .map(snapshot -> serverCache.computeIfAbsent(key, k -> createEntry(snapshot, basePath)))
-                .orElse(null);
+        Optional<CanonicalServiceSnapshot> snapshotOpt =
+                serviceProvider.getServiceSnapshot(serviceName, environment);
+        if (snapshotOpt.isEmpty()) {
+            return null;
+        }
+
+        CanonicalServiceSnapshot snapshot = snapshotOpt.get();
+
+        // 分组级：校验分组是否存在
+        if (groupSlug != null) {
+            boolean groupExists = snapshot.getGroups().stream()
+                    .anyMatch(g -> groupSlug.equals(g.getSlug()) || groupSlug.equals(g.getName()));
+            if (!groupExists) {
+                return null;
+            }
+        }
+
+        return serverCache.computeIfAbsent(key, k -> createEntry(snapshot, groupSlug, basePath));
     }
 
     /**
      * 服务重新注册后刷新 MCP 工具定义。
+     * 同时清除该服务下所有缓存条目（服务级 + 全部分组级）。
      */
     public void refreshServer(String serviceName, String environment) {
-        String key = cacheKey(serviceName, environment);
-        ServerEntry old = serverCache.remove(key);
-        if (old != null) {
-            log.info("Evicting MCP servers for service {} ({}) due to re-registration", serviceName, environment);
-            closeEntry(old);
-        }
+        String prefix = serviceName + "::" + environment;
+        serverCache.entrySet().removeIf(entry -> {
+            if (entry.getKey().startsWith(prefix)) {
+                log.info("Evicting MCP server [{}] due to re-registration", entry.getKey());
+                closeEntry(entry.getValue());
+                return true;
+            }
+            return false;
+        });
     }
 
     /**
@@ -87,16 +113,22 @@ public class PerServiceMcpRouter {
         serverCache.clear();
     }
 
-    private ServerEntry createEntry(CanonicalServiceSnapshot snapshot, String basePath) {
+    private ServerEntry createEntry(CanonicalServiceSnapshot snapshot, String groupSlug,
+                                    String basePath) {
         String serviceName = snapshot.getRef().getName();
         String environment = snapshot.getRef().getEnvironment();
-        long toolCount = countOperations(snapshot);
 
-        log.info("Creating MCP servers (SSE + Streamable HTTP) for service {} ({}) with {} tools",
-                serviceName, environment, toolCount);
+        // 确定要暴露的操作范围
+        List<CanonicalOperation> operations = resolveOperations(snapshot, groupSlug);
 
-        // 构建工具规格列表（SSE 和 Streamable HTTP 共用同一组工具定义）
-        List<McpServerFeatures.SyncToolSpecification> toolSpecs = buildToolSpecs(snapshot);
+        String scope = groupSlug != null
+                ? "group '" + groupSlug + "' of service " + serviceName
+                : "service " + serviceName;
+        log.info("Creating MCP servers (SSE + Streamable HTTP) for {} ({}) with {} tools",
+                scope, environment, operations.size());
+
+        // 构建工具规格列表
+        List<McpServerFeatures.SyncToolSpecification> toolSpecs = buildToolSpecs(snapshot, operations);
         JacksonMcpJsonMapper jsonMapper = new JacksonMcpJsonMapper(
                 new com.fasterxml.jackson.databind.ObjectMapper());
 
@@ -134,9 +166,30 @@ public class PerServiceMcpRouter {
         return new ServerEntry(sseTransport, sseServer, streamableTransport, streamableServer, snapshot);
     }
 
-    private List<McpServerFeatures.SyncToolSpecification> buildToolSpecs(CanonicalServiceSnapshot snapshot) {
+    /**
+     * 根据 groupSlug 筛选操作。
+     * groupSlug 为 null 返回全部操作；否则返回匹配分组下的操作（先匹配 slug，再 fallback 到 name）。
+     */
+    private List<CanonicalOperation> resolveOperations(CanonicalServiceSnapshot snapshot,
+                                                        String groupSlug) {
+        if (groupSlug == null) {
+            return snapshot.getGroups().stream()
+                    .flatMap(g -> g.getOperations().stream())
+                    .toList();
+        }
+
         return snapshot.getGroups().stream()
-                .flatMap(group -> group.getOperations().stream())
+                .filter(g -> groupSlug.equals(g.getSlug()) || groupSlug.equals(g.getName()))
+                .findFirst()
+                .map(CanonicalGroup::getOperations)
+                .orElse(List.of());
+    }
+
+    private List<McpServerFeatures.SyncToolSpecification> buildToolSpecs(
+            CanonicalServiceSnapshot snapshot,
+            List<CanonicalOperation> operations
+    ) {
+        return operations.stream()
                 .map(operation -> new McpServerFeatures.SyncToolSpecification(
                         toolConverter.convertOperation(operation),
                         (exchange, request) -> handleToolCall(snapshot, operation, request)
@@ -166,14 +219,12 @@ public class PerServiceMcpRouter {
         }
     }
 
-    private long countOperations(CanonicalServiceSnapshot snapshot) {
-        return snapshot.getGroups().stream()
-                .mapToLong(g -> g.getOperations().size())
-                .sum();
-    }
-
-    private String cacheKey(String serviceName, String environment) {
-        return serviceName + "::" + environment;
+    private String cacheKey(String serviceName, String environment, String groupSlug) {
+        String key = serviceName + "::" + environment;
+        if (groupSlug != null) {
+            key += "::" + groupSlug;
+        }
+        return key;
     }
 
     /**

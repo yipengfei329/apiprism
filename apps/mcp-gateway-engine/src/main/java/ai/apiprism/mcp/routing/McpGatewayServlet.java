@@ -9,20 +9,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
- * MCP 网关调度 Servlet：注册在 /mcp/* 路径下，根据 URL 路径中的服务名、环境和端点类型
- * 分发请求到对应服务的 SSE 或 Streamable HTTP 传输层。
+ * MCP 网关调度 Servlet：注册在 /mcp/* 路径下，根据 URL 路径中的服务名、环境、
+ * 可选分组和端点类型分发请求到对应的 SSE 或 Streamable HTTP 传输层。
  *
  * <p>URL 格式:
  * <ul>
- *   <li>SSE: /mcp/{serviceName}/{environment}/sse (GET) 和 /mcp/{serviceName}/{environment}/message (POST)</li>
- *   <li>Streamable HTTP: /mcp/{serviceName}/{environment}/mcp (GET/POST/DELETE)</li>
+ *   <li>服务级（全部 API）: /mcp/{service}/{env}/sse|message|mcp</li>
+ *   <li>分组级（单组 API）: /mcp/{service}/{env}/{groupSlug}/sse|message|mcp</li>
  * </ul>
  */
 public class McpGatewayServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(McpGatewayServlet.class);
+
+    /** 保留的端点名，不能作为 groupSlug */
+    private static final Set<String> TRANSPORT_ENDPOINTS = Set.of("sse", "message", "mcp");
 
     private final PerServiceMcpRouter router;
 
@@ -37,26 +41,30 @@ public class McpGatewayServlet extends HttpServlet {
         String pathInfo = req.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/")) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    "Missing service path. Use /mcp/{service}/{env}/sse or /mcp/{service}/{env}/mcp");
+                    "Missing service path. Use /mcp/{service}/{env}/sse or /mcp/{service}/{env}/{group}/sse");
             return;
         }
 
         PathParts parts = parsePath(pathInfo);
         if (parts == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    "Invalid MCP path. Expected: /mcp/{service}/{env}/sse|message|mcp");
+                    "Invalid MCP path. Expected: /mcp/{service}/{env}[/{group}]/sse|message|mcp");
             return;
         }
 
         String basePath = req.getContextPath() + req.getServletPath()
-                + "/" + parts.serviceName + "/" + parts.environment;
+                + "/" + parts.serviceName + "/" + parts.environment
+                + (parts.groupSlug != null ? "/" + parts.groupSlug : "");
 
         PerServiceMcpRouter.ServerEntry entry = router.getOrCreateEntry(
-                parts.serviceName, parts.environment, basePath);
+                parts.serviceName, parts.environment, parts.groupSlug, basePath);
 
         if (entry == null) {
+            String target = parts.groupSlug != null
+                    ? "Group '" + parts.groupSlug + "' in service " + parts.serviceName
+                    : "Service " + parts.serviceName;
             resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    "Service not found: " + parts.serviceName + " (" + parts.environment + ")");
+                    target + " (" + parts.environment + ") not found");
             return;
         }
 
@@ -85,40 +93,66 @@ public class McpGatewayServlet extends HttpServlet {
             entry.streamableTransport().service(wrapped, resp);
         } else {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-                    "Unknown MCP endpoint: " + parts.endpoint
-                            + ". Use /sse, /message, or /mcp");
+                    "Unknown MCP endpoint: " + parts.endpoint);
         }
     }
 
     /**
-     * 解析路径: /serviceName/environment/endpoint
-     * 例如: /demo-service/dev/sse → PathParts("demo-service", "dev", "/sse")
-     *       /demo-service/dev/mcp → PathParts("demo-service", "dev", "/mcp")
+     * 解析路径，支持服务级和分组级两种格式。
+     *
+     * <p>3 段: /{service}/{env}/{endpoint}        → 服务级，groupSlug=null
+     * <p>4 段: /{service}/{env}/{groupSlug}/{endpoint} → 分组级
+     *
+     * <p>{endpoint} 必须是 sse / message / mcp 之一。如果第三段不是端点名，
+     * 则视为 groupSlug，第四段作为端点。
      */
     static PathParts parsePath(String pathInfo) {
-        // 去掉前导斜杠
         String trimmed = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
-        // 至少需要 service/env/endpoint
-        int firstSlash = trimmed.indexOf('/');
-        if (firstSlash < 0) {
-            return null;
-        }
-        String serviceName = trimmed.substring(0, firstSlash);
+        String[] segments = trimmed.split("/");
 
-        String rest = trimmed.substring(firstSlash + 1);
-        int secondSlash = rest.indexOf('/');
-        if (secondSlash < 0) {
-            return null;
-        }
-        String environment = rest.substring(0, secondSlash);
-        String endpoint = rest.substring(secondSlash); // 保留前导斜杠
-
-        if (serviceName.isEmpty() || environment.isEmpty() || endpoint.isEmpty()) {
+        if (segments.length < 3) {
             return null;
         }
 
-        return new PathParts(serviceName, environment, endpoint);
+        String serviceName = segments[0];
+        String environment = segments[1];
+
+        if (serviceName.isEmpty() || environment.isEmpty()) {
+            return null;
+        }
+
+        // 3 段: service/env/endpoint（服务级）
+        if (segments.length == 3) {
+            String endpointName = segments[2];
+            if (!TRANSPORT_ENDPOINTS.contains(endpointName)) {
+                return null;
+            }
+            return new PathParts(serviceName, environment, null, "/" + endpointName);
+        }
+
+        // 4 段: service/env/groupSlug/endpoint（分组级）
+        if (segments.length == 4) {
+            String thirdSegment = segments[2];
+            String fourthSegment = segments[3];
+
+            // 如果第三段是端点名，说明路径格式不对（多了一段）
+            if (TRANSPORT_ENDPOINTS.contains(thirdSegment)) {
+                return null;
+            }
+
+            if (!TRANSPORT_ENDPOINTS.contains(fourthSegment)) {
+                return null;
+            }
+
+            return new PathParts(serviceName, environment, thirdSegment, "/" + fourthSegment);
+        }
+
+        return null;
     }
 
-    record PathParts(String serviceName, String environment, String endpoint) {}
+    /**
+     * @param groupSlug 分组标识，null 表示服务级（全部 API）
+     * @param endpoint  传输端点，如 /sse、/message、/mcp
+     */
+    record PathParts(String serviceName, String environment, String groupSlug, String endpoint) {}
 }
