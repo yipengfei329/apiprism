@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":libs:registration-protocol"))
     implementation(project(":libs:api-model"))
     implementation(project(":libs:openapi-parser"))
+    implementation(project(":apps:mcp-gateway-engine"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")

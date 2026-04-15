@@ -15,6 +15,7 @@ flyway                    = "10.15.0"
 hypersistenceTsid         = "2.1.3"
 slugify                   = "3.0.7"
 icu4j                     = "76.1"
+mcpSdk                    = "1.1.1"
 
 [libraries]
 # Jackson
@@ -38,6 +39,8 @@ flyway-core                      = { module = "org.flywaydb:flyway-core",       
 hypersistence-tsid               = { module = "io.hypersistence:hypersistence-tsid",                         version.ref = "hypersistenceTsid" }
 slugify                          = { module = "com.github.slugify:slugify",                                     version.ref = "slugify" }
 icu4j                            = { module = "com.ibm.icu:icu4j",                                              version.ref = "icu4j" }
+mcp-core                         = { module = "io.modelcontextprotocol.sdk:mcp-core",                           version.ref = "mcpSdk" }
+mcp-json-jackson2                = { module = "io.modelcontextprotocol.sdk:mcp-json-jackson2",                   version.ref = "mcpSdk" }
 
 # Spring Boot 相关
 spring-boot-autoconfigure        = { module = "org.springframework.boot:spring-boot-autoconfigure",      version.ref = "springBoot" }
