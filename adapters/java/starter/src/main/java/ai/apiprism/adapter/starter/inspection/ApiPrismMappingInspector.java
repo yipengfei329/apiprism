@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +36,7 @@ public class ApiPrismMappingInspector {
     }
 
     public ApiPrismRegistrationDiagnostics inspect(OpenAPI openApi) {
-        RequestMappingHandlerMapping handlerMapping = handlerMappingProvider.getIfAvailable();
-        if (handlerMapping == null || openApi == null) {
+        if (openApi == null) {
             return ApiPrismRegistrationDiagnostics.builder()
                     .mappingCount(0)
                     .documentedOperationCount(0)
@@ -44,7 +44,13 @@ public class ApiPrismMappingInspector {
                     .build();
         }
 
-        Set<ApiPrismEndpointMapping> runtimeMappings = collectRuntimeMappings(handlerMapping.getHandlerMethods());
+        // 收集所有 RequestMappingHandlerMapping 实例的处理器方法，兼容多 Bean 场景（如 Actuator 共存）
+        Map<RequestMappingInfo, HandlerMethod> allHandlerMethods = new LinkedHashMap<>();
+        handlerMappingProvider.orderedStream().forEach(mapping ->
+                allHandlerMethods.putAll(mapping.getHandlerMethods())
+        );
+
+        Set<ApiPrismEndpointMapping> runtimeMappings = collectRuntimeMappings(allHandlerMethods);
         Set<ApiPrismEndpointMapping> documentedMappings = collectDocumentedMappings(openApi);
 
         List<String> undocumentedMappings = runtimeMappings.stream()
