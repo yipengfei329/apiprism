@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServiceSnapshot } from "../../lib/api";
+import { getServiceSnapshot, getMcpServiceStatus } from "../../lib/api";
 import { Breadcrumb } from "../../components/Breadcrumb";
 import { HtmlText } from "../../components/HtmlText";
+import { McpToggle } from "../../components/McpToggle";
 
 
 type Props = {
@@ -14,7 +15,10 @@ export default async function ServiceOverviewPage({ params }: Props) {
   const svc = decodeURIComponent(service);
   const env = decodeURIComponent(environment);
 
-  const snapshot = await getServiceSnapshot(svc, env);
+  const [snapshot, mcpStatus] = await Promise.all([
+    getServiceSnapshot(svc, env),
+    getMcpServiceStatus(svc, env),
+  ]);
   if (!snapshot) notFound();
 
   return (
@@ -79,6 +83,20 @@ export default async function ServiceOverviewPage({ params }: Props) {
           </div>
         )}
       </header>
+
+      {/* MCP 服务开关 */}
+      <section className="mb-14">
+        <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8E8E93]">
+          MCP 网关
+        </p>
+        <McpToggle
+          service={svc}
+          environment={env}
+          initialEnabled={mcpStatus?.serviceEnabled ?? false}
+          initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
+          initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
+        />
+      </section>
 
       {/* 分组卡片网格 */}
       <section>

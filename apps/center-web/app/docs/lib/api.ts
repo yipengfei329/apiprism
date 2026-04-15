@@ -155,3 +155,55 @@ export async function getOperation(
   }
 }
 
+// ---- MCP 配置 ----
+
+export type McpToggleResponse = {
+  enabled: boolean;
+  sseEndpoint: string | null;
+  streamableEndpoint: string | null;
+};
+
+export type McpStatusResponse = {
+  serviceEnabled: boolean;
+  sseEndpoint: string | null;
+  streamableEndpoint: string | null;
+  enabledGroups: string[];
+};
+
+export async function getMcpServiceStatus(
+  service: string,
+  environment: string
+): Promise<McpStatusResponse | null> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/mcp-config`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function getMcpGroupStatus(
+  service: string,
+  environment: string,
+  group: string
+): Promise<McpToggleResponse | null> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}/mcp-config`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+

@@ -69,6 +69,11 @@ public class PerServiceMcpRouter {
             return existing;
         }
 
+        // 检查端点是否已在前端控制页面上启用
+        if (!serviceProvider.isMcpEndpointEnabled(serviceName, environment, groupSlug)) {
+            return null;
+        }
+
         Optional<CanonicalServiceSnapshot> snapshotOpt =
                 serviceProvider.getServiceSnapshot(serviceName, environment);
         if (snapshotOpt.isEmpty()) {

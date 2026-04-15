@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGroup } from "../../../lib/api";
+import { getGroup, getMcpGroupStatus } from "../../../lib/api";
 import { HtmlText } from "../../../components/HtmlText";
 import { MethodBadge } from "../../../components/MethodBadge";
 import { Breadcrumb } from "../../../components/Breadcrumb";
 import { AgentDocLink } from "../../../components/AgentDocLink";
+import { McpToggle } from "../../../components/McpToggle";
 
 
 type Props = {
@@ -17,7 +18,10 @@ export default async function GroupPage({ params }: Props) {
   const env = decodeURIComponent(environment);
   const grpSlug = decodeURIComponent(group);
 
-  const data = await getGroup(svc, env, grpSlug);
+  const [data, mcpStatus] = await Promise.all([
+    getGroup(svc, env, grpSlug),
+    getMcpGroupStatus(svc, env, grpSlug),
+  ]);
   if (!data) notFound();
 
   return (
@@ -64,6 +68,18 @@ export default async function GroupPage({ params }: Props) {
             {data.operations.length} 个接口
           </div>
         </div>
+      </div>
+
+      {/* MCP 分组开关 */}
+      <div className="mx-auto max-w-[1100px] px-8 pt-8">
+        <McpToggle
+          service={svc}
+          environment={env}
+          groupSlug={grpSlug}
+          initialEnabled={mcpStatus?.enabled ?? false}
+          initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
+          initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
+        />
       </div>
 
       {/* 接口列表 */}

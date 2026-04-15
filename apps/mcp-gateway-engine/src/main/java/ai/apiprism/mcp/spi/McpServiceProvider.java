@@ -21,4 +21,12 @@ public interface McpServiceProvider {
      * 列出所有可用服务的引用。
      */
     List<ServiceRef> listAvailableServices();
+
+    /**
+     * 检查指定的 MCP 端点是否已启用。
+     *
+     * @param groupSlug 分组标识，null 表示服务级
+     * @return true 如果该端点已被用户启用
+     */
+    boolean isMcpEndpointEnabled(String serviceName, String environment, String groupSlug);
 }
