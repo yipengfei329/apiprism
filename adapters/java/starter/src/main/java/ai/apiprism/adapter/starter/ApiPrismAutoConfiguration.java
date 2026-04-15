@@ -4,13 +4,13 @@ import ai.apiprism.adapter.starter.exceptions.ApiPrismRegistrationException;
 import ai.apiprism.adapter.starter.inspection.ApiPrismMappingInspector;
 import ai.apiprism.adapter.starter.registration.ApiPrismRegistrationClient;
 import ai.apiprism.adapter.starter.openapi.ApiPrismOpenApiSupplier;
+import ai.apiprism.adapter.starter.openapi.HttpOpenApiSupplier;
 import ai.apiprism.adapter.starter.openapi.SpringDocOpenApiSupplier;
 import ai.apiprism.adapter.starter.registration.ApiPrismRegistrationListener;
 import ai.apiprism.adapter.starter.registration.RegistrationRequestFactory;
 import ai.apiprism.adapter.starter.registration.ServiceMetadataResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springdoc.webmvc.api.OpenApiResource;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -20,6 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.RetryContext;
@@ -55,13 +56,29 @@ public class ApiPrismAutoConfiguration {
         return new ApiPrismRegistrationClient(restClientBuilder.requestFactory(requestFactory).build());
     }
 
+    // 当 SpringDoc 在类路径时，优先使用进程内获取 OpenAPI 文档
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = "org.springdoc.webmvc.api.OpenApiResource")
+    static class SpringDocOpenApiSupplierConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(ApiPrismOpenApiSupplier.class)
+        ApiPrismOpenApiSupplier springDocOpenApiSupplier(
+                ApiPrismProperties properties,
+                ObjectProvider<org.springdoc.webmvc.api.OpenApiResource> openApiResourceProvider
+        ) {
+            log.info("SpringDoc detected on classpath, enabling in-process OpenAPI document access");
+            return new SpringDocOpenApiSupplier(properties, openApiResourceProvider);
+        }
+    }
+
+    // 回退：无 SpringDoc 时通过 HTTP 获取 OpenAPI 文档
     @Bean
-    @ConditionalOnMissingBean
-    public ApiPrismOpenApiSupplier apiPrismOpenApiSupplier(
-            ApiPrismProperties properties,
-            ObjectProvider<OpenApiResource> openApiResourceProvider
-    ) {
-        return new SpringDocOpenApiSupplier(properties, openApiResourceProvider);
+    @ConditionalOnMissingBean(ApiPrismOpenApiSupplier.class)
+    public ApiPrismOpenApiSupplier httpOpenApiSupplier(ApiPrismProperties properties) {
+        log.info("SpringDoc not detected on classpath, using HTTP fallback for OpenAPI document retrieval from {}",
+                properties.getOpenapiPath());
+        return new HttpOpenApiSupplier(properties);
     }
 
     @Bean
