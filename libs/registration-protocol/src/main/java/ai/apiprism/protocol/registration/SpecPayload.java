@@ -3,14 +3,12 @@ package ai.apiprism.protocol.registration;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * 注册请求中携带的原始接口规格内容。
  */
 @Value
 @Builder(toBuilder = true)
-@Jacksonized
 public class SpecPayload {
 
     /**

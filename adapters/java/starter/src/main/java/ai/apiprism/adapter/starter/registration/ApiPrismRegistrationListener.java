@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.env.Environment;
 import org.springframework.retry.support.RetryTemplate;
 
 import java.util.List;
@@ -45,6 +45,7 @@ public class ApiPrismRegistrationListener
     private final ServiceMetadataResolver metadataResolver;
     private final RegistrationRequestFactory requestFactory;
     private final RetryTemplate retryTemplate;
+    private final Environment environment;
 
     private volatile boolean shuttingDown = false;
     private volatile Thread registrationThread;
@@ -56,7 +57,8 @@ public class ApiPrismRegistrationListener
             ApiPrismMappingInspector mappingInspector,
             ServiceMetadataResolver metadataResolver,
             RegistrationRequestFactory requestFactory,
-            RetryTemplate retryTemplate
+            RetryTemplate retryTemplate,
+            Environment environment
     ) {
         this.properties = properties;
         this.registrationClient = registrationClient;
@@ -65,6 +67,7 @@ public class ApiPrismRegistrationListener
         this.metadataResolver = metadataResolver;
         this.requestFactory = requestFactory;
         this.retryTemplate = retryTemplate;
+        this.environment = environment;
     }
 
     @Override
@@ -72,12 +75,15 @@ public class ApiPrismRegistrationListener
         if (!properties.isRegisterOnStartup()) {
             return;
         }
-        if (!(event.getApplicationContext() instanceof WebServerApplicationContext webCtx)) {
-            log.debug("Skipping APIPrism registration because the application is not a web application.");
+        // local.server.port 在嵌入式服务器启动后由 Spring Boot 写入 Environment，
+        // 使用 Environment 而非 WebServerApplicationContext 以兼容 Spring Boot 3.x 和 4.x
+        String port = environment.getProperty("local.server.port");
+        if (port == null) {
+            log.debug("Skipping APIPrism registration because the embedded server port is not available.");
             return;
         }
 
-        String localBaseUrl = "http://127.0.0.1:" + webCtx.getWebServer().getPort();
+        String localBaseUrl = "http://127.0.0.1:" + port;
         ServiceMetadata metadata = metadataResolver.resolve(localBaseUrl);
 
         registrationThread = new Thread(

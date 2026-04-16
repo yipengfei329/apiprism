@@ -18,7 +18,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -34,7 +33,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import java.util.Map;
 
 @AutoConfiguration
-@ConditionalOnClass(WebServerApplicationContext.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @EnableConfigurationProperties(ApiPrismProperties.class)
 public class ApiPrismAutoConfiguration {
@@ -164,12 +162,13 @@ public class ApiPrismAutoConfiguration {
             ApiPrismMappingInspector mappingInspector,
             ServiceMetadataResolver metadataResolver,
             RegistrationRequestFactory requestFactory,
-            RetryTemplate apiPrismRetryTemplate
+            RetryTemplate apiPrismRetryTemplate,
+            Environment environment
     ) {
         return new ApiPrismRegistrationListener(
                 properties, registrationClient, openApiSupplier,
                 mappingInspector, metadataResolver, requestFactory,
-                apiPrismRetryTemplate
+                apiPrismRetryTemplate, environment
         );
     }
 }

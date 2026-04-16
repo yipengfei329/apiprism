@@ -23,9 +23,11 @@ import java.util.Locale;
 public class SpringDocOpenApiSupplier extends HttpOpenApiSupplier {
 
     private static final Logger log = LoggerFactory.getLogger(SpringDocOpenApiSupplier.class);
-    private static final Method GET_OPEN_API_METHOD = initGetOpenApiMethod();
 
     private final ObjectProvider<OpenApiResource> openApiResourceProvider;
+    // 懒加载反射方法引用，避免类加载时因 springdoc 版本不兼容抛异常导致整个配置类失败
+    private volatile Method getOpenApiMethod;
+    private volatile boolean methodResolved = false;
 
     public SpringDocOpenApiSupplier(ApiPrismProperties properties, ObjectProvider<OpenApiResource> openApiResourceProvider) {
         super(properties);
@@ -36,27 +38,42 @@ public class SpringDocOpenApiSupplier extends HttpOpenApiSupplier {
     public ApiPrismOpenApiDocument fetch(String localBaseUrl) {
         OpenApiResource openApiResource = openApiResourceProvider.orderedStream().findFirst().orElse(null);
         if (openApiResource != null) {
-            try {
-                return buildDocumentFromModel(loadInProcess(openApiResource), "springdoc-bean");
-            } catch (ReflectiveOperationException | RuntimeException exception) {
-                log.debug("Falling back to local OpenAPI HTTP fetch because in-process springdoc access failed: {}",
-                        exception.getMessage());
+            Method method = resolveGetOpenApiMethod();
+            if (method != null) {
+                try {
+                    return buildDocumentFromModel(loadInProcess(openApiResource, method), "springdoc-bean");
+                } catch (ReflectiveOperationException | RuntimeException exception) {
+                    log.debug("Falling back to local OpenAPI HTTP fetch because in-process springdoc access failed: {}",
+                            exception.getMessage());
+                }
             }
         }
         return fetchViaHttp(localBaseUrl);
     }
 
-    private OpenAPI loadInProcess(OpenApiResource openApiResource) throws ReflectiveOperationException {
-        return (OpenAPI) GET_OPEN_API_METHOD.invoke(openApiResource, Locale.getDefault());
+    private OpenAPI loadInProcess(OpenApiResource openApiResource, Method method) throws ReflectiveOperationException {
+        return (OpenAPI) method.invoke(openApiResource, Locale.getDefault());
     }
 
-    private static Method initGetOpenApiMethod() {
-        try {
-            Method method = AbstractOpenApiResource.class.getDeclaredMethod("getOpenApi", Locale.class);
-            method.setAccessible(true);
-            return method;
-        } catch (NoSuchMethodException exception) {
-            throw new IllegalStateException("Unable to access springdoc OpenAPI builder.", exception);
+    private Method resolveGetOpenApiMethod() {
+        if (methodResolved) {
+            return getOpenApiMethod;
+        }
+        synchronized (this) {
+            if (methodResolved) {
+                return getOpenApiMethod;
+            }
+            try {
+                Method method = AbstractOpenApiResource.class.getDeclaredMethod("getOpenApi", Locale.class);
+                method.setAccessible(true);
+                getOpenApiMethod = method;
+            } catch (NoSuchMethodException exception) {
+                log.debug("springdoc AbstractOpenApiResource.getOpenApi(Locale) not found, "
+                        + "falling back to HTTP-based OpenAPI retrieval: {}", exception.getMessage());
+                getOpenApiMethod = null;
+            }
+            methodResolved = true;
+            return getOpenApiMethod;
         }
     }
 }

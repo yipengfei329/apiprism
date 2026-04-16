@@ -40,3 +40,6 @@ project(":apps:center-server").projectDir = file("apps/center-server")
 
 include(":examples:java-demo-service")
 project(":examples:java-demo-service").projectDir = file("examples/java-demo-service")
+
+include(":examples:spring-boot4-demo")
+project(":examples:spring-boot4-demo").projectDir = file("examples/spring-boot4-demo")

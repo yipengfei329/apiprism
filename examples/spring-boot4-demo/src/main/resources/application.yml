@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: boot4-demo-service
+  main:
+    banner-mode: off
+
+server:
+  port: 8082
+
+# APIPrism starter 配置
+apiprism:
+  center-url: http://localhost:3000
+  project-name: boot4-demo-service
+  env: dev
+
+# SpringDoc 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

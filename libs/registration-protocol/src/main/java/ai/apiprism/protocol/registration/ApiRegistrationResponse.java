@@ -3,7 +3,6 @@ package ai.apiprism.protocol.registration;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 
 import java.util.List;
 
@@ -12,7 +11,6 @@ import java.util.List;
  */
 @Value
 @Builder(toBuilder = true)
-@Jacksonized
 public class ApiRegistrationResponse {
 
     /**
