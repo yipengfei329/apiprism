@@ -1,7 +1,7 @@
 package ai.apiprism.center.mcp;
 
-import ai.apiprism.center.repository.RegistrationRepository;
-import ai.apiprism.center.repository.StoredRegistration;
+import ai.apiprism.center.catalog.CatalogService;
+import ai.apiprism.center.exceptions.RegistrationNotFoundException;
 import ai.apiprism.mcp.spi.McpServiceProvider;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import ai.apiprism.model.ServiceRef;
@@ -11,31 +11,37 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * MCP 网关引擎的服务数据提供者实现，委托注册中心存储层获取服务快照，
+ * MCP 网关引擎的服务数据提供者实现，委托 CatalogService 获取服务快照（含 slug 补全），
  * 委托 McpEndpointRepository 检查端点启用状态。
  */
 @Component
 public class McpServiceProviderImpl implements McpServiceProvider {
 
-    private final RegistrationRepository registrationRepository;
+    private final CatalogService catalogService;
     private final McpEndpointRepository mcpEndpointRepository;
 
-    public McpServiceProviderImpl(RegistrationRepository registrationRepository,
+    public McpServiceProviderImpl(CatalogService catalogService,
                                   McpEndpointRepository mcpEndpointRepository) {
-        this.registrationRepository = registrationRepository;
+        this.catalogService = catalogService;
         this.mcpEndpointRepository = mcpEndpointRepository;
     }
 
     @Override
     public Optional<CanonicalServiceSnapshot> getServiceSnapshot(String serviceName, String environment) {
-        return registrationRepository.findByRef(serviceName, environment)
-                .map(StoredRegistration::getSnapshot);
+        try {
+            return Optional.of(catalogService.getService(serviceName, environment));
+        } catch (RegistrationNotFoundException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
     public List<ServiceRef> listAvailableServices() {
-        return registrationRepository.findAll().stream()
-                .map(reg -> reg.getSnapshot().getRef())
+        return catalogService.listServices().stream()
+                .map(item -> ServiceRef.builder()
+                        .name(item.getName())
+                        .environment(item.getEnvironment())
+                        .build())
                 .toList();
     }
 

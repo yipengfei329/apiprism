@@ -44,7 +44,7 @@ public class OpenApiNormalizer {
      * 当 normalize 产出的结构因逻辑变更而不同于旧版本时递增此值，
      * 使注册端的 specHash 失效，强制重写已持久化的 snapshot。
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
     private static final int MAX_SCHEMA_DEPTH = 8;
 
@@ -163,7 +163,10 @@ public class OpenApiNormalizer {
                 .toList();
         CanonicalRequestBody requestBody = toRequestBody(operation);
         List<CanonicalResponse> responses = Optional.ofNullable(operation.getResponses())
-                .map(apiResponses -> apiResponses.entrySet().stream().map(this::toResponse).toList())
+                .map(apiResponses -> apiResponses.entrySet().stream()
+                        .map(this::toResponse)
+                        .sorted(Comparator.comparingInt(response -> responseSortKey(response.getStatusCode())))
+                        .toList())
                 .orElseGet(List::of);
         List<String> securityRequirements = Optional.ofNullable(operation.getSecurity())
                 .orElseGet(List::of)
@@ -233,6 +236,24 @@ public class OpenApiNormalizer {
                 .contentType(media.getKey())
                 .schema(schemaToMap(media.getValue().getSchema()))
                 .build();
+    }
+
+    private int responseSortKey(String statusCode) {
+        if (statusCode == null || statusCode.isBlank()) {
+            return Integer.MAX_VALUE - 1;
+        }
+
+        String normalized = statusCode.trim().toUpperCase(Locale.ROOT);
+        if (normalized.matches("\\d{3}")) {
+            return Integer.parseInt(normalized);
+        }
+        if (normalized.matches("[1-5]XX")) {
+            return (normalized.charAt(0) - '0') * 100 + 99;
+        }
+        if ("DEFAULT".equals(normalized)) {
+            return Integer.MAX_VALUE - 2;
+        }
+        return Integer.MAX_VALUE;
     }
 
     /**

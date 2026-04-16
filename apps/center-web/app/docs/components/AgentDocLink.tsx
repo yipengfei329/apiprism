@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Robot, Link as LinkIcon, Check } from "@phosphor-icons/react";
+import { Robot, Copy, Check } from "@phosphor-icons/react";
 
 interface AgentDocLinkProps {
   /** apidocs.md 的前端路径，如 /svc/env/apidocs.md */
@@ -44,7 +44,7 @@ export function AgentDocLink({ path }: AgentDocLinkProps) {
         {copied ? (
           <Check size={13} weight="bold" className="text-green-600" />
         ) : (
-          <LinkIcon size={13} />
+          <Copy size={13} />
         )}
       </button>
     </span>

@@ -4,16 +4,14 @@ import { useState } from "react";
 import {
   BookOpen,
   Bug,
-  Robot,
 } from "@phosphor-icons/react";
 import { type ReactNode } from "react";
 import { CanonicalOperation } from "../lib/api";
-import { AgentPanel } from "./AgentPanel";
 import { HtmlText } from "./HtmlText";
 import { MethodBadge } from "./MethodBadge";
 import { AgentDocLink } from "./AgentDocLink";
 
-type TabKey = "doc" | "debug" | "agent";
+type TabKey = "doc" | "debug";
 
 interface TabDef {
   key: TabKey;
@@ -24,8 +22,16 @@ interface TabDef {
 const tabs: TabDef[] = [
   { key: "doc", label: "文档", icon: BookOpen },
   { key: "debug", label: "调试测试", icon: Bug },
-  { key: "agent", label: "For Agent", icon: Robot },
 ];
+
+function HeaderMetaPill({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] text-v-gray-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
+      <span className="uppercase tracking-[0.08em] text-v-gray-400">{label}</span>
+      <span className="font-mono text-v-gray-600">{value}</span>
+    </div>
+  );
+}
 
 // ── 占位面板 ──
 
@@ -65,15 +71,7 @@ export function OperationDetail({
     <div>
       {/* ── 头部区域 ── */}
       <div style={{ background: "linear-gradient(180deg, rgba(242,242,247,0.6) 0%, rgba(242,242,247,0.3) 100%)" }}>
-        <div className="mx-auto max-w-[1100px] px-4 pb-0 pt-8 sm:px-8 sm:pt-14">
-          {/* Method + Path */}
-          <div className="mb-5 flex flex-wrap items-center gap-3 v-fade-in">
-            <MethodBadge method={op.method} size="lg" />
-            <code className="font-mono text-[14px] font-medium text-v-gray-500">
-              {op.path}
-            </code>
-          </div>
-
+        <div className="mx-auto max-w-[1100px] px-4 pb-8 pt-8 sm:px-8 sm:pt-14">
           {/* 标题 */}
           <div className="flex items-start justify-between gap-4">
             <h1
@@ -85,9 +83,10 @@ export function OperationDetail({
             <AgentDocLink path={`/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(op.operationId)}/apidocs.md`} />
           </div>
 
-          {/* operationId */}
           {op.operationId && (
-            <p className="mt-2.5 font-mono text-[12px] text-v-gray-400 v-fade-in v-delay-1">{op.operationId}</p>
+            <div className="mt-3">
+              <HeaderMetaPill label="Operation" value={op.operationId} />
+            </div>
           )}
 
           {/* 描述 */}
@@ -99,8 +98,32 @@ export function OperationDetail({
             />
           )}
 
-          {/* ── Tab 栏 — 毛玻璃风格 ── */}
-          <div className="mt-8 flex items-end gap-0.5">
+          <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/80 v-fade-in shadow-[0_18px_48px_-28px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl">
+            <div className="flex flex-wrap items-center gap-2 border-b border-[#ECECF1] px-5 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-v-gray-400">
+                Endpoint
+              </span>
+              {op.requestBody?.contentType && (
+                <HeaderMetaPill label="Request" value={op.requestBody.contentType} />
+              )}
+              {op.responses?.[0]?.contentType && (
+                <HeaderMetaPill label="Response" value={op.responses[0].contentType} />
+              )}
+            </div>
+            <div className="flex min-w-0 flex-col gap-3 px-5 py-5 md:flex-row md:items-center">
+              <MethodBadge method={op.method} size="lg" />
+              <code className="block overflow-x-auto font-mono text-[15px] font-medium leading-[1.7] text-v-black md:text-[16px]">
+                {op.path}
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1100px] px-4 sm:px-8">
+        {/* ── Tab 栏 ── */}
+        <div className="-mt-4 flex">
+          <div className="inline-flex rounded-full border border-[#E8E8EC] bg-white p-1 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.22)]">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = active === tab.key;
@@ -108,30 +131,18 @@ export function OperationDetail({
                 <button
                   key={tab.key}
                   onClick={() => setActive(tab.key)}
-                  className={`relative flex cursor-pointer items-center gap-1.5 rounded-t-xl px-4 py-2.5 text-[13px] font-medium transition-all duration-300 ${
+                  className={`relative flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-300 ${
                     isActive
-                      ? "text-v-link"
-                      : "text-v-gray-400 hover:text-v-gray-600 hover:bg-white/40"
+                      ? "bg-v-black text-white shadow-[0_8px_20px_-14px_rgba(15,23,42,0.45)]"
+                      : "text-v-gray-400 hover:text-v-gray-600 hover:bg-v-gray-50"
                   }`}
-                  style={isActive ? {
-                    background: "rgba(255, 255, 255, 0.85)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6), 0 -1px 3px rgba(0,0,0,0.03)",
-                  } : undefined}
                 >
                   <Icon
                     size={15}
                     weight={isActive ? "fill" : "regular"}
-                    className={`transition-colors duration-200 ${isActive ? "text-v-link" : "text-v-gray-400/60"}`}
+                    className={`transition-colors duration-200 ${isActive ? "text-white" : "text-v-gray-400/60"}`}
                   />
                   {tab.label}
-                  {/* 激活指示条 */}
-                  {isActive && (
-                    <span
-                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-v-link/50"
-                    />
-                  )}
                 </button>
               );
             })}
@@ -140,20 +151,13 @@ export function OperationDetail({
       </div>
 
       {/* ── 内容区域 ── */}
-      <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-8 sm:py-8">
         {active === "doc" && children}
         {active === "debug" && (
           <PlaceholderPanel
             icon={Bug}
             title="调试测试"
             description="在这里直接调试和测试该接口，发送请求并查看响应结果。即将上线。"
-          />
-        )}
-        {active === "agent" && (
-          <AgentPanel
-            service={service}
-            environment={environment}
-            operationId={op.operationId}
           />
         )}
       </div>

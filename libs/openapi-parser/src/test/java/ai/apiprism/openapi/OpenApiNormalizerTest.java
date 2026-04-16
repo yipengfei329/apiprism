@@ -482,4 +482,35 @@ class OpenApiNormalizerTest {
         assertEquals("integer", params.get(1).getSchema().get("type"));
         assertEquals("int32", params.get(1).getSchema().get("format"));
     }
+
+    @Test
+    void sortsResponsesByStatusCodeAscending() {
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                paths:
+                  /orders:
+                    get:
+                      operationId: listOrders
+                      responses:
+                        '404':
+                          description: Not Found
+                        default:
+                          description: Fallback
+                        '201':
+                          description: Created
+                        '2XX':
+                          description: Success range
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("orders-service", "dev", null, null, null, spec);
+        var responses = result.getSnapshot().getGroups().getFirst().getOperations().getFirst().getResponses();
+
+        assertEquals(List.of("200", "201", "2XX", "404", "default"),
+                responses.stream().map(CanonicalResponse::getStatusCode).toList());
+    }
 }

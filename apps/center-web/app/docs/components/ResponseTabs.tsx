@@ -5,6 +5,25 @@ import type { CanonicalResponse } from "../lib/api";
 import { HtmlText } from "./HtmlText";
 import { StatusBadge } from "./StatusBadge";
 import { SchemaTable } from "./SchemaTable";
+import { RequestBodyTabs } from "./RequestBodyTabs";
+import { schemaTypeLabel } from "./schemaUtils";
+
+function ResponseMeta({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#ECECF1] bg-v-gray-50/55 px-4 py-3">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-v-gray-400">
+        {label}
+      </p>
+      <div className="mt-2 text-[13px] text-v-black">{value}</div>
+    </div>
+  );
+}
 
 export function ResponseTabs({
   responses,
@@ -19,54 +38,83 @@ export function ResponseTabs({
   if (responses.length === 0) return null;
 
   const active = responses[activeIndex];
+  const activeExample = examples?.[activeIndex] ?? null;
 
   return (
     <div>
-      {/* Tab 栏 */}
-      <div className="mb-4 flex gap-1.5">
-        {responses.map((r, i) => (
-          <button
-            key={r.statusCode}
-            onClick={() => setActiveIndex(i)}
-            className={`cursor-pointer rounded-lg px-3 py-1.5 font-mono text-[13px] font-medium transition-all duration-300 ${
-              i === activeIndex
-                ? "bg-white text-v-black v-glass-subtle"
-                : "text-v-gray-400 hover:text-v-gray-600 hover:bg-v-gray-50/50"
-            }`}
-            style={i === activeIndex ? { borderRadius: "0.5rem" } : undefined}
-          >
-            <StatusBadge code={r.statusCode} />
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        {responses.map((response, index) => {
+          const isActive = index === activeIndex;
+
+          return (
+            <button
+              key={response.statusCode}
+              onClick={() => setActiveIndex(index)}
+              className={`cursor-pointer rounded-full px-3.5 py-2 font-mono text-[13px] font-medium transition-all duration-200 ${
+                isActive
+                  ? "bg-v-black text-white shadow-[0_8px_20px_-14px_rgba(15,23,42,0.45)]"
+                  : "bg-white text-v-gray-400 hover:bg-v-gray-50 hover:text-v-gray-600"
+              }`}
+            >
+              <StatusBadge code={response.statusCode} inverted={isActive} />
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab 面板 */}
-      <div>
-        {/* 描述与 content type */}
-        <div className="mb-3 flex flex-wrap items-center gap-3">
-          {active.description && (
-            <HtmlText text={active.description} className="text-[13px] text-v-gray-600" />
-          )}
+      <div className="mb-4 rounded-2xl border border-[#E8E8EC] bg-v-gray-50/35 px-5 py-4">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <StatusBadge code={active.statusCode} />
           {active.contentType && (
-            <code className="ml-auto font-mono text-[11px] text-v-gray-400">
+            <code className="rounded-full bg-white px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
               {active.contentType}
             </code>
           )}
+          {active.schema && (
+            <span className="rounded-full bg-[#EEF4FF] px-2.5 py-1 font-mono text-[11px] text-v-link">
+              {schemaTypeLabel(active.schema)}
+            </span>
+          )}
         </div>
-
-        {/* Schema + JSON 示例统一容器 */}
-        {(active.schema || examples?.[activeIndex] != null) && (
-          <div className="overflow-hidden rounded-2xl border border-[#E8E8EC]">
-            {active.schema && (
-              <div className="bg-v-gray-50/40 px-5 py-1">
-                <SchemaTable schema={active.schema} />
-              </div>
-            )}
-            {examples?.[activeIndex] != null && (
-              <>{examples[activeIndex]}</>
-            )}
-          </div>
+        {active.description && (
+          <HtmlText
+            text={active.description}
+            className="mt-3 text-[13px] leading-[1.7] text-v-gray-600 [&>p]:mt-1 [&>p:first-child]:mt-0"
+          />
         )}
+      </div>
+
+      <RequestBodyTabs
+        schemaPanel={
+          active.schema ? (
+            <div className="bg-v-gray-50/30 px-5 py-1">
+              <SchemaTable schema={active.schema} />
+            </div>
+          ) : (
+            <div className="px-5 py-6 text-[13px] text-v-gray-400">
+              当前响应没有结构定义。
+            </div>
+          )
+        }
+        examplePanel={
+          activeExample ?? (
+            <div className="px-5 py-6 text-[13px] leading-[1.7] text-v-gray-400">
+              当前响应没有可生成的 JSON 示例。
+            </div>
+          )
+        }
+      />
+
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ResponseMeta label="Status" value={<code className="font-mono text-[12px] text-v-gray-500">{active.statusCode}</code>} />
+        <ResponseMeta
+          label="Content Type"
+          value={
+            <code className="font-mono text-[12px] text-v-gray-500">
+              {active.contentType || "—"}
+            </code>
+          }
+        />
       </div>
     </div>
   );
