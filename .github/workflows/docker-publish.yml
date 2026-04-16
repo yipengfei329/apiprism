@@ -1,10 +1,12 @@
 name: Build & Push Docker Image
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "镜像版本号（留空则读取 gradle.properties）"
+        required: false
+        type: string
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/apiprism-center
@@ -28,11 +30,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract version from gradle.properties
+      - name: Resolve version
         id: version
         run: |
-          version=$(grep '^version=' gradle.properties | cut -d= -f2)
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "Using manual version: ${{ inputs.version }}"
+          else
+            version=$(grep '^version=' gradle.properties | cut -d= -f2)
+            echo "version=${version}" >> "$GITHUB_OUTPUT"
+            echo "Using gradle.properties version: ${version}"
+          fi
 
       - name: Generate image tags
         id: meta
@@ -40,16 +48,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            # push to main -> latest
-            type=raw,value=latest,enable={{is_default_branch}}
-            # push to main -> sha-abc1234
+            type=raw,value=latest
             type=sha,prefix=sha-,format=short
-            # push to main -> gradle version (0.2.0-SNAPSHOT)
-            type=raw,value=${{ steps.version.outputs.version }},enable={{is_default_branch}}
-            # tag v1.0.0 -> 1.0.0
-            type=semver,pattern={{version}}
-            # tag v1.0.0 -> 1.0
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ steps.version.outputs.version }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
