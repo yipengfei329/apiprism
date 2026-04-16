@@ -40,7 +40,9 @@ COPY libs/registration-protocol/build.gradle.kts    libs/registration-protocol/
 COPY libs/api-model/build.gradle.kts                libs/api-model/
 COPY libs/openapi-parser/build.gradle.kts           libs/openapi-parser/
 COPY adapters/java/starter/build.gradle.kts         adapters/java/starter/
+COPY apps/mcp-gateway-engine/build.gradle.kts       apps/mcp-gateway-engine/
 COPY examples/java-demo-service/build.gradle.kts    examples/java-demo-service/
+COPY examples/spring-boot4-demo/build.gradle.kts    examples/spring-boot4-demo/
 COPY apps/center-server/build.gradle.kts            apps/center-server/
 
 RUN --mount=type=cache,id=gradle-home,target=/home/gradle/.gradle \
@@ -48,6 +50,7 @@ RUN --mount=type=cache,id=gradle-home,target=/home/gradle/.gradle \
 
 COPY libs/ libs/
 COPY adapters/ adapters/
+COPY apps/mcp-gateway-engine/ apps/mcp-gateway-engine/
 COPY examples/ examples/
 COPY apps/center-server/ apps/center-server/
 

@@ -12,7 +12,9 @@ COPY libs/registration-protocol/build.gradle.kts    libs/registration-protocol/
 COPY libs/api-model/build.gradle.kts                libs/api-model/
 COPY libs/openapi-parser/build.gradle.kts           libs/openapi-parser/
 COPY adapters/java/starter/build.gradle.kts         adapters/java/starter/
+COPY apps/mcp-gateway-engine/build.gradle.kts       apps/mcp-gateway-engine/
 COPY examples/java-demo-service/build.gradle.kts    examples/java-demo-service/
+COPY examples/spring-boot4-demo/build.gradle.kts    examples/spring-boot4-demo/
 COPY apps/center-server/build.gradle.kts            apps/center-server/
 
 # 直接使用与仓库一致版本的官方 Gradle 镜像，避免容器内重复下载 wrapper 分发包
@@ -22,6 +24,7 @@ RUN --mount=type=cache,id=gradle-home,target=/home/gradle/.gradle \
 # 第二层：复制源码并执行实际构建
 COPY libs/ libs/
 COPY adapters/ adapters/
+COPY apps/mcp-gateway-engine/ apps/mcp-gateway-engine/
 COPY examples/ examples/
 COPY apps/center-server/ apps/center-server/
 
