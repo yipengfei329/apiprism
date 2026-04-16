@@ -1,0 +1,98 @@
+name: Publish to Maven Central
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Override version (leave empty to use gradle.properties)"
+        required: false
+        type: string
+      publish_type:
+        description: "Publishing type"
+        required: true
+        type: choice
+        options:
+          - AUTOMATIC
+          - USER_MANAGED
+        default: AUTOMATIC
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Override version (if provided)
+        if: inputs.version != ''
+        run: sed -i "s/^version=.*/version=${{ inputs.version }}/" gradle.properties
+
+      - name: Publish to local staging directory
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
+        run: ./gradlew :libs:registration-protocol:publishAllPublicationsToStagingRepository :adapters:java:starter:publishAllPublicationsToStagingRepository --no-daemon --no-configuration-cache
+
+      - name: Bundle staging artifacts
+        run: cd build/staging-deploy && zip -r "$GITHUB_WORKSPACE/central-bundle.zip" .
+
+      - name: Upload bundle to Central Portal
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST "https://central.sonatype.com/api/v1/publisher/upload?publishingType=${{ inputs.publish_type }}" \
+            -H "Authorization: Bearer ${{ secrets.CENTRAL_PORTAL_TOKEN }}" \
+            -F "bundle=@central-bundle.zip")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Upload failed with HTTP $http_code"
+            exit 1
+          fi
+
+          echo "deployment_id=$body" >> "$GITHUB_ENV"
+          echo "Deployment ID: $body"
+
+      - name: Check deployment status
+        if: inputs.publish_type == 'AUTOMATIC'
+        run: |
+          for i in $(seq 1 30); do
+            status=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.CENTRAL_PORTAL_TOKEN }}" \
+              "https://central.sonatype.com/api/v1/publisher/status?id=$deployment_id")
+
+            state=$(echo "$status" | jq -r '.deploymentState')
+            echo "Attempt $i: state=$state"
+
+            case "$state" in
+              PUBLISHED)
+                echo "Successfully published to Maven Central!"
+                exit 0
+                ;;
+              FAILED)
+                echo "::error::Deployment failed"
+                echo "$status" | jq .
+                exit 1
+                ;;
+            esac
+
+            sleep 20
+          done
+
+          echo "::warning::Status check timed out (last state: $state). Check https://central.sonatype.com for status."

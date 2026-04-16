@@ -59,6 +59,13 @@ subprojects {
 
         afterEvaluate {
             extensions.configure<PublishingExtension>("publishing") {
+                repositories {
+                    maven {
+                        name = "staging"
+                        url = uri(rootProject.layout.buildDirectory.dir("staging-deploy"))
+                    }
+                }
+
                 publications.withType<MavenPublication>().configureEach {
                     pom {
                         name.set(project.name)
@@ -88,6 +95,13 @@ subprojects {
             }
 
             extensions.configure<SigningExtension>("signing") {
+                val signingKey = findProperty("signing.key") as String?
+                    ?: System.getenv("GPG_SIGNING_KEY")
+                val signingPassword = findProperty("signing.password") as String?
+                    ?: System.getenv("GPG_SIGNING_PASSWORD")
+                if (signingKey != null && signingPassword != null) {
+                    useInMemoryPgpKeys(signingKey, signingPassword)
+                }
                 sign(extensions.getByType<PublishingExtension>().publications)
             }
         }
