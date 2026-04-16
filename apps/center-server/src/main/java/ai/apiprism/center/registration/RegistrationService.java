@@ -6,9 +6,11 @@ import ai.apiprism.protocol.registration.ApiRegistrationRequest;
 import ai.apiprism.protocol.registration.ApiRegistrationResponse;
 import ai.apiprism.openapi.NormalizationResult;
 import ai.apiprism.openapi.OpenApiNormalizer;
+import ai.apiprism.mcp.event.ServiceRegisteredEvent;
 import io.hypersistence.tsid.TSID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -26,10 +28,13 @@ public class RegistrationService {
 
     private final RegistrationRepository repository;
     private final OpenApiNormalizer normalizer;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public RegistrationService(RegistrationRepository repository, OpenApiNormalizer normalizer) {
+    public RegistrationService(RegistrationRepository repository, OpenApiNormalizer normalizer,
+                               ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
         this.normalizer = normalizer;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -74,6 +79,9 @@ public class RegistrationService {
         log.info("Registered service {} ({}) with id {} ({} group(s), {} warning(s))",
                 serviceName, environment, registrationId,
                 result.getSnapshot().getGroups().size(), result.getWarnings().size());
+
+        // 通知 MCP 网关引擎刷新工具定义
+        eventPublisher.publishEvent(new ServiceRegisteredEvent(this, serviceName, environment));
 
         return ApiRegistrationResponse.builder()
                 .accepted(true)

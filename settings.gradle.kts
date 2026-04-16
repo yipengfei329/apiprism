@@ -32,6 +32,9 @@ project(":libs:openapi-parser").projectDir = file("libs/openapi-parser")
 include(":adapters:java:starter")
 project(":adapters:java:starter").projectDir = file("adapters/java/starter")
 
+include(":apps:mcp-gateway-engine")
+project(":apps:mcp-gateway-engine").projectDir = file("apps/mcp-gateway-engine")
+
 include(":apps:center-server")
 project(":apps:center-server").projectDir = file("apps/center-server")
 
