@@ -177,7 +177,7 @@ export async function getMcpServiceStatus(
   try {
     const res = await fetch(
       getInternalApiUrl(
-        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/mcp-config`
+        `/api/v1/services/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/mcp-config`
       ),
       { cache: "no-store" }
     );
@@ -196,7 +196,7 @@ export async function getMcpGroupStatus(
   try {
     const res = await fetch(
       getInternalApiUrl(
-        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}/mcp-config`
+        `/api/v1/services/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/mcp-config`
       ),
       { cache: "no-store" }
     );

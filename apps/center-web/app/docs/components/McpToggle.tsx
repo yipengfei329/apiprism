@@ -27,18 +27,20 @@ export function McpToggle({
   const [streamableEndpoint, setStreamableEndpoint] = useState(initialStreamableEndpoint);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleUrl = groupSlug
     ? getPublicApiUrl(
-        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(groupSlug)}/mcp-config`
+        `/api/v1/services/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(groupSlug)}/mcp-config`
       )
     : getPublicApiUrl(
-        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/mcp-config`
+        `/api/v1/services/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/mcp-config`
       );
 
   const handleToggle = useCallback(async () => {
     const next = !enabled;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(toggleUrl, {
         method: "PUT",
@@ -50,7 +52,12 @@ export function McpToggle({
         setEnabled(data.enabled);
         setSseEndpoint(data.sseEndpoint ?? null);
         setStreamableEndpoint(data.streamableEndpoint ?? null);
+      } else {
+        const body = await res.json().catch(() => null);
+        setError(body?.detail ?? body?.message ?? `启用失败 (HTTP ${res.status})`);
       }
+    } catch {
+      setError("网络请求失败");
     } finally {
       setLoading(false);
     }
@@ -92,6 +99,13 @@ export function McpToggle({
           />
         </button>
       </div>
+
+      {/* 错误提示 */}
+      {error && (
+        <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* 端点地址 */}
       {enabled && (sseEndpoint || streamableEndpoint) && (
