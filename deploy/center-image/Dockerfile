@@ -63,6 +63,8 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV APIPRISM_SERVER_INTERNAL_BASE=http://127.0.0.1:8080
 ENV APIPRISM_STORAGE_DATA_DIR=/app/data
+# Center 对外可访问的根地址，用于 Agent 文档中生成完整链接；为空时从请求头自动推导
+ENV APIPRISM_CENTER_EXTERNAL_URL=
 
 RUN apk add --no-cache \
         gcompat \

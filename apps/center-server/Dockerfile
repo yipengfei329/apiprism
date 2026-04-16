@@ -34,6 +34,8 @@ WORKDIR /app
 RUN apk add --no-cache tini
 
 ENV APIPRISM_STORAGE_DATA_DIR=/app/data
+# Center 对外可访问的根地址，用于 Agent 文档中生成完整链接；为空时从请求头自动推导
+ENV APIPRISM_CENTER_EXTERNAL_URL=
 
 COPY --from=builder /workspace/apps/center-server/build/libs/*.jar /app/center-server.jar
 

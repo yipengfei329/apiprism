@@ -130,6 +130,8 @@ That's it. On the next `ApplicationReadyEvent`, your API registers and appears i
 
 | Variable | Default | Description |
 |---|---|---|
+| `APIPRISM_CENTER_EXTERNAL_URL` | *(auto-detected)* | Public root URL of the Center, used to generate full links in Agent Markdown docs. Auto-detected from request headers (`X-Forwarded-Proto`/`X-Forwarded-Host`) when empty. Set this explicitly when behind a reverse proxy that does not forward these headers. Example: `https://api.example.com` |
+| `APIPRISM_SERVER_INTERNAL_BASE` | `http://127.0.0.1:8080` | Internal address of the Spring Boot backend, used by the Next.js frontend for SSR proxying. Only change when running backend and frontend as separate containers. |
 | `APIPRISM_STORAGE_DATA_DIR` | `/app/data` | Database and spec snapshot storage path. |
 
 **Health check:** `GET http://localhost:3000/actuator/health`

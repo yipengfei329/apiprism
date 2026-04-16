@@ -3,6 +3,11 @@ services:
     build:
       context: ../..
       dockerfile: deploy/center-image/Dockerfile
+    environment:
+      # Center 对外可访问的根地址，用于 Agent 文档中生成完整链接
+      # 未设置时从请求头自动推导，反向代理场景建议显式配置
+      # APIPRISM_CENTER_EXTERNAL_URL: https://api.example.com
+      APIPRISM_STORAGE_DATA_DIR: /app/data
     volumes:
       - center-data:/app/data
     ports:

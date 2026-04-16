@@ -128,6 +128,8 @@ apiprism:
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
+| `APIPRISM_CENTER_EXTERNAL_URL` | *(自动推导)* | Center 对外可访问的根地址，用于在 Agent Markdown 文档中生成完整链接。为空时从请求头（`X-Forwarded-Proto`/`X-Forwarded-Host`）自动推导。反向代理未转发这些头时建议显式配置。示例：`https://api.example.com` |
+| `APIPRISM_SERVER_INTERNAL_BASE` | `http://127.0.0.1:8080` | Spring Boot 后端的内部地址，供 Next.js 前端 SSR 代理使用。仅在前后端拆为独立容器时需要修改。 |
 | `APIPRISM_STORAGE_DATA_DIR` | `/app/data` | 数据库和规范快照的存储路径。 |
 
 **健康检查：** `GET http://localhost:3000/actuator/health`
