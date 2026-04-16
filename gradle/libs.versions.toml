@@ -1,6 +1,6 @@
 [versions]
-springBoot                = "3.3.6"
-springDependencyManagement = "1.1.6"
+springBoot                = "4.0.5"
+springDependencyManagement = "1.1.7"
 jackson                   = "2.18.2"
 swaggerParser             = "2.1.24"
 swaggerCore               = "2.2.22"
