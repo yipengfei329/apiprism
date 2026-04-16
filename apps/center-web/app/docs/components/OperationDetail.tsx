@@ -65,7 +65,7 @@ export function OperationDetail({
     <div>
       {/* ── 头部区域 ── */}
       <div style={{ background: "linear-gradient(180deg, rgba(242,242,247,0.6) 0%, rgba(242,242,247,0.3) 100%)" }}>
-        <div className="mx-auto max-w-[1100px] px-8 pb-0 pt-14">
+        <div className="mx-auto max-w-[1100px] px-4 pb-0 pt-8 sm:px-8 sm:pt-14">
           {/* Method + Path */}
           <div className="mb-5 flex flex-wrap items-center gap-3 v-fade-in">
             <MethodBadge method={op.method} size="lg" />
@@ -140,7 +140,7 @@ export function OperationDetail({
       </div>
 
       {/* ── 内容区域 ── */}
-      <div className="mx-auto max-w-[1100px] px-8 py-12">
+      <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-8 sm:py-12">
         {active === "doc" && children}
         {active === "debug" && (
           <PlaceholderPanel

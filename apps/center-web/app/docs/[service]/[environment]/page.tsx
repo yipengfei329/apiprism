@@ -22,7 +22,7 @@ export default async function ServiceOverviewPage({ params }: Props) {
   if (!snapshot) notFound();
 
   return (
-    <div className="mx-auto max-w-[820px] px-8 py-14">
+    <div className="mx-auto max-w-[820px] px-4 py-8 sm:px-8 sm:py-14">
       {/* 面包屑 */}
       <div className="mb-8">
         <Breadcrumb

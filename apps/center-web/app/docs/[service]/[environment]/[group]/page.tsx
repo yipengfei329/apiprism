@@ -27,7 +27,7 @@ export default async function GroupPage({ params }: Props) {
   return (
     <div>
       {/* 面包屑导航：sticky，毛玻璃 */}
-      <div className="sticky top-0 z-10 px-8 py-3 v-glass" style={{ borderRadius: 0, borderLeft: "none", borderRight: "none", borderTop: "none" }}>
+      <div className="sticky top-0 z-10 px-4 py-3 sm:px-8 v-glass" style={{ borderRadius: 0, borderLeft: "none", borderRight: "none", borderTop: "none" }}>
         <div className="mx-auto max-w-[1100px]">
           <Breadcrumb
             items={[
@@ -47,7 +47,7 @@ export default async function GroupPage({ params }: Props) {
 
       {/* 分组头部区域 */}
       <div style={{ background: "linear-gradient(180deg, rgba(242,242,247,0.6) 0%, rgba(242,242,247,0.2) 100%)" }}>
-        <div className="mx-auto max-w-[1100px] px-8 pb-8 pt-14">
+        <div className="mx-auto max-w-[1100px] px-4 pb-8 pt-8 sm:px-8 sm:pt-14">
           <div className="flex items-start justify-between gap-4">
             <h1
               className="text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-tight text-v-black"
@@ -71,7 +71,7 @@ export default async function GroupPage({ params }: Props) {
       </div>
 
       {/* MCP 分组开关 */}
-      <div className="mx-auto max-w-[1100px] px-8 pt-8">
+      <div className="mx-auto max-w-[1100px] px-4 pt-6 sm:px-8 sm:pt-8">
         <McpToggle
           service={svc}
           environment={env}
@@ -83,7 +83,7 @@ export default async function GroupPage({ params }: Props) {
       </div>
 
       {/* 接口列表 */}
-      <div className="mx-auto max-w-[1100px] px-8 py-12">
+      <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-8 sm:py-12">
         <section>
           <p className="mb-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-v-gray-400">
             接口列表

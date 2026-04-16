@@ -22,7 +22,7 @@ export default async function OperationPage({ params }: Props) {
   return (
     <div>
       {/* 面包屑导航：sticky，毛玻璃 */}
-      <div className="sticky top-0 z-10 px-8 py-3 v-glass" style={{ borderRadius: 0, borderLeft: "none", borderRight: "none", borderTop: "none" }}>
+      <div className="sticky top-0 z-10 px-4 py-3 sm:px-8 v-glass" style={{ borderRadius: 0, borderLeft: "none", borderRight: "none", borderTop: "none" }}>
         <div className="mx-auto max-w-[1100px]">
           <Breadcrumb
             items={[
