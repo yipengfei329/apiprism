@@ -46,4 +46,11 @@ public class ServiceDescriptor {
      * 产生本次注册的适配器类型。
      */
     String adapterType;
+
+    /**
+     * 适配器提交内容的默认 locale（BCP-47，如 zh-CN、en-US）。
+     * 中心据此把 title/summary/description 写入 content_localizations 的对应 locale 行，
+     * 并作为读取时回落的默认语言。留空时中心按全局配置回落。
+     */
+    String defaultLocale;
 }
