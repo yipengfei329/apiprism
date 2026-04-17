@@ -33,6 +33,7 @@ public class RegistrationRequestFactory {
                         .environment(metadata.environment())
                         .serverUrls(metadata.serverUrls())
                         .adapterType("spring-boot-starter")
+                        .defaultLocale(properties.getDefaultLocale())
                         .build())
                 .spec(SpecPayload.builder()
                         .format(document.getFormat())

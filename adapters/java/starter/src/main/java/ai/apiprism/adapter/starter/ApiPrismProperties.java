@@ -50,6 +50,13 @@ public class ApiPrismProperties {
     /** OpenAPI 规格文档路径（默认 {@code /v3/api-docs}）。 */
     private String openapiPath = "/v3/api-docs";
 
+    /**
+     * 适配器文档的默认语言（BCP-47，如 zh-CN、en-US）。
+     * 中心据此把 summary/description 写入 content_localizations 的对应 locale 行。
+     * 留空时中心回落全局默认（当前为 zh-CN）。
+     */
+    private String defaultLocale;
+
     /** 注册重试策略配置。 */
     private Retry retry = new Retry();
 
