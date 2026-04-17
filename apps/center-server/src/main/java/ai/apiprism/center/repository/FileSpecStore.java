@@ -1,7 +1,6 @@
 package ai.apiprism.center.repository;
 
 import ai.apiprism.center.config.StorageProperties;
-import ai.apiprism.model.CanonicalServiceSnapshot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,63 +13,41 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * 文件存储服务：将 snapshot JSON 和原始规范落盘到数据目录。
+ * 原始 OpenAPI 规范的审计归档。
+ *
+ * <p>中心规范化模型切换后，snapshot 结构存在 H2 规范化表里，不再落盘。
+ * 本组件只承担一件事：把适配器每次提交的 raw spec 原文按 deployment id 归档，
+ * 便于事后比对/审计/调试。查询路径（CatalogService、Markdown 渲染等）不再依赖本组件。
  */
 @Component
 public class FileSpecStore {
 
     private static final Logger log = LoggerFactory.getLogger(FileSpecStore.class);
 
-    private final Path snapshotsDir;
     private final Path rawSpecsDir;
+    @SuppressWarnings("unused")
     private final ObjectMapper objectMapper;
 
     public FileSpecStore(StorageProperties properties, ObjectMapper objectMapper) {
-        this.snapshotsDir = Path.of(properties.getDataDir(), "snapshots");
         this.rawSpecsDir = Path.of(properties.getDataDir(), "raw-specs");
         this.objectMapper = objectMapper;
     }
 
     /**
-     * 将规范化快照序列化为 JSON 写入 snapshots/{id}.json。
-     */
-    public void saveSnapshot(String id, CanonicalServiceSnapshot snapshot) {
-        Path file = snapshotsDir.resolve(id + ".json");
-        try {
-            objectMapper.writeValue(file.toFile(), snapshot);
-            log.debug("Snapshot saved: {}", file);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to save snapshot " + id, e);
-        }
-    }
-
-    /**
-     * 从 snapshots/{id}.json 读取并反序列化规范化快照。
-     */
-    public CanonicalServiceSnapshot loadSnapshot(String id) {
-        Path file = snapshotsDir.resolve(id + ".json");
-        try {
-            return objectMapper.readValue(file.toFile(), CanonicalServiceSnapshot.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to load snapshot " + id, e);
-        }
-    }
-
-    /**
-     * 将原始 OpenAPI 规范写入 raw-specs/{id}.{ext}。
+     * 将原始 OpenAPI 规范写入 raw-specs/{id}.{ext}，供审计回溯。
      */
     public void saveRawSpec(String id, String content, String specFormat) {
         Path file = rawSpecsDir.resolve(id + "." + resolveExtension(specFormat));
         try {
             Files.writeString(file, content, StandardCharsets.UTF_8);
-            log.debug("Raw spec saved: {}", file);
+            log.debug("Raw spec archived: {}", file);
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to save raw spec " + id, e);
+            throw new UncheckedIOException("Failed to archive raw spec " + id, e);
         }
     }
 
     /**
-     * 从 raw-specs/{id}.{ext} 读取原始规范内容。
+     * 从 raw-specs/{id}.{ext} 读取原始规范，用于审计/调试。
      */
     public String loadRawSpec(String id, String specFormat) {
         Path file = rawSpecsDir.resolve(id + "." + resolveExtension(specFormat));
@@ -78,18 +55,6 @@ public class FileSpecStore {
             return Files.readString(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to load raw spec " + id, e);
-        }
-    }
-
-    /**
-     * 删除指定 ID 对应的 snapshot 和 raw-spec 文件。
-     */
-    public void delete(String id, String specFormat) {
-        try {
-            Files.deleteIfExists(snapshotsDir.resolve(id + ".json"));
-            Files.deleteIfExists(rawSpecsDir.resolve(id + "." + resolveExtension(specFormat)));
-        } catch (IOException e) {
-            log.warn("Failed to clean up files for {}: {}", id, e.getMessage());
         }
     }
 

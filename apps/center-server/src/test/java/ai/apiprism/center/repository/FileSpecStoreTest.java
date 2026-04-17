@@ -1,10 +1,6 @@
 package ai.apiprism.center.repository;
 
 import ai.apiprism.center.config.StorageProperties;
-import ai.apiprism.model.CanonicalGroup;
-import ai.apiprism.model.CanonicalOperation;
-import ai.apiprism.model.CanonicalServiceSnapshot;
-import ai.apiprism.model.ServiceRef;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,10 +9,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * FileSpecStore 降级为 raw spec 审计归档后，仅保留写入/读取 raw spec 的验证。
+ */
 class FileSpecStoreTest {
 
     @TempDir
@@ -26,7 +25,6 @@ class FileSpecStoreTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Files.createDirectories(tempDir.resolve("snapshots"));
         Files.createDirectories(tempDir.resolve("raw-specs"));
 
         StorageProperties props = new StorageProperties();
@@ -35,23 +33,6 @@ class FileSpecStoreTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         store = new FileSpecStore(props, mapper);
-    }
-
-    @Test
-    void saveAndLoadSnapshot() {
-        CanonicalServiceSnapshot snapshot = buildSnapshot();
-
-        store.saveSnapshot("test-001", snapshot);
-        assertTrue(Files.exists(tempDir.resolve("snapshots/test-001.json")));
-
-        CanonicalServiceSnapshot loaded = store.loadSnapshot("test-001");
-        assertEquals(snapshot.getRef().getName(), loaded.getRef().getName());
-        assertEquals(snapshot.getRef().getEnvironment(), loaded.getRef().getEnvironment());
-        assertEquals(snapshot.getTitle(), loaded.getTitle());
-        assertEquals(snapshot.getVersion(), loaded.getVersion());
-        assertEquals(snapshot.getGroups().size(), loaded.getGroups().size());
-        assertEquals(snapshot.getGroups().get(0).getOperations().size(),
-                loaded.getGroups().get(0).getOperations().size());
     }
 
     @Test
@@ -74,35 +55,5 @@ class FileSpecStoreTest {
 
         String loaded = store.loadRawSpec("test-003", "openapi-yaml");
         assertEquals(content, loaded);
-    }
-
-    @Test
-    void deleteRemovesFiles() {
-        store.saveSnapshot("test-004", buildSnapshot());
-        store.saveRawSpec("test-004", "{}", "openapi-json");
-
-        store.delete("test-004", "openapi-json");
-        assertFalse(Files.exists(tempDir.resolve("snapshots/test-004.json")));
-        assertFalse(Files.exists(tempDir.resolve("raw-specs/test-004.json")));
-    }
-
-    private CanonicalServiceSnapshot buildSnapshot() {
-        return CanonicalServiceSnapshot.builder()
-                .ref(ServiceRef.builder().name("demo-service").environment("dev").build())
-                .title("Demo Service")
-                .version("1.0.0")
-                .serverUrl("http://localhost:8080")
-                .group(CanonicalGroup.builder()
-                        .name("orders")
-                        .description("Order operations")
-                        .operation(CanonicalOperation.builder()
-                                .operationId("getOrder")
-                                .method("GET")
-                                .path("/orders/{id}")
-                                .summary("Get order by ID")
-                                .build())
-                        .build())
-                .updatedAt(Instant.now())
-                .build();
     }
 }

@@ -2,12 +2,15 @@ package ai.apiprism.center.markdown;
 
 import ai.apiprism.center.catalog.CatalogService;
 import ai.apiprism.center.config.CenterProperties;
+import ai.apiprism.center.localization.AcceptLanguageParser;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,19 +34,23 @@ public class AgentDocsController {
     }
 
     @GetMapping(value = "/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
-    public String globalCatalog(HttpServletRequest request) {
+    public String globalCatalog(HttpServletRequest request,
+                                @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage) {
         String baseUrl = resolveBaseUrl(request);
-        return agentMarkdownRenderer.renderGlobalCatalog(catalogService.listServices(), baseUrl);
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        return agentMarkdownRenderer.renderGlobalCatalog(catalogService.listServices(locale), baseUrl);
     }
 
     @GetMapping(value = "/{service}/{env}/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
     public String serviceIndex(
             @PathVariable String service,
             @PathVariable String env,
-            HttpServletRequest request
+            HttpServletRequest request,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
     ) {
         String baseUrl = resolveBaseUrl(request);
-        CanonicalServiceSnapshot snapshot = catalogService.getService(service, env);
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        CanonicalServiceSnapshot snapshot = catalogService.getService(service, env, locale);
         return agentMarkdownRenderer.renderServiceIndex(snapshot, baseUrl);
     }
 
@@ -51,10 +58,12 @@ public class AgentDocsController {
     public String operationDocs(
             @PathVariable String service,
             @PathVariable String env,
-            @PathVariable String operationId
+            @PathVariable String operationId,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
     ) {
-        CanonicalServiceSnapshot snapshot = catalogService.getService(service, env);
-        CanonicalOperation operation = catalogService.getOperation(service, env, operationId);
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        CanonicalServiceSnapshot snapshot = catalogService.getService(service, env, locale);
+        CanonicalOperation operation = catalogService.getOperation(service, env, operationId, locale);
         return agentMarkdownRenderer.renderAgentOperation(snapshot, operation);
     }
 
@@ -66,10 +75,8 @@ public class AgentDocsController {
     private String resolveBaseUrl(HttpServletRequest request) {
         String configured = centerProperties.getExternalUrl();
         if (configured != null && !configured.isBlank()) {
-            // 去掉尾部斜杠
             return configured.endsWith("/") ? configured.substring(0, configured.length() - 1) : configured;
         }
-        // 从请求自动推导
         String scheme = request.getHeader("X-Forwarded-Proto");
         if (scheme == null) scheme = request.getScheme();
         String host = request.getHeader("X-Forwarded-Host");

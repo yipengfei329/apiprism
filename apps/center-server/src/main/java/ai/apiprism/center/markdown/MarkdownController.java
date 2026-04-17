@@ -1,12 +1,15 @@
 package ai.apiprism.center.markdown;
 
 import ai.apiprism.center.catalog.CatalogService;
+import ai.apiprism.center.localization.AcceptLanguageParser;
 import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,19 +32,23 @@ public class MarkdownController {
     @GetMapping(value = "/services/{service}/env/{environment}/markdown.md", produces = MediaType.TEXT_PLAIN_VALUE)
     public String serviceMarkdown(
             @PathVariable String service,
-            @PathVariable String environment
+            @PathVariable String environment,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
     ) {
-        return markdownRenderer.renderService(catalogService.getService(service, environment));
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        return markdownRenderer.renderService(catalogService.getService(service, environment, locale));
     }
 
     @GetMapping(value = "/services/{service}/env/{environment}/groups/{group}/markdown.md", produces = MediaType.TEXT_PLAIN_VALUE)
     public String groupMarkdown(
             @PathVariable String service,
             @PathVariable String environment,
-            @PathVariable String group
+            @PathVariable String group,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
     ) {
-        CanonicalServiceSnapshot snapshot = catalogService.getService(service, environment);
-        CanonicalGroup canonicalGroup = catalogService.getGroup(service, environment, group);
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        CanonicalServiceSnapshot snapshot = catalogService.getService(service, environment, locale);
+        CanonicalGroup canonicalGroup = catalogService.getGroupBySlug(service, environment, group, locale);
         return markdownRenderer.renderGroup(snapshot, canonicalGroup);
     }
 
@@ -49,10 +56,12 @@ public class MarkdownController {
     public String operationMarkdown(
             @PathVariable String service,
             @PathVariable String environment,
-            @PathVariable String operationId
+            @PathVariable String operationId,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
     ) {
-        CanonicalServiceSnapshot snapshot = catalogService.getService(service, environment);
-        CanonicalOperation operation = catalogService.getOperation(service, environment, operationId);
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        CanonicalServiceSnapshot snapshot = catalogService.getService(service, environment, locale);
+        CanonicalOperation operation = catalogService.getOperation(service, environment, operationId, locale);
         return markdownRenderer.renderOperation(snapshot, operation);
     }
 
@@ -60,10 +69,12 @@ public class MarkdownController {
     public String agentOperationMarkdown(
             @PathVariable String service,
             @PathVariable String environment,
-            @PathVariable String operationId
+            @PathVariable String operationId,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage
     ) {
-        CanonicalServiceSnapshot snapshot = catalogService.getService(service, environment);
-        CanonicalOperation operation = catalogService.getOperation(service, environment, operationId);
+        String locale = AcceptLanguageParser.pickPrimary(acceptLanguage);
+        CanonicalServiceSnapshot snapshot = catalogService.getService(service, environment, locale);
+        CanonicalOperation operation = catalogService.getOperation(service, environment, operationId, locale);
         return agentMarkdownRenderer.renderAgentOperation(snapshot, operation);
     }
 }
