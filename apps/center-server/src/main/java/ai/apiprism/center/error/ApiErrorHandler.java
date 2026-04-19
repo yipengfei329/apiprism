@@ -1,6 +1,7 @@
 package ai.apiprism.center.error;
 
 import ai.apiprism.center.exceptions.RegistrationNotFoundException;
+import ai.apiprism.center.exceptions.RevisionNotFoundException;
 import ai.apiprism.openapi.exceptions.NormalizationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -16,6 +17,15 @@ public class ApiErrorHandler {
     public ProblemDetail handleNotFound(RegistrationNotFoundException exception) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         detail.setTitle("Registration not found");
+        detail.setDetail(exception.getMessage());
+        return detail;
+    }
+
+    @ExceptionHandler(RevisionNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ProblemDetail handleRevisionNotFound(RevisionNotFoundException exception) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        detail.setTitle("Revision not found");
         detail.setDetail(exception.getMessage());
         return detail;
     }

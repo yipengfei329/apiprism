@@ -62,11 +62,11 @@ public class RegistrationService {
                     result.getWarnings().size(), serviceName, environment, result.getWarnings());
         }
 
-        String registrationId = TSID.Factory.getTsid().toString();
+        String incomingId = TSID.Factory.getTsid().toString();
         // hash 包含 normalizer 版本号，逻辑变更时强制重写 snapshot
         String specHash = sha256(OpenApiNormalizer.VERSION + "\n" + request.getSpec().getContent());
-        repository.save(StoredRegistration.builder()
-                .id(registrationId)
+        StoredRegistration saved = repository.saveRevision(StoredRegistration.builder()
+                .id(incomingId)
                 .rawSpec(request.getSpec().getContent())
                 .specFormat(request.getSpec().getFormat())
                 .adapterType(request.getService().getAdapterType())
@@ -76,8 +76,8 @@ public class RegistrationService {
                 .extensions(request.getExtensions())
                 .build());
 
-        log.info("Registered service {} ({}) with id {} ({} group(s), {} warning(s))",
-                serviceName, environment, registrationId,
+        log.info("Registered service {} ({}) with revision id {} seq {} ({} group(s), {} warning(s))",
+                serviceName, environment, saved.getId(), saved.getRevisionSeq(),
                 result.getSnapshot().getGroups().size(), result.getWarnings().size());
 
         // 通知 MCP 网关引擎刷新工具定义
@@ -85,7 +85,7 @@ public class RegistrationService {
 
         return ApiRegistrationResponse.builder()
                 .accepted(true)
-                .registrationId(registrationId)
+                .registrationId(saved.getId())
                 .message("Registration accepted")
                 .warnings(result.getWarnings())
                 .build();

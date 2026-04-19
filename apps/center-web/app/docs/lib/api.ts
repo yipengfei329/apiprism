@@ -188,6 +188,60 @@ export async function getMcpServiceStatus(
   }
 }
 
+// ---- 版本历史 ----
+
+export type RevisionSummary = {
+  id: string;
+  serviceName: string;
+  environment: string;
+  seq: number;
+  specHash: string;
+  title: string | null;
+  version: string | null;
+  adapterType: string | null;
+  source: string;
+  warningsCount: number;
+  registeredAt: string;
+  current: boolean;
+};
+
+export async function listRevisions(
+  service: string,
+  environment: string
+): Promise<RevisionSummary[]> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/rev`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getRevisionSnapshot(
+  service: string,
+  environment: string,
+  revisionId: string
+): Promise<CanonicalServiceSnapshot | null> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/rev/${encodeURIComponent(revisionId)}`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function getMcpGroupStatus(
   service: string,
   environment: string,

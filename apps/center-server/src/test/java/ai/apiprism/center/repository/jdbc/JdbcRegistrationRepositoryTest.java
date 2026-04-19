@@ -1,5 +1,7 @@
 package ai.apiprism.center.repository.jdbc;
 
+import ai.apiprism.center.exceptions.RevisionNotFoundException;
+import ai.apiprism.center.repository.RevisionSummary;
 import ai.apiprism.center.repository.StoredRegistration;
 import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
@@ -164,6 +166,127 @@ class JdbcRegistrationRepositoryTest {
         assertEquals(2, op.getResponses().size());
         assertEquals(1, loaded.getWarnings().size());
         assertEquals("spring-boot", loaded.getExtensions().get("framework"));
+    }
+
+    @Test
+    void deleteByRefRemovesRegistration() {
+        repository.save(buildRegistration("svc-del", "staging", "del-001"));
+        assertTrue(repository.findByRef("svc-del", "staging").isPresent());
+
+        repository.deleteByRef("svc-del", "staging");
+
+        assertTrue(repository.findByRef("svc-del", "staging").isEmpty());
+    }
+
+    @Test
+    void deleteByRefIsIdempotentForMissingRef() {
+        // 对不存在的 ref 调用不应抛异常
+        assertDoesNotThrow(() -> repository.deleteByRef("nonexistent-svc", "prod"));
+    }
+
+    @Test
+    void saveRevisionFirstTimeCreatesSeq1AndMarksCurrent() {
+        StoredRegistration saved = repository.saveRevision(
+                buildRegistration("svc-rev1", "dev", "rev1-001", "1.0.0", "hash-rev1-1"));
+
+        assertEquals(1L, saved.getRevisionSeq());
+        assertTrue(saved.isCurrent());
+
+        List<RevisionSummary> revisions = repository.listRevisions("svc-rev1", "dev");
+        assertEquals(1, revisions.size());
+        assertEquals(1L, revisions.get(0).getSeq());
+        assertTrue(revisions.get(0).isCurrent());
+    }
+
+    @Test
+    void saveRevisionSameHashAsCurrentDoesNotAppend() {
+        repository.saveRevision(buildRegistration("svc-rev2", "dev", "rev2-001", "1.0.0", "same-hash"));
+        // 不同 id，相同 hash —— 应复用 current，不追加
+        StoredRegistration reused = repository.saveRevision(
+                buildRegistration("svc-rev2", "dev", "rev2-002", "2.0.0", "same-hash"));
+
+        assertEquals("rev2-001", reused.getId(), "current id 应保持不变");
+        assertEquals(1, repository.listRevisions("svc-rev2", "dev").size());
+    }
+
+    @Test
+    void saveRevisionNewHashAppendsAndAdvancesCurrent() {
+        repository.saveRevision(buildRegistration("svc-rev3", "dev", "rev3-001", "1.0.0", "hash-rev3-1"));
+        StoredRegistration second = repository.saveRevision(
+                buildRegistration("svc-rev3", "dev", "rev3-002", "2.0.0", "hash-rev3-2"));
+
+        assertEquals(2L, second.getRevisionSeq());
+        assertEquals("rev3-002", repository.findCurrent("svc-rev3", "dev").orElseThrow().getId());
+
+        List<RevisionSummary> revisions = repository.listRevisions("svc-rev3", "dev");
+        assertEquals(2, revisions.size());
+        assertEquals(2L, revisions.get(0).getSeq(), "按 seq 降序");
+        assertTrue(revisions.get(0).isCurrent());
+        assertFalse(revisions.get(1).isCurrent());
+    }
+
+    @Test
+    void activateRevisionSwitchesCurrentAndIsIdempotent() {
+        repository.saveRevision(buildRegistration("svc-rev4", "dev", "rev4-001", "1.0.0", "hash-rev4-1"));
+        repository.saveRevision(buildRegistration("svc-rev4", "dev", "rev4-002", "2.0.0", "hash-rev4-2"));
+
+        StoredRegistration rolled = repository.activateRevision("svc-rev4", "dev", "rev4-001");
+        assertEquals("rev4-001", rolled.getId());
+        assertEquals("1.0.0", repository.findCurrent("svc-rev4", "dev").orElseThrow().getSnapshot().getVersion());
+
+        // 幂等：再次 activate 同一 id 不抛异常
+        StoredRegistration again = repository.activateRevision("svc-rev4", "dev", "rev4-001");
+        assertEquals("rev4-001", again.getId());
+
+        // listRevisions 仍然返回两条，但 current 标志已切换
+        List<RevisionSummary> revisions = repository.listRevisions("svc-rev4", "dev");
+        assertEquals(2, revisions.size());
+        assertTrue(revisions.stream().filter(RevisionSummary::isCurrent).findFirst()
+                .filter(r -> r.getId().equals("rev4-001")).isPresent());
+    }
+
+    @Test
+    void activateRevisionUnknownIdThrows() {
+        repository.saveRevision(buildRegistration("svc-rev5", "dev", "rev5-001", "1.0.0", "hash-rev5-1"));
+        assertThrows(RevisionNotFoundException.class,
+                () -> repository.activateRevision("svc-rev5", "dev", "nonexistent"));
+    }
+
+    @Test
+    void registrationAfterRollbackAppendsNewRevision() {
+        repository.saveRevision(buildRegistration("svc-rev6", "dev", "rev6-001", "1.0.0", "hash-rev6-1"));
+        repository.saveRevision(buildRegistration("svc-rev6", "dev", "rev6-002", "2.0.0", "hash-rev6-2"));
+        repository.activateRevision("svc-rev6", "dev", "rev6-001");
+
+        // 回滚后 adapter 又推了最新 hash —— 应作为新 revision 追加，不是复用历史 id
+        StoredRegistration latest = repository.saveRevision(
+                buildRegistration("svc-rev6", "dev", "rev6-003", "3.0.0", "hash-rev6-2"));
+        assertEquals("rev6-003", latest.getId());
+        assertEquals(3L, latest.getRevisionSeq());
+        assertEquals(3, repository.listRevisions("svc-rev6", "dev").size());
+    }
+
+    @Test
+    void deleteByRefRemovesAllRevisions() {
+        repository.saveRevision(buildRegistration("svc-del-all", "dev", "del-r1", "1.0.0", "hash-d1"));
+        repository.saveRevision(buildRegistration("svc-del-all", "dev", "del-r2", "2.0.0", "hash-d2"));
+        assertEquals(2, repository.listRevisions("svc-del-all", "dev").size());
+
+        repository.deleteByRef("svc-del-all", "dev");
+
+        assertTrue(repository.findCurrent("svc-del-all", "dev").isEmpty());
+        assertTrue(repository.listRevisions("svc-del-all", "dev").isEmpty());
+    }
+
+    @Test
+    void deleteByRefDoesNotAffectOtherEnvironments() {
+        repository.save(buildRegistration("svc-multi", "dev", "multi-001"));
+        repository.save(buildRegistration("svc-multi", "prod", "multi-002", "1.0.0", "hash-multi-002"));
+
+        repository.deleteByRef("svc-multi", "dev");
+
+        assertTrue(repository.findByRef("svc-multi", "dev").isEmpty());
+        assertTrue(repository.findByRef("svc-multi", "prod").isPresent());
     }
 
     private StoredRegistration buildRegistration(String name, String env, String id) {

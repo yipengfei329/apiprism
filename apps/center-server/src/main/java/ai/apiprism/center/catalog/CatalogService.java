@@ -41,6 +41,19 @@ public class CatalogService {
         return require(serviceName, environment);
     }
 
+    public void deleteService(String serviceName, String environment) {
+        require(serviceName, environment);
+        repository.deleteByRef(serviceName, environment);
+    }
+
+    public List<String> listEnvironments(String serviceName) {
+        return repository.findAll().stream()
+                .filter(r -> r.getSnapshot().getRef().getName().equals(serviceName))
+                .map(r -> r.getSnapshot().getRef().getEnvironment())
+                .sorted()
+                .toList();
+    }
+
     public CanonicalGroup getGroup(String serviceName, String environment, String groupName) {
         return getService(serviceName, environment).getGroups().stream()
                 .filter(candidate -> candidate.getName().equals(groupName))
