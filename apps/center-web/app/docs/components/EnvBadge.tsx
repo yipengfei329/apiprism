@@ -1,20 +1,19 @@
 // 环境标签组件，用于面包屑和侧边栏统一展示环境信息
 
-/**
- * 环境色映射（亮色主题版本，用于白底页面）
- */
 function getEnvThemeLight(env: string) {
   const lower = env.toLowerCase();
   if (lower === "production" || lower === "prod") {
-    return { dot: "#22C55E", bg: "#F0FDF4", border: "#BBF7D0", text: "#15803D" };
+    // prod 最重要，用唯一突出色紫色
+    return { dot: "#7C3AED", bg: "rgba(124,58,237,0.06)", border: "rgba(124,58,237,0.20)", text: "#7C3AED" };
   }
   if (lower === "staging" || lower === "preview" || lower === "pre") {
+    // staging 保留功能性琥珀色（警告信号）
     return { dot: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", text: "#B45309" };
   }
   if (lower === "test" || lower === "testing") {
-    return { dot: "#8B5CF6", bg: "#F5F3FF", border: "#DDD6FE", text: "#6D28D9" };
+    return { dot: "#666666", bg: "#F5F5F5", border: "#EBEBEB", text: "#444444" };
   }
-  return { dot: "#3B82F6", bg: "#EFF6FF", border: "#BFDBFE", text: "#1D4ED8" };
+  return { dot: "#999999", bg: "#F5F5F5", border: "#EBEBEB", text: "#666666" };
 }
 
 export function EnvBadge({ env }: { env: string }) {

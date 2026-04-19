@@ -5,20 +5,20 @@ import JsonView from "@uiw/react-json-view";
 import { TriangleArrow } from "@uiw/react-json-view/triangle-arrow";
 import { CopyButton } from "./CopyButton";
 
-/* ── 浅色主题（Apple System Palette 风格） ────────────────── */
+/* ── 浅色主题（Vercel 极简风格） ────────────────── */
 const appleLight = {
   "--w-rjv-background-color": "transparent",
   "--w-rjv-color": "#1C1C1E",
   "--w-rjv-key-string": "#1C1C1E",
   "--w-rjv-type-string-color": "#0A6B30",
-  "--w-rjv-type-int-color": "#0063CC",
-  "--w-rjv-type-float-color": "#0063CC",
+  "--w-rjv-type-int-color": "#7C3AED",
+  "--w-rjv-type-float-color": "#7C3AED",
   "--w-rjv-type-boolean-color": "#C0148A",
   "--w-rjv-type-null-color": "#8E8E93",
   "--w-rjv-type-undefined-color": "#8E8E93",
   "--w-rjv-type-nan-color": "#8E8E93",
   "--w-rjv-type-date-color": "#636366",
-  "--w-rjv-type-url-color": "#0063CC",
+  "--w-rjv-type-url-color": "#7C3AED",
   "--w-rjv-curlybraces-color": "#3C3C43",
   "--w-rjv-brackets-color": "#3C3C43",
   "--w-rjv-colon-color": "#8E8E93",
@@ -28,7 +28,7 @@ const appleLight = {
   "--w-rjv-ellipsis-color": "#636366",
   "--w-rjv-line-color": "rgba(60, 60, 67, 0.08)",
   "--w-rjv-info-color": "rgba(142, 142, 147, 0.55)",
-  "--w-rjv-copied-color": "#0063CC",
+  "--w-rjv-copied-color": "#7C3AED",
   "--w-rjv-copied-success-color": "#0A6B30",
   "--w-rjv-font-family":
     "var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",

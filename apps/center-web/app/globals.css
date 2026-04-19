@@ -1,136 +1,76 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* ── 基础中性色（Apple System Palette） ── */
-  --color-v-black:    #1C1C1E;   /* Apple label */
-  --color-v-gray-600: #3C3C43;   /* Apple secondary label */
-  --color-v-gray-500: #636366;   /* Apple tertiary label */
-  --color-v-gray-400: #8E8E93;   /* Apple quaternary label */
-  --color-v-gray-100: #E5E5EA;   /* Apple separator */
-  --color-v-gray-50:  #F2F2F7;   /* Apple system grouped bg */
-  --color-v-white:    #ffffff;
-  --color-v-link:     #0063CC;   /* Apple blue (refined) */
+  /* ── 中性色板（Vercel 极简风格） ── */
+  --color-v-black:    #000000;
+  --color-v-gray-600: #333333;
+  --color-v-gray-500: #666666;
+  --color-v-gray-400: #999999;
+  --color-v-gray-100: #EBEBEB;
+  --color-v-gray-50:  #F5F5F5;
+  --color-v-white:    #FFFFFF;
 
-  /* ── 侧边栏专属色（Arc + Apple macOS Sidebar） ── */
-  --color-sidebar-bg:          #F2F2F7;
-  --color-sidebar-header-bg:   #EAEAEF;
-  --color-sidebar-active-bg:   rgba(0, 99, 204, 0.10);
-  --color-sidebar-active-text: #0063CC;
-  --color-sidebar-separator:   rgba(60, 60, 67, 0.18);
+  /* ── 唯一突出色：电光紫 ── */
+  --color-v-link:         #7C3AED;
+  --color-v-accent-light: rgba(124, 58, 237, 0.08);
+
+  /* ── 侧边栏专属色（深色表面） ── */
+  --color-sidebar-bg:     #0A0A0A;
+  --color-sidebar-border: #1F1F1F;
 
   /* ── 卡片 / 边框色 ── */
-  --color-v-border:   #E8E8EC;   /* 卡片边框 */
-
-  /* ── 工作流阶段色（仅用于对应流程语境） ── */
-  --color-ship-red:      #E0341A;
-  --color-preview-pink:  #C0148A;
-  --color-develop-blue:  #0063CC;
+  --color-v-border: #EBEBEB;
 
   /* ── 字体族 ── */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New", monospace;
 }
 
-/* ── Shadow-as-border 与卡片 shadow stack 工具类 ── */
+/* ── 边框与卡片工具类 ── */
 @layer utilities {
   /* Level 1：ring border */
   .v-ring {
-    box-shadow: rgba(60, 60, 67, 0.18) 0px 0px 0px 1px;
+    box-shadow: 0 0 0 1px #EBEBEB;
   }
-  /* Level 1b：浅灰 ring（tabs / image borders） */
+  /* Level 1b：浅灰 ring */
   .v-ring-light {
-    box-shadow: rgba(60, 60, 67, 0.12) 0px 0px 0px 1px;
+    box-shadow: 0 0 0 1px #F0F0F0;
   }
-  /* Level 2：subtle card（Apple 卡片深度） */
+  /* 卡片：单层 1px 边框，无阴影 */
   .v-card {
-    box-shadow:
-      rgba(60, 60, 67, 0.12) 0px 0px 0px 1px,
-      rgba(0, 0, 0, 0.04) 0px 2px 4px;
+    border: 1px solid #EBEBEB;
   }
-  /* Level 3：featured card with inner glow */
   .v-card-full {
-    box-shadow:
-      rgba(60, 60, 67, 0.10) 0px 0px 0px 1px,
-      rgba(0, 0, 0, 0.03) 0px 2px 4px,
-      rgba(0, 0, 0, 0.02) 0px 8px 16px -8px,
-      rgba(255, 255, 255, 0.8) 0px 1px 0px inset;
+    border: 1px solid #EBEBEB;
   }
-  /* 方向性 shadow border */
+  /* 方向性边框 */
   .v-border-b {
-    box-shadow: 0 1px 0 0 rgba(60, 60, 67, 0.12);
+    box-shadow: 0 1px 0 0 #EBEBEB;
   }
   .v-border-r {
-    box-shadow: 1px 0 0 0 rgba(60, 60, 67, 0.18);
+    box-shadow: 1px 0 0 0 #EBEBEB;
   }
-  /* hover 增强 */
+  /* hover：边框加深，无位移 */
   .v-card-full-hover {
-    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: border-color 0.15s ease;
   }
   .v-card-full-hover:hover {
-    box-shadow:
-      rgba(60, 60, 67, 0.14) 0px 0px 0px 1px,
-      rgba(0, 0, 0, 0.06) 0px 4px 8px,
-      rgba(0, 0, 0, 0.04) 0px 16px 24px -8px,
-      rgba(255, 255, 255, 0.9) 0px 1px 0px inset;
-    transform: translateY(-2px);
-  }
-
-  /* ── 毛玻璃面板 ── */
-  .v-glass {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(20px) saturate(1.8);
-    -webkit-backdrop-filter: blur(20px) saturate(1.8);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      0 1px 3px rgba(0, 0, 0, 0.04),
-      0 8px 24px -8px rgba(0, 0, 0, 0.06);
-  }
-  .v-glass-subtle {
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(16px) saturate(1.6);
-    -webkit-backdrop-filter: blur(16px) saturate(1.6);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.25),
-      0 1px 2px rgba(0, 0, 0, 0.03);
-  }
-  .v-glass-dark {
-    background: rgba(15, 15, 17, 0.8);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 1px 3px rgba(0, 0, 0, 0.2);
+    border-color: #CECECE;
   }
 
   /* ── 入场动画 ── */
   .v-fade-in {
-    animation: v-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: v-fade-in 0.4s ease both;
   }
   .v-slide-up {
-    animation: v-slide-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: v-slide-up 0.5s ease both;
   }
 
-  /* ── 动画延迟阶梯（用于列表交错） ── */
-  .v-delay-1 { animation-delay: 80ms; }
-  .v-delay-2 { animation-delay: 160ms; }
-  .v-delay-3 { animation-delay: 240ms; }
-  .v-delay-4 { animation-delay: 320ms; }
-  .v-delay-5 { animation-delay: 400ms; }
-
-  /* ── 微光扫描（用于装饰线条或 loading） ── */
-  .v-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(0, 99, 204, 0) 0%,
-      rgba(0, 99, 204, 0.08) 50%,
-      rgba(0, 99, 204, 0) 100%
-    );
-    background-size: 200% 100%;
-    animation: v-shimmer 2.4s ease-in-out infinite;
-  }
+  /* ── 动画延迟阶梯 ── */
+  .v-delay-1 { animation-delay: 60ms; }
+  .v-delay-2 { animation-delay: 120ms; }
+  .v-delay-3 { animation-delay: 180ms; }
+  .v-delay-4 { animation-delay: 240ms; }
 }
 
 /* ── 关键帧 ── */
@@ -139,16 +79,8 @@
   to { opacity: 1; }
 }
 @keyframes v-slide-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-@keyframes v-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-@keyframes v-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
 }
 
 html {
@@ -162,19 +94,19 @@ html {
 
 body {
   min-height: 100vh;
-  background-color: #fafafa;
-  color: #1C1C1E;
+  background-color: #FFFFFF;
+  color: #000000;
 }
 
-/* 文字选中高亮（Apple 蓝色调） */
+/* 文字选中高亮（紫色调） */
 ::selection {
-  background: rgba(0, 99, 204, 0.15);
-  color: #1C1C1E;
+  background: rgba(124, 58, 237, 0.12);
+  color: #000000;
 }
 
-/* 焦点环（Apple 蓝色） */
+/* 焦点环（紫色） */
 :focus-visible {
-  outline: 2px solid rgba(0, 99, 204, 0.75);
+  outline: 2px solid rgba(124, 58, 237, 0.6);
   outline-offset: 2px;
   border-radius: 4px;
 }

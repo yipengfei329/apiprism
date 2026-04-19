@@ -101,7 +101,7 @@ export async function OperationWiki({ op }: { op: CanonicalOperation }) {
                   </code>
                 )}
                 {op.requestBody.schema && (
-                  <span className="rounded-full bg-[#EEF4FF] px-2.5 py-1 font-mono text-[11px] text-v-link">
+                  <span className="rounded-full bg-v-gray-50 px-2.5 py-1 font-mono text-[11px] text-v-link">
                     {schemaTypeLabel(op.requestBody.schema)}
                   </span>
                 )}
@@ -178,7 +178,7 @@ export async function OperationWiki({ op }: { op: CanonicalOperation }) {
               {op.tags.map((t) => (
                 <span
                   key={t}
-                  className="rounded-full bg-[#EEF4FF] px-3.5 py-1.5 text-[13px] font-medium text-v-link"
+                  className="rounded-full bg-v-gray-50 px-3.5 py-1.5 text-[13px] font-medium text-v-link"
                 >
                   {t}
                 </span>

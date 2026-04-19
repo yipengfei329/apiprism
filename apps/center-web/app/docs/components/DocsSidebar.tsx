@@ -52,7 +52,7 @@ function getEnvTheme(env: string) {
   if (lower === "test" || lower === "testing") {
     return { dot: "#A78BFA", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.22)", text: "#A78BFA" };
   }
-  return { dot: "#60A5FA", bg: "rgba(96,165,250,0.12)", border: "rgba(96,165,250,0.22)", text: "#60A5FA" };
+  return { dot: "#888888", bg: "rgba(136,136,136,0.12)", border: "rgba(136,136,136,0.20)", text: "#AAAAAA" };
 }
 
 // ── 分组名 → 图标的智能映射 ──
@@ -165,9 +165,9 @@ function GroupItem({
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all duration-200"
           style={{
-            backgroundColor: isHighlighted ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.05)",
-            color: isHighlighted ? "#93C5FD" : "rgba(255,255,255,0.35)",
-            boxShadow: isHighlighted ? "0 0 12px rgba(96,165,250,0.12)" : "none",
+            backgroundColor: isHighlighted ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.05)",
+            color: isHighlighted ? "#A78BFA" : "rgba(255,255,255,0.35)",
+            boxShadow: "none",
           }}
         >
           <GroupIcon size={14} weight={isHighlighted ? "fill" : "regular"} />
@@ -233,15 +233,15 @@ function GroupItem({
                       title={op.summary || op.operationId}
                       className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-[7px] transition-colors duration-150 hover:bg-white/[0.05]"
                       style={{
-                        backgroundColor: isActive ? "rgba(96,165,250,0.10)" : undefined,
-                        borderLeft: isActive ? "2px solid #3B82F6" : "2px solid transparent",
+                        backgroundColor: isActive ? "rgba(124,58,237,0.10)" : undefined,
+                        borderLeft: isActive ? "2px solid #7C3AED" : "2px solid transparent",
                       }}
                     >
                       <MethodBadge method={op.method} size="sm" />
                       <span
                         className="truncate text-[12.5px] leading-snug transition-colors duration-150"
                         style={{
-                          color: isActive ? "#93C5FD" : "rgba(255,255,255,0.45)",
+                          color: isActive ? "#C4B5FD" : "rgba(255,255,255,0.45)",
                           fontWeight: isActive ? 500 : 400,
                         }}
                       >
@@ -289,9 +289,8 @@ export function DocsSidebar({
     <aside
       className="flex h-full w-[288px] shrink-0 flex-col"
       style={{
-        backgroundColor: "#0f0f11",
-        borderRight: "1px solid rgba(255,255,255,0.07)",
-        backgroundImage: "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59,130,246,0.04) 0%, transparent 70%)",
+        backgroundColor: "#0A0A0A",
+        borderRight: "1px solid #1F1F1F",
       }}
     >
       {/* ── 头部：品牌 + 服务信息 ── */}
@@ -305,7 +304,7 @@ export function DocsSidebar({
             <Link href="/" className="group flex items-center gap-2">
               <div
                 className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-                style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)" }}
+                style={{ background: "#7C3AED" }}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
                   <path d="M2 3h8M2 6h5M2 9h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
@@ -365,7 +364,7 @@ export function DocsSidebar({
           <Link href="/" className="group flex items-center gap-2">
             <div
               className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-              style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)" }}
+              style={{ background: "#7C3AED" }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
                 <path d="M2 3h8M2 6h5M2 9h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />

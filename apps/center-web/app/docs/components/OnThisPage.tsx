@@ -76,8 +76,8 @@ export function OnThisPage({ sections }: { sections: SectionItem[] }) {
               onClick={() => handleClick(s.id)}
               className={`block w-full cursor-pointer border-l-2 py-1 pl-3 text-left text-[13px] transition-colors ${
                 activeId === s.id
-                  ? "border-[#0063CC] font-semibold text-[#0063CC]"
-                  : "border-transparent text-[#8E8E93] hover:text-[#3C3C43]"
+                  ? "border-[#7C3AED] font-semibold text-[#7C3AED]"
+                  : "border-transparent text-[#999999] hover:text-[#333333]"
               }`}
             >
               {s.label}

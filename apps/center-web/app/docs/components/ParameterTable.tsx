@@ -76,7 +76,7 @@ function ParameterMeta({ parameter }: { parameter: CanonicalParameter }) {
         </span>
       )}
       {hasExample && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-[#EEF4FF] px-2.5 py-1 text-[11px] text-v-link">
+        <span className="inline-flex items-center gap-1 rounded-full bg-v-gray-50 px-2.5 py-1 text-[11px] text-v-gray-500 v-ring-light">
           <span className="font-medium text-v-gray-400">Example</span>
           <code className="font-mono">{String(schema?.example)}</code>
         </span>
@@ -103,7 +103,7 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
         </div>
       </td>
       <td className="px-4 py-4 md:px-5">
-        <code className="rounded-md bg-[#EEF4FF] px-1.5 py-[2px] font-mono text-[11px] text-v-link">
+        <code className="rounded-md bg-v-gray-50 px-1.5 py-[2px] font-mono text-[11px] text-v-gray-500 v-ring-light">
           {schemaTypeLabel(parameter.schema)}
         </code>
       </td>
@@ -128,11 +128,11 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
         )}
         <ParameterMeta parameter={parameter} />
         {nested && parameter.schema && (
-          <details className="mt-3 overflow-hidden rounded-xl border border-[#E8E8EC] bg-v-gray-50/40">
-            <summary className="cursor-pointer list-none px-4 py-3 text-[12px] font-medium text-v-link marker:hidden">
+          <details className="mt-3 overflow-hidden rounded-xl border border-v-gray-100 bg-v-gray-50/40">
+            <summary className="cursor-pointer list-none px-4 py-3 text-[12px] font-medium text-v-gray-500 marker:hidden">
               查看字段结构
             </summary>
-            <div className="border-t border-[#E8E8EC] px-3 pb-2">
+            <div className="border-t border-v-gray-100 px-3 pb-2">
               <SchemaTable schema={parameter.schema} />
             </div>
           </details>
@@ -154,7 +154,7 @@ function ParameterGroup({
   const requiredCount = parameters.filter((parameter) => parameter.required).length;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#E8E8EC] bg-white">
+    <section className="overflow-hidden rounded-2xl border border-v-gray-100 bg-white">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0F0F3] bg-v-gray-50/50 px-5 py-4">
         <div className="flex items-center gap-3">
           <h3 className="text-[14px] font-semibold text-v-black">{label}</h3>

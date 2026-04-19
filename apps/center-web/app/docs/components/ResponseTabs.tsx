@@ -16,7 +16,7 @@ function ResponseMeta({
   value: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-[#ECECF1] bg-v-gray-50/55 px-4 py-3">
+    <div className="rounded-2xl border border-v-gray-100 bg-v-gray-50 px-4 py-3">
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-v-gray-400">
         {label}
       </p>
@@ -52,7 +52,7 @@ export function ResponseTabs({
               onClick={() => setActiveIndex(index)}
               className={`cursor-pointer rounded-full px-3.5 py-2 font-mono text-[13px] font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-v-black text-white shadow-[0_8px_20px_-14px_rgba(15,23,42,0.45)]"
+                  ? "bg-v-black text-white"
                   : "bg-white text-v-gray-400 hover:bg-v-gray-50 hover:text-v-gray-600"
               }`}
             >
@@ -62,7 +62,7 @@ export function ResponseTabs({
         })}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-[#E8E8EC] bg-v-gray-50/35 px-5 py-4">
+      <div className="mb-4 rounded-2xl border border-v-gray-100 bg-v-gray-50 px-5 py-4">
         <div className="flex flex-wrap items-center gap-2.5">
           <StatusBadge code={active.statusCode} />
           {active.contentType && (
@@ -71,7 +71,7 @@ export function ResponseTabs({
             </code>
           )}
           {active.schema && (
-            <span className="rounded-full bg-[#EEF4FF] px-2.5 py-1 font-mono text-[11px] text-v-link">
+            <span className="rounded-full bg-v-gray-50 px-2.5 py-1 font-mono text-[11px] text-v-gray-500 v-ring-light">
               {schemaTypeLabel(active.schema)}
             </span>
           )}
