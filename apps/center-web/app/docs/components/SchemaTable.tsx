@@ -88,7 +88,7 @@ function PropertyRow({
               className={`rounded-[5px] px-1.5 py-[1px] font-mono text-[11px] leading-snug ${
                 schema.deprecated
                   ? "bg-[#F2F2F7] text-[#8E8E93]"
-                  : "bg-[#EEF4FF] text-[#0063CC]"
+                  : "bg-[#F5F5F5] text-[#666666]"
               }`}
             >
               {schemaTypeLabel(schema)}
@@ -146,7 +146,7 @@ function PropertyRow({
 
       {/* 子属性：左边框缩进 */}
       {expanded && hasChildren && childSchema?.properties && (
-        <div className="ml-[26px] border-l-[1.5px] border-[#E8E8EC]">
+        <div className="ml-[26px] border-l border-[#EBEBEB]">
           <PropertyList
             properties={childSchema.properties}
             requiredFields={childSchema.required ?? []}

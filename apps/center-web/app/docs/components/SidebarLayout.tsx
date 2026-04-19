@@ -17,13 +17,16 @@ export function SidebarLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true);
+  // 惰性初始化，避免 SSR 不匹配
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`).matches;
+  });
   const pathname = usePathname();
 
   // 监听视口断点变化
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`);
-    setIsDesktop(mq.matches);
     const handler = (e: MediaQueryListEvent) => {
       setIsDesktop(e.matches);
       if (e.matches) setMobileOpen(false);
@@ -33,9 +36,8 @@ export function SidebarLayout({
   }, []);
 
   // 移动端路由切换时自动收起侧边栏
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const handleCollapse = useCallback(() => {
     if (isDesktop) {
@@ -44,9 +46,6 @@ export function SidebarLayout({
       setMobileOpen(false);
     }
   }, [isDesktop]);
-
-  // 侧边栏是否可见（用于遮罩控制）
-  const sidebarVisible = isDesktop ? !collapsed : mobileOpen;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -97,18 +96,13 @@ export function SidebarLayout({
       {/* ── 主内容区 ── */}
       <main
         className="relative flex flex-1 flex-col overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #fafbfc 0%, #ffffff 120px)" }}
+        style={{ background: "#FFFFFF" }}
       >
         {/* 移动端顶栏（汉堡菜单 + 品牌） */}
         {!isDesktop && (
           <div
             className="flex shrink-0 items-center gap-3 border-b px-4 py-3"
-            style={{
-              borderColor: "rgba(0,0,0,0.07)",
-              background: "rgba(250,251,252,0.95)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }}
+            style={{ borderColor: "#EBEBEB", background: "#FFFFFF" }}
           >
             <button
               onClick={() => setMobileOpen(true)}
@@ -120,7 +114,7 @@ export function SidebarLayout({
             <div className="flex items-center gap-2">
               <div
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
-                style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)" }}
+                style={{ background: "#7C3AED" }}
               >
                 <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden>
                   <path d="M2 3h8M2 6h5M2 9h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />

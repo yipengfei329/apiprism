@@ -71,7 +71,7 @@ export function McpToggle({
   }, []);
 
   return (
-    <div className="rounded-xl bg-white/90 backdrop-blur-sm v-card-full p-5">
+    <div className="rounded-xl bg-white v-card-full p-5">
       {/* 标题行 + 开关 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export function McpToggle({
           onClick={handleToggle}
           className={`relative inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer rounded-full
                       transition-colors duration-200 ease-in-out focus:outline-none
-                      ${enabled ? "bg-[#34C759]" : "bg-[#E5E5EA]"}
+                      ${enabled ? "bg-[#34C759]" : "bg-v-gray-100"}
                       ${loading ? "opacity-60 cursor-wait" : ""}`}
         >
           <span
@@ -145,7 +145,7 @@ function EndpointRow({
 }) {
   return (
     <div className="flex items-center gap-2 rounded-lg bg-[#F4F4F5] px-3 py-2">
-      <span className="shrink-0 rounded bg-[#E5E5EA] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-v-gray-500 uppercase">
+      <span className="shrink-0 rounded bg-v-gray-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-v-gray-500 uppercase">
         {label}
       </span>
       <code className="min-w-0 flex-1 truncate font-mono text-[12px] text-v-black">{url}</code>
