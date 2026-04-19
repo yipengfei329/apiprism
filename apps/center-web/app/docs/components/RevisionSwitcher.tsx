@@ -60,7 +60,7 @@ export function RevisionSwitcher({
     <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-[#F4F4F5] px-2.5 py-0.5 font-mono text-[12px] font-medium text-[#636366] transition-colors hover:bg-[#EEF4FF] hover:text-[#0063CC]"
+        className="inline-flex items-center gap-1.5 rounded-md bg-[var(--bg-subtle)] px-2.5 py-0.5 font-mono text-[12px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--accent-bg)] hover:text-[var(--accent)]"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
@@ -69,11 +69,11 @@ export function RevisionSwitcher({
         </svg>
         {active ? `#${active.seq}` : "版本"}
         {viewingOlder && (
-          <span className="rounded bg-[#FFF3E0] px-1 text-[10px] text-[#B45309]">
+          <span className="rounded bg-[var(--env-staging-bg)] px-1 text-[10px] text-[var(--env-staging-text)]">
             历史
           </span>
         )}
-        <svg className="h-3 w-3 text-[#8E8E93]" viewBox="0 0 12 12" fill="none">
+        <svg className="h-3 w-3 text-[var(--text-tertiary)]" viewBox="0 0 12 12" fill="none">
           <path
             d="M3 4.5L6 7.5L9 4.5"
             stroke="currentColor"
@@ -87,7 +87,7 @@ export function RevisionSwitcher({
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 z-20 mt-2 max-h-[320px] w-[280px] overflow-y-auto rounded-lg border border-[#E5E5EA] bg-white py-1 shadow-lg"
+          className="absolute right-0 z-20 mt-2 max-h-[320px] w-[280px] overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] py-1 shadow-lg"
         >
           {revisions.map((rev) => {
             const href = rev.current
@@ -101,19 +101,19 @@ export function RevisionSwitcher({
                 role="option"
                 aria-selected={isSelected}
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-[#F4F4F5]"
+                className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-[var(--bg-subtle)]"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[12px] font-semibold text-[#1C1C1E]">
+                  <span className="font-mono text-[12px] font-semibold text-[var(--text-primary)]">
                     #{rev.seq}
                   </span>
                   {rev.current && (
-                    <span className="rounded bg-[#E8F5E9] px-1.5 py-[1px] font-mono text-[10px] font-medium text-[#2E7D32]">
+                    <span className="rounded bg-[var(--env-prod-bg)] px-1.5 py-[1px] font-mono text-[10px] font-medium text-[var(--env-prod-text)]">
                       当前
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-[#8E8E93]">
+                <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
                   <span className="font-mono">{rev.specHash.substring(0, 7)}</span>
                   <span>·</span>
                   <span>{formatRelative(rev.registeredAt)}</span>

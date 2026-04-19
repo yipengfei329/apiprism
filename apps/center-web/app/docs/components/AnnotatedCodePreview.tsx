@@ -38,10 +38,10 @@ export async function AnnotatedCodePreview({
   maxHeight = 400,
   className = "",
 }: AnnotatedCodePreviewProps) {
-  const html = await codeToHtml(code, {
-    lang: language,
-    theme: "one-dark-pro",
-  });
+  const [htmlLight, htmlDark] = await Promise.all([
+    codeToHtml(code, { lang: language, theme: "github-light" }),
+    codeToHtml(code, { lang: language, theme: "one-dark-pro" }),
+  ]);
 
   const totalLines = code.split("\n").length;
   const annotationMap = schema
@@ -55,15 +55,15 @@ export async function AnnotatedCodePreview({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-white/[0.06] bg-[#282c34] ${className}`}
+      className={`overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--code-bg)] ${className}`}
     >
       {/* 顶栏 */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2">
+      <div className="flex items-center justify-between border-b border-[var(--code-border)] px-4 py-2">
         <div className="flex items-center gap-3">
-          <span className="text-[11px] font-medium text-[#E5C07B]/50">
+          <span className="text-[11px] font-medium text-[var(--code-label)]">
             示例预览 · 自动生成
           </span>
-          <span className="text-[11px] font-medium tracking-wide text-white/35">
+          <span className="text-[11px] font-medium tracking-wide text-[var(--code-label)]">
             {langLabel}
           </span>
         </div>
@@ -73,7 +73,8 @@ export async function AnnotatedCodePreview({
       {/* 内容区 */}
       {hasAnnotations ? (
         <CodeAnnotationPanel
-          codeHtml={html}
+          codeHtmlLight={htmlLight}
+          codeHtmlDark={htmlDark}
           annotations={annotations}
           totalLines={totalLines}
           maxHeight={maxHeight}
@@ -84,8 +85,10 @@ export async function AnnotatedCodePreview({
                      [&_pre]:!bg-transparent [&_pre]:px-4 [&_pre]:py-4
                      [&_code]:font-mono"
           style={{ maxHeight }}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        >
+          <div className="dark:hidden" dangerouslySetInnerHTML={{ __html: htmlLight }} />
+          <div className="hidden dark:block" dangerouslySetInnerHTML={{ __html: htmlDark }} />
+        </div>
       )}
     </div>
   );

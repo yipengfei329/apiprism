@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getInternalApiUrl } from "@/app/lib/internal-api";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 
 type GroupRef = {
@@ -33,8 +34,8 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-const ACCENT = "#7C3AED";
-const ACCENT_BG = "rgba(124, 58, 237, 0.06)";
+const ACCENT = "var(--accent)";
+const ACCENT_BG = "var(--accent-bg)";
 
 /* 三种输出形态 */
 const spectrum = [
@@ -82,16 +83,16 @@ export default async function HomePage() {
   const services = await getServices();
 
   return (
-    <main className="min-h-[100dvh] bg-white">
+    <main className="min-h-[100dvh] bg-[var(--bg-canvas)]">
       {/* 顶栏 */}
-      <header className="sticky top-0 z-10 flex h-12 items-center border-b border-v-gray-100 bg-white px-6">
-        <span className="text-sm font-semibold tracking-tight text-v-black">
+      <header className="sticky top-0 z-10 flex h-12 items-center border-b border-[var(--border-default)] bg-[var(--bg-canvas)] px-6">
+        <span className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
           APIPrism
         </span>
         <nav className="ml-auto flex items-center gap-1">
           <Link
             href="/docs"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-v-gray-500 transition-colors hover:bg-v-gray-50 hover:text-v-black"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
           >
             文档中心
           </Link>
@@ -99,13 +100,14 @@ export default async function HomePage() {
             href="https://github.com/yipengfei329/apiprism"
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg p-2 text-v-gray-400 transition-colors hover:bg-v-gray-50 hover:text-v-black"
+            className="rounded-lg p-2 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
             aria-label="GitHub"
           >
             <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
             </svg>
           </a>
+          <ThemeToggle variant="surface" />
         </nav>
       </header>
 
@@ -132,7 +134,7 @@ export default async function HomePage() {
         <div className="mt-7 flex flex-wrap items-center gap-3 v-slide-up v-delay-3">
           <Link
             href="/docs"
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-v-black px-5 text-sm font-medium text-v-white transition-all duration-200 hover:bg-v-gray-600 active:scale-[0.98]"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-sm font-medium text-[var(--bg-canvas)] transition-all duration-200 hover:opacity-80 active:scale-[0.98]"
           >
             开始探索
             <svg className="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none">
@@ -143,7 +145,7 @@ export default async function HomePage() {
             href="https://github.com/yipengfei329/apiprism"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-v-gray-100 px-5 text-sm font-medium text-v-gray-500 transition-colors duration-150 hover:border-v-gray-200 hover:text-v-black active:scale-[0.98]"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] px-5 text-sm font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] active:scale-[0.98]"
           >
             <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
@@ -161,7 +163,7 @@ export default async function HomePage() {
       {/* ── 已注册服务 ── */}
       <section className="mx-auto max-w-[1200px] px-6 py-10">
         {services.length === 0 ? (
-          <div className="rounded-2xl border border-v-gray-100 bg-white px-8 py-12">
+          <div className="rounded-2xl border border-v-gray-100 bg-[var(--bg-surface)] px-8 py-12">
             <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-v-gray-400">
               暂无服务
             </p>
@@ -187,7 +189,7 @@ export default async function HomePage() {
                 <Link
                   key={`${service.name}-${service.environment}`}
                   href={`/docs/${encodeURIComponent(service.name)}/${encodeURIComponent(service.environment)}`}
-                  className={`group flex flex-col rounded-2xl bg-white p-6 transition-all duration-200 v-card-full v-card-full-hover v-slide-up ${idx === 0 ? "v-delay-1" : idx === 1 ? "v-delay-2" : idx === 2 ? "v-delay-3" : "v-delay-4"}`}
+                  className={`group flex flex-col rounded-2xl bg-[var(--bg-surface)] p-6 transition-all duration-200 v-card-full v-card-full-hover v-slide-up ${idx === 0 ? "v-delay-1" : idx === 1 ? "v-delay-2" : idx === 2 ? "v-delay-3" : "v-delay-4"}`}
                 >
                   <h2
                     className="text-2xl font-semibold text-v-black transition-colors"
@@ -263,7 +265,7 @@ export default async function HomePage() {
           {spectrum.map((beam, idx) => (
             <div
               key={beam.title}
-              className={`group flex flex-col overflow-hidden rounded-2xl bg-white p-6 pb-5 transition-all duration-200 v-card-full v-card-full-hover v-slide-up v-delay-${idx + 1}`}
+              className={`group flex flex-col overflow-hidden rounded-2xl bg-[var(--bg-surface)] p-6 pb-5 transition-all duration-200 v-card-full v-card-full-hover v-slide-up v-delay-${idx + 1}`}
             >
               {/* 图标 + 标题 */}
               <div className="flex items-center gap-3">

@@ -83,7 +83,7 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
       <header className="mb-14">
         <div className="flex items-start justify-between gap-4">
           <h1
-            className="text-[clamp(1.8rem,3vw,2.6rem)] font-semibold leading-tight text-[#1C1C1E]"
+            className="text-[clamp(1.8rem,3vw,2.6rem)] font-semibold leading-tight text-[var(--text-primary)]"
             style={{ letterSpacing: "-0.035em" }}
           >
             {svc}
@@ -136,14 +136,14 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
 
         {snapshot.serverUrls?.length > 0 && (
           <div className="mt-8">
-            <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8E8E93]">
+            <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
               服务地址
             </p>
             <div className="flex flex-wrap gap-2">
               {snapshot.serverUrls.map((url) => (
                 <code
                   key={url}
-                  className="rounded-lg bg-v-gray-50 px-3 py-1.5 font-mono text-[13px] text-[#1C1C1E]"
+                  className="rounded-lg bg-v-gray-50 px-3 py-1.5 font-mono text-[13px] text-[var(--text-primary)]"
                 >
                   {url}
                 </code>
@@ -156,7 +156,7 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
       {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
       {!viewingOlder && (
         <section className="mb-14">
-          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8E8E93]">
+          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
             MCP 网关
           </p>
           <McpToggle
@@ -171,12 +171,12 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
 
       {/* 分组卡片网格 */}
       <section>
-        <p className="mb-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8E8E93]">
+        <p className="mb-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
           接口分组 — {snapshot.groups.length}
         </p>
 
         {snapshot.groups.length === 0 ? (
-          <p className="text-[#8E8E93]">该服务下暂无接口分组。</p>
+          <p className="text-[var(--text-tertiary)]">该服务下暂无接口分组。</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {snapshot.groups.map((group) => {
@@ -185,10 +185,10 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
                 return (
                   <div
                     key={group.name}
-                    className="rounded-xl bg-white p-5 opacity-75 v-card-full"
+                    className="rounded-xl bg-[var(--bg-surface)] p-5 opacity-75 v-card-full"
                   >
                     <h3
-                      className="font-semibold text-[#1C1C1E]"
+                      className="font-semibold text-[var(--text-primary)]"
                       style={{ letterSpacing: "-0.015em" }}
                     >
                       {group.name}
@@ -197,11 +197,11 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
                       <HtmlText
                         as="p"
                         text={group.description}
-                        className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[#636366]"
+                        className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[var(--text-secondary)]"
                       />
                     )}
                     <div className="mt-4 flex items-center justify-between">
-                      <p className="font-mono text-[12px] text-[#8E8E93]">
+                      <p className="font-mono text-[12px] text-[var(--text-tertiary)]">
                         {group.operations.length} 个接口
                       </p>
                     </div>
@@ -212,10 +212,10 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
                 <Link
                   key={group.name}
                   href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}`}
-                  className="group rounded-xl bg-white p-5 transition-all v-card-full v-card-full-hover"
+                  className="group rounded-xl bg-[var(--bg-surface)] p-5 transition-all v-card-full v-card-full-hover"
                 >
                   <h3
-                    className="font-semibold text-[#1C1C1E]"
+                    className="font-semibold text-[var(--text-primary)]"
                     style={{ letterSpacing: "-0.015em" }}
                   >
                     {group.name}
@@ -224,15 +224,15 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
                     <HtmlText
                       as="p"
                       text={group.description}
-                      className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[#636366]"
+                      className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[var(--text-secondary)]"
                     />
                   )}
                   <div className="mt-4 flex items-center justify-between">
-                    <p className="font-mono text-[12px] text-[#8E8E93]">
+                    <p className="font-mono text-[12px] text-[var(--text-tertiary)]">
                       {group.operations.length} 个接口
                     </p>
                     <svg
-                      className="h-3.5 w-3.5 text-[#8E8E93] opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100"
+                      className="h-3.5 w-3.5 text-[var(--text-tertiary)] opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100"
                       viewBox="0 0 14 14"
                       fill="none"
                     >

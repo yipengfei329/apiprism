@@ -52,8 +52,8 @@ export function ResponseTabs({
               onClick={() => setActiveIndex(index)}
               className={`cursor-pointer rounded-full px-3.5 py-2 font-mono text-[13px] font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-v-black text-white"
-                  : "bg-white text-v-gray-400 hover:bg-v-gray-50 hover:text-v-gray-600"
+                  ? "bg-[var(--text-primary)] text-[var(--bg-surface)]"
+                  : "bg-[var(--bg-surface)] text-v-gray-400 hover:bg-v-gray-50 hover:text-v-gray-600"
               }`}
             >
               <StatusBadge code={response.statusCode} inverted={isActive} />
@@ -66,7 +66,7 @@ export function ResponseTabs({
         <div className="flex flex-wrap items-center gap-2.5">
           <StatusBadge code={active.statusCode} />
           {active.contentType && (
-            <code className="rounded-full bg-white px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
+            <code className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
               {active.contentType}
             </code>
           )}

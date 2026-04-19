@@ -12,7 +12,7 @@ import { RequestBodyTabs } from "./RequestBodyTabs";
 
 function RequiredTag({ required }: { required: boolean }) {
   return required ? (
-    <span className="font-mono text-[10px] font-semibold text-[#E5484D]">必填</span>
+    <span className="font-mono text-[10px] font-semibold text-[var(--danger)]">必填</span>
   ) : (
     <span className="font-mono text-[10px] font-medium text-v-gray-400">选填</span>
   );
@@ -79,7 +79,7 @@ export async function OperationWiki({ op }: { op: CanonicalOperation }) {
   return (
     <div className="flex gap-12">
       {/* ── 左侧：主内容 ── */}
-      <article className="min-w-0 flex-1 [&>section+section]:border-t [&>section+section]:border-[#F0F0F3] [&>section]:pb-8 [&>section+section]:pt-8 [&>section:last-of-type]:pb-0">
+      <article className="min-w-0 flex-1 [&>section+section]:border-t [&>section+section]:border-[var(--border-subtle)] [&>section]:pb-8 [&>section+section]:pt-8 [&>section:last-of-type]:pb-0">
         {/* ── 参数 ── */}
         {op.parameters && op.parameters.length > 0 && (
           <section id="parameters" className="scroll-mt-16">
@@ -92,11 +92,11 @@ export async function OperationWiki({ op }: { op: CanonicalOperation }) {
         {op.requestBody && (
           <section id="request-body" className="scroll-mt-16">
             <SectionTitle>请求体</SectionTitle>
-            <div className="mb-4 rounded-2xl border border-[#E8E8EC] bg-v-gray-50/35 px-5 py-4">
+            <div className="mb-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-subtle)]/35 px-5 py-4">
               <div className="flex flex-wrap items-center gap-2.5">
                 <RequiredTag required={op.requestBody.required} />
                 {op.requestBody.contentType && (
-                  <code className="rounded-full bg-white px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
+                  <code className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
                     {op.requestBody.contentType}
                   </code>
                 )}

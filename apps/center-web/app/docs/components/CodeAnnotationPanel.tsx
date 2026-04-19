@@ -6,12 +6,14 @@ import { useRef, useCallback } from "react";
 const LINE_HEIGHT = 13 * 1.75; // 22.75px
 
 export function CodeAnnotationPanel({
-  codeHtml,
+  codeHtmlLight,
+  codeHtmlDark,
   annotations,
   totalLines,
   maxHeight = 400,
 }: {
-  codeHtml: string;
+  codeHtmlLight: string;
+  codeHtmlDark: string;
   annotations: [number, string][];
   totalLines: number;
   maxHeight?: number;
@@ -38,13 +40,15 @@ export function CodeAnnotationPanel({
                    [&_code]:font-mono"
         style={{ maxHeight }}
         onScroll={handleScroll}
-        dangerouslySetInnerHTML={{ __html: codeHtml }}
-      />
+      >
+        <div className="dark:hidden" dangerouslySetInnerHTML={{ __html: codeHtmlLight }} />
+        <div className="hidden dark:block" dangerouslySetInnerHTML={{ __html: codeHtmlDark }} />
+      </div>
 
       {/* 注释面板 */}
       <div
         ref={annotRef}
-        className="w-[220px] shrink-0 overflow-hidden border-l border-white/[0.06] bg-white/[0.02]"
+        className="w-[220px] shrink-0 overflow-hidden border-l border-[var(--code-border)] bg-[var(--bg-subtle)]/30"
         style={{ maxHeight }}
       >
         <div className="py-4 pl-3 pr-2">
@@ -53,12 +57,12 @@ export function CodeAnnotationPanel({
             return (
               <div
                 key={i}
-                className="flex items-center text-[11px] text-[#7f848e]"
+                className="flex items-center text-[11px] text-[var(--code-comment)]"
                 style={{ height: LINE_HEIGHT }}
               >
                 {text && (
                   <span className="truncate" title={text}>
-                    <span className="mr-1 font-mono text-[#5c6370]">{"//"}</span>
+                    <span className="mr-1 font-mono opacity-70">{"//"}</span>
                     {text}
                   </span>
                 )}

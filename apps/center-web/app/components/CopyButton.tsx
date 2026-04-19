@@ -34,8 +34,8 @@ export function CopyButton({ text, variant = "light" }: CopyButtonProps) {
     >
       {copied ? (
         <>
-          <Check size={13} weight="bold" className={variant === "dark" ? "text-emerald-400" : "text-green-600"} />
-          <span className={variant === "dark" ? "text-emerald-400" : "text-green-600"}>已复制</span>
+          <Check size={13} weight="bold" className="text-[var(--accent)]" />
+          <span className="text-[var(--accent)]">已复制</span>
         </>
       ) : (
         <>

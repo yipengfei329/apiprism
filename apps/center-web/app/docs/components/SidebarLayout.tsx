@@ -48,7 +48,13 @@ export function SidebarLayout({
   }, [isDesktop]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{
+        // Arc 风格外层"窗口": 桌面端使用 sidebar 深色作为外框，使主内容区看起来是嵌入式圆角面板
+        backgroundColor: isDesktop ? "var(--sidebar-bg)" : "var(--bg-canvas)",
+      }}
+    >
       {/* ── 移动端遮罩 ── */}
       {!isDesktop && (
         <div
@@ -93,34 +99,44 @@ export function SidebarLayout({
         </div>
       )}
 
-      {/* ── 主内容区 ── */}
+      {/* ── 主内容区：桌面端以圆角浮动面板的形式嵌入，呈现 Arc/macOS 层次感 ── */}
       <main
         className="relative flex flex-1 flex-col overflow-hidden"
-        style={{ background: "#FFFFFF" }}
+        style={{
+          background: "var(--bg-canvas)",
+          borderTopLeftRadius: isDesktop ? 14 : 0,
+          borderBottomLeftRadius: isDesktop ? 14 : 0,
+          boxShadow: isDesktop
+            ? "inset 1px 1px 0 0 var(--border-subtle)"
+            : "none",
+        }}
       >
         {/* 移动端顶栏（汉堡菜单 + 品牌） */}
         {!isDesktop && (
           <div
             className="flex shrink-0 items-center gap-3 border-b px-4 py-3"
-            style={{ borderColor: "#EBEBEB", background: "#FFFFFF" }}
+            style={{
+              borderColor: "var(--border-default)",
+              background: "var(--bg-canvas)",
+            }}
           >
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="打开侧边栏"
-              className="flex items-center justify-center rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+              className="flex items-center justify-center rounded-md p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
             >
               <List size={18} />
             </button>
             <div className="flex items-center gap-2">
               <div
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
-                style={{ background: "#7C3AED" }}
+                style={{ background: "var(--accent)" }}
               >
                 <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden>
-                  <path d="M2 3h8M2 6h5M2 9h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M2 3h8M2 6h5M2 9h7" stroke="var(--accent-on)" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
-              <span className="text-[13px] font-semibold tracking-tight text-zinc-700">APIPrism</span>
+              <span className="text-[13px] font-semibold tracking-tight text-[var(--text-secondary)]">APIPrism</span>
             </div>
           </div>
         )}
@@ -130,7 +146,7 @@ export function SidebarLayout({
           <button
             onClick={() => setCollapsed(false)}
             aria-label="展开侧边栏"
-            className="absolute left-3 top-3 z-20 flex cursor-pointer items-center justify-center rounded-md p-1.5 text-zinc-400 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-700"
+            className="absolute left-3 top-3 z-20 flex cursor-pointer items-center justify-center rounded-md p-1.5 text-[var(--text-tertiary)] transition-all duration-150 hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
             style={{
               opacity: collapsed ? 1 : 0,
               pointerEvents: collapsed ? "auto" : "none",

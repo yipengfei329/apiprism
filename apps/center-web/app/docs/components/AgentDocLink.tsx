@@ -42,7 +42,7 @@ export function AgentDocLink({ path }: AgentDocLinkProps) {
         title="复制链接"
       >
         {copied ? (
-          <Check size={13} weight="bold" className="text-green-600" />
+          <Check size={13} weight="bold" className="text-[var(--accent)]" />
         ) : (
           <Copy size={13} />
         )}

@@ -14,7 +14,7 @@ const MAX_DEPTH = 6;
 function Chevron({ expanded }: { expanded: boolean }) {
   return (
     <svg
-      className={`h-3.5 w-3.5 shrink-0 text-[#B0B0B8] transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
+      className={`h-3.5 w-3.5 shrink-0 text-[var(--text-quaternary)] transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
       viewBox="0 0 16 16"
       fill="currentColor"
     >
@@ -56,7 +56,7 @@ function PropertyRow({
         : null;
 
   return (
-    <div className={!isLast ? "border-b border-[#F0F0F3]" : ""}>
+    <div className={!isLast ? "border-b border-[var(--border-subtle)]" : ""}>
       {/* 属性主体 */}
       <div className="flex items-start gap-2 px-4 py-3.5">
         {/* 展开按钮 */}
@@ -64,7 +64,7 @@ function PropertyRow({
           {hasChildren && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex cursor-pointer items-center justify-center transition-colors hover:text-[#636366]"
+              className="flex cursor-pointer items-center justify-center transition-colors hover:text-[var(--text-secondary)]"
             >
               <Chevron expanded={expanded} />
             </button>
@@ -78,8 +78,8 @@ function PropertyRow({
             <span
               className={`font-mono text-[13px] font-semibold leading-snug ${
                 schema.deprecated
-                  ? "text-[#8E8E93] line-through"
-                  : "text-[#1C1C1E]"
+                  ? "text-[var(--text-tertiary)] line-through"
+                  : "text-[var(--text-primary)]"
               }`}
             >
               {name}
@@ -87,14 +87,14 @@ function PropertyRow({
             <code
               className={`rounded-[5px] px-1.5 py-[1px] font-mono text-[11px] leading-snug ${
                 schema.deprecated
-                  ? "bg-[#F2F2F7] text-[#8E8E93]"
-                  : "bg-[#F5F5F5] text-[#666666]"
+                  ? "bg-[var(--bg-muted)] text-[var(--text-tertiary)]"
+                  : "bg-[var(--bg-subtle)] text-[var(--text-secondary)]"
               }`}
             >
               {schemaTypeLabel(schema)}
             </code>
             {isRequired && (
-              <span className="font-mono text-[10px] font-semibold leading-snug text-[#E5484D]">
+              <span className="font-mono text-[10px] font-semibold leading-snug text-[var(--danger)]">
                 必填
               </span>
             )}
@@ -106,7 +106,7 @@ function PropertyRow({
               as="div"
               text={schema.description}
               className={`mt-1.5 text-[13px] leading-[1.65] [&>p]:mt-1 [&>p:first-child]:mt-0 ${
-                schema.deprecated ? "text-[#8E8E93]" : "text-[#636366]"
+                schema.deprecated ? "text-[var(--text-tertiary)]" : "text-[var(--text-secondary)]"
               }`}
             />
           )}
@@ -117,7 +117,7 @@ function PropertyRow({
               {schema.enum.map((v, i) => (
                 <span
                   key={i}
-                  className="rounded-[5px] bg-[#F2F2F7] px-1.5 py-[1px] font-mono text-[10px] text-[#636366]"
+                  className="rounded-[5px] bg-[var(--bg-muted)] px-1.5 py-[1px] font-mono text-[10px] text-[var(--text-secondary)]"
                 >
                   {String(v)}
                 </span>
@@ -128,8 +128,8 @@ function PropertyRow({
           {/* 示例值 */}
           {schema.example !== undefined && schema.example !== null && (
             <div className="mt-1.5 flex items-center gap-1.5">
-              <span className="text-[11px] text-[#8E8E93]">示例:</span>
-              <code className="rounded-[5px] bg-[#F2F2F7] px-1.5 py-[1px] font-mono text-[11px] text-[#636366]">
+              <span className="text-[11px] text-[var(--text-tertiary)]">示例:</span>
+              <code className="rounded-[5px] bg-[var(--bg-muted)] px-1.5 py-[1px] font-mono text-[11px] text-[var(--text-secondary)]">
                 {String(schema.example)}
               </code>
             </div>
@@ -137,7 +137,7 @@ function PropertyRow({
 
           {/* 循环引用标记 */}
           {schema.$circular && (
-            <span className="mt-1.5 inline-block rounded-[5px] bg-[#FFF7ED] px-1.5 py-[1px] text-[10px] font-medium text-[#C2410C]">
+            <span className="mt-1.5 inline-block rounded-[5px] bg-[var(--status-4xx-bg)] px-1.5 py-[1px] text-[10px] font-medium text-[var(--status-4xx-text)]">
               循环引用
             </span>
           )}
@@ -146,7 +146,7 @@ function PropertyRow({
 
       {/* 子属性：左边框缩进 */}
       {expanded && hasChildren && childSchema?.properties && (
-        <div className="ml-[26px] border-l border-[#EBEBEB]">
+        <div className="ml-[26px] border-l border-[var(--border-default)]">
           <PropertyList
             properties={childSchema.properties}
             requiredFields={childSchema.required ?? []}

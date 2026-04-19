@@ -66,7 +66,7 @@ export function OnThisPage({ sections }: { sections: SectionItem[] }) {
 
   return (
     <nav ref={navRefCallback} className="sticky top-20">
-      <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8E8E93]">
+      <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
         页内导航
       </h4>
       <ul className="space-y-1">
@@ -76,8 +76,8 @@ export function OnThisPage({ sections }: { sections: SectionItem[] }) {
               onClick={() => handleClick(s.id)}
               className={`block w-full cursor-pointer border-l-2 py-1 pl-3 text-left text-[13px] transition-colors ${
                 activeId === s.id
-                  ? "border-[#7C3AED] font-semibold text-[#7C3AED]"
-                  : "border-transparent text-[#999999] hover:text-[#333333]"
+                  ? "border-[var(--accent)] font-semibold text-[var(--accent)]"
+                  : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
               }`}
             >
               {s.label}

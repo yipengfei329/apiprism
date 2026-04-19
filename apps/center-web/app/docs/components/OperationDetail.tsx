@@ -98,7 +98,7 @@ export function OperationDetail({
             />
           )}
 
-          <div className="mt-6 overflow-hidden rounded-xl border border-v-gray-100 bg-white v-fade-in">
+          <div className="mt-6 overflow-hidden rounded-xl border border-v-gray-100 bg-[var(--bg-surface)] v-fade-in">
             <div className="flex flex-wrap items-center gap-2 border-b border-v-gray-100 px-5 py-3">
               <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-v-gray-400">
                 Endpoint
@@ -123,7 +123,7 @@ export function OperationDetail({
       <div className="mx-auto max-w-[1100px] px-4 sm:px-8">
         {/* ── Tab 栏 ── */}
         <div className="-mt-4 flex">
-          <div className="inline-flex rounded-full border border-v-gray-100 bg-white p-1">
+          <div className="inline-flex rounded-full border border-v-gray-100 bg-[var(--bg-surface)] p-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = active === tab.key;
@@ -133,14 +133,14 @@ export function OperationDetail({
                   onClick={() => setActive(tab.key)}
                   className={`relative flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-300 ${
                     isActive
-                      ? "bg-v-black text-white"
-                      : "text-v-gray-400 hover:text-v-gray-500 hover:bg-v-gray-50"
+                      ? "bg-[var(--text-primary)] text-[var(--bg-surface)]"
+                      : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]"
                   }`}
                 >
                   <Icon
                     size={15}
                     weight={isActive ? "fill" : "regular"}
-                    className={`transition-colors duration-200 ${isActive ? "text-white" : "text-v-gray-400/60"}`}
+                    className={`transition-colors duration-200 ${isActive ? "text-[var(--bg-surface)]" : "text-[var(--text-quaternary)]"}`}
                   />
                   {tab.label}
                 </button>

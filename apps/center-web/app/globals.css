@@ -1,61 +1,377 @@
 @import "tailwindcss";
 
+/* ────────────────────────────────────────────────────────────
+ * 暗色模式触发：next-themes 会在 <html> 上切换 .dark class
+ * ──────────────────────────────────────────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ────────────────────────────────────────────────────────────
+ * 1) Tailwind 主题注入层：
+ *    - Tailwind v4 需要通过 @theme 暴露 --color-* token 以生成工具类。
+ *    - 所有值指向下面定义的语义 token，保证主题切换时统一生效。
+ * ──────────────────────────────────────────────────────────── */
 @theme inline {
-  /* ── 中性色板（Vercel 极简风格） ── */
-  --color-v-black:    #000000;
-  --color-v-gray-600: #333333;
-  --color-v-gray-500: #666666;
-  --color-v-gray-400: #999999;
-  --color-v-gray-100: #EBEBEB;
-  --color-v-gray-50:  #F5F5F5;
-  --color-v-white:    #FFFFFF;
-
-  /* ── 唯一突出色：电光紫 ── */
-  --color-v-link:         #7C3AED;
-  --color-v-accent-light: rgba(124, 58, 237, 0.08);
-
-  /* ── 侧边栏专属色（深色表面） ── */
-  --color-sidebar-bg:     #0A0A0A;
-  --color-sidebar-border: #1F1F1F;
-
-  /* ── 卡片 / 边框色 ── */
-  --color-v-border: #EBEBEB;
-
   /* ── 字体族 ── */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New", monospace;
+
+  /* ── 语义色暴露为 Tailwind utility（bg-accent / text-primary 等）── */
+  --color-bg-canvas:     var(--bg-canvas);
+  --color-bg-surface:    var(--bg-surface);
+  --color-bg-elevated:   var(--bg-elevated);
+  --color-bg-subtle:     var(--bg-subtle);
+  --color-bg-muted:      var(--bg-muted);
+  --color-bg-inset:      var(--bg-inset);
+
+  --color-border-subtle:  var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong:  var(--border-strong);
+
+  --color-text-primary:     var(--text-primary);
+  --color-text-secondary:   var(--text-secondary);
+  --color-text-tertiary:    var(--text-tertiary);
+  --color-text-quaternary:  var(--text-quaternary);
+  --color-text-on-accent:   var(--text-on-accent);
+  --color-text-on-inverse:  var(--text-on-inverse);
+
+  --color-accent:         var(--accent);
+  --color-accent-hover:   var(--accent-hover);
+  --color-accent-bg:      var(--accent-bg);
+  --color-accent-border:  var(--accent-border);
+  --color-accent-on:      var(--accent-on);
+
+  --color-danger:        var(--danger);
+  --color-danger-hover:  var(--danger-hover);
+  --color-danger-bg:     var(--danger-bg);
+  --color-danger-border: var(--danger-border);
+  --color-danger-text:   var(--danger-text);
+
+  /* ── DEPRECATED：v-* 命名保留为语义 token 别名 ──
+   * 现存组件仍消费 bg-v-* / text-v-* / border-v-*；
+   * 本轮不做破坏性重命名，后续 cleanup commit 再移除。
+   */
+  --color-v-white:    var(--bg-canvas);
+  --color-v-black:    var(--text-primary);
+  --color-v-gray-50:  var(--bg-subtle);
+  --color-v-gray-100: var(--border-default);
+  --color-v-gray-400: var(--text-quaternary);
+  --color-v-gray-500: var(--text-tertiary);
+  --color-v-gray-600: var(--text-secondary);
+  --color-v-link:     var(--accent);
+  --color-v-accent-light: var(--accent-bg);
+  --color-v-border:   var(--border-default);
+
+  /* ── Sidebar（常暗）也暴露为 utility ── */
+  --color-sidebar-bg:     var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
 }
 
-/* ── 边框与卡片工具类 ── */
+/* ────────────────────────────────────────────────────────────
+ * 2) 语义 token 定义：浅色（:root）
+ * ──────────────────────────────────────────────────────────── */
+:root {
+  /* Surface */
+  --bg-canvas:   #FFFFFF;
+  --bg-surface:  #FFFFFF;
+  --bg-elevated: #FAFAFA;
+  --bg-subtle:   #F5F5F5;
+  --bg-muted:    #F0F0F3;
+  --bg-inset:    #EBEBEB;
+
+  /* Border */
+  --border-subtle:  #F0F0F3;
+  --border-default: #EBEBEB;
+  --border-strong:  #D4D4D8;
+  --border-focus:   #A1A1AA;
+
+  /* Text */
+  --text-primary:    #0A0A0A;
+  --text-secondary:  #3F3F46;
+  --text-tertiary:   #71717A;
+  --text-quaternary: #A1A1AA;
+  --text-on-accent:  #FFFFFF;
+  --text-on-inverse: #FFFFFF;
+
+  /* Accent — teal-600 on light */
+  --accent:           #0D9488;
+  --accent-hover:     #0F766E;
+  --accent-bg:        rgba(13, 148, 136, 0.08);
+  --accent-border:    rgba(13, 148, 136, 0.24);
+  --accent-ring:      rgba(13, 148, 136, 0.55);
+  --accent-selection: rgba(13, 148, 136, 0.18);
+  --accent-on:        #FFFFFF;
+
+  /* Danger */
+  --danger:        #DC2626;
+  --danger-hover:  #B91C1C;
+  --danger-bg:     #FEF2F2;
+  --danger-border: rgba(220, 38, 38, 0.20);
+  --danger-text:   #B91C1C;
+
+  /* Scrollbar */
+  --scrollbar-thumb:       rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.6);
+
+  /* Method badge — light */
+  --method-get-bg:     #EFF6FF;
+  --method-get-text:   #1D4ED8;
+  --method-get-border: #BFDBFE;
+
+  --method-post-bg:     #F0FDF4;
+  --method-post-text:   #15803D;
+  --method-post-border: #BBF7D0;
+
+  --method-put-bg:     #FFFBEB;
+  --method-put-text:   #B45309;
+  --method-put-border: #FDE68A;
+
+  --method-patch-bg:     #F0FDFA;
+  --method-patch-text:   #0F766E;
+  --method-patch-border: #99F6E4;
+
+  --method-delete-bg:     #FEF2F2;
+  --method-delete-text:   #B91C1C;
+  --method-delete-border: #FECACA;
+
+  --method-head-bg:     #F4F4F5;
+  --method-head-text:   #3F3F46;
+  --method-head-border: #D4D4D8;
+
+  --method-options-bg:     #F4F4F5;
+  --method-options-text:   #52525B;
+  --method-options-border: #D4D4D8;
+
+  /* Env badge — light */
+  --env-prod-bg:     #F0FDFA;
+  --env-prod-text:   #0F766E;
+  --env-prod-border: #99F6E4;
+  --env-prod-dot:    #0D9488;
+
+  --env-staging-bg:     #FFFBEB;
+  --env-staging-text:   #B45309;
+  --env-staging-border: #FDE68A;
+  --env-staging-dot:    #F59E0B;
+
+  --env-test-bg:     #F5F3FF;
+  --env-test-text:   #6D28D9;
+  --env-test-border: #DDD6FE;
+  --env-test-dot:    #8B5CF6;
+
+  --env-default-bg:     #F4F4F5;
+  --env-default-text:   #52525B;
+  --env-default-border: #E4E4E7;
+  --env-default-dot:    #71717A;
+
+  /* Status code — light */
+  --status-2xx-bg:   #F0FDF4;
+  --status-2xx-text: #15803D;
+  --status-3xx-bg:   #F4F4F5;
+  --status-3xx-text: #52525B;
+  --status-4xx-bg:   #FFF7ED;
+  --status-4xx-text: #9A3412;
+  --status-5xx-bg:   #FEF2F2;
+  --status-5xx-text: #991B1B;
+
+  /* Warning（revision banner 等） */
+  --warning-bg:     #FFFBEB;
+  --warning-border: #FDE68A;
+  --warning-text:   #92400E;
+  --warning-strong: #B45309;
+
+  /* Code preview — light */
+  --code-bg:       #FAFAFA;
+  --code-border:   rgba(10, 10, 10, 0.06);
+  --code-label:    rgba(10, 10, 10, 0.45);
+  --code-comment:  #6E7681;
+
+  /* chip-on-inverse：显示在 text-primary 背景上的小徽章（如激活响应 tab 里的状态码） */
+  --chip-on-inverse-bg: rgba(255, 255, 255, 0.16);
+}
+
+/* ────────────────────────────────────────────────────────────
+ * 3) 语义 token 定义：暗色（.dark）
+ * ──────────────────────────────────────────────────────────── */
+.dark {
+  /* Surface */
+  --bg-canvas:   #0A0A0B;
+  --bg-surface:  #131316;
+  --bg-elevated: #18181B;
+  --bg-subtle:   #1F1F23;
+  --bg-muted:    #27272A;
+  --bg-inset:    #2A2A2E;
+
+  /* Border */
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-strong:  rgba(255, 255, 255, 0.14);
+  --border-focus:   rgba(255, 255, 255, 0.22);
+
+  /* Text */
+  --text-primary:    rgba(255, 255, 255, 0.92);
+  --text-secondary:  rgba(255, 255, 255, 0.72);
+  --text-tertiary:   rgba(255, 255, 255, 0.52);
+  --text-quaternary: rgba(255, 255, 255, 0.32);
+  --text-on-accent:  #042F2E;
+  --text-on-inverse: #0A0A0B;
+
+  /* Accent — teal-400 on dark */
+  --accent:           #2DD4BF;
+  --accent-hover:     #5EEAD4;
+  --accent-bg:        rgba(45, 212, 191, 0.12);
+  --accent-border:    rgba(45, 212, 191, 0.28);
+  --accent-ring:      rgba(45, 212, 191, 0.55);
+  --accent-selection: rgba(45, 212, 191, 0.25);
+  --accent-on:        #042F2E;
+
+  /* Danger */
+  --danger:        #F87171;
+  --danger-hover:  #FCA5A5;
+  --danger-bg:     rgba(248, 113, 113, 0.10);
+  --danger-border: rgba(248, 113, 113, 0.28);
+  --danger-text:   #F87171;
+
+  /* Scrollbar */
+  --scrollbar-thumb:       rgba(255, 255, 255, 0.10);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.78);
+
+  /* Method badge — dark */
+  --method-get-bg:     #0C1E3A;
+  --method-get-text:   #60A5FA;
+  --method-get-border: rgba(96, 165, 250, 0.22);
+
+  --method-post-bg:     #052E16;
+  --method-post-text:   #4ADE80;
+  --method-post-border: rgba(74, 222, 128, 0.24);
+
+  --method-put-bg:     #1F1700;
+  --method-put-text:   #FBBF24;
+  --method-put-border: rgba(251, 191, 36, 0.24);
+
+  --method-patch-bg:     #042F2E;
+  --method-patch-text:   #5EEAD4;
+  --method-patch-border: rgba(94, 234, 212, 0.24);
+
+  --method-delete-bg:     #2A0A0A;
+  --method-delete-text:   #F87171;
+  --method-delete-border: rgba(248, 113, 113, 0.24);
+
+  --method-head-bg:     #1F1F23;
+  --method-head-text:   #D4D4D8;
+  --method-head-border: rgba(255, 255, 255, 0.12);
+
+  --method-options-bg:     #1F1F23;
+  --method-options-text:   #A1A1AA;
+  --method-options-border: rgba(255, 255, 255, 0.10);
+
+  /* Env badge — dark */
+  --env-prod-bg:     rgba(45, 212, 191, 0.12);
+  --env-prod-text:   #2DD4BF;
+  --env-prod-border: rgba(45, 212, 191, 0.28);
+  --env-prod-dot:    #2DD4BF;
+
+  --env-staging-bg:     rgba(245, 158, 11, 0.12);
+  --env-staging-text:   #FBBF24;
+  --env-staging-border: rgba(245, 158, 11, 0.22);
+  --env-staging-dot:    #FBBF24;
+
+  --env-test-bg:     rgba(167, 139, 250, 0.14);
+  --env-test-text:   #C4B5FD;
+  --env-test-border: rgba(167, 139, 250, 0.24);
+  --env-test-dot:    #A78BFA;
+
+  --env-default-bg:     rgba(255, 255, 255, 0.06);
+  --env-default-text:   rgba(255, 255, 255, 0.6);
+  --env-default-border: rgba(255, 255, 255, 0.10);
+  --env-default-dot:    rgba(255, 255, 255, 0.45);
+
+  /* Status code — dark */
+  --status-2xx-bg:   #052E16;
+  --status-2xx-text: #4ADE80;
+  --status-3xx-bg:   #1F1F23;
+  --status-3xx-text: #A1A1AA;
+  --status-4xx-bg:   #1F1100;
+  --status-4xx-text: #FDBA74;
+  --status-5xx-bg:   #2A0A0A;
+  --status-5xx-text: #FCA5A5;
+
+  /* Warning — dark */
+  --warning-bg:     rgba(251, 191, 36, 0.10);
+  --warning-border: rgba(251, 191, 36, 0.30);
+  --warning-text:   #FBBF24;
+  --warning-strong: #FCD34D;
+
+  /* Code preview — dark */
+  --code-bg:       #18181B;
+  --code-border:   rgba(255, 255, 255, 0.06);
+  --code-label:    rgba(255, 255, 255, 0.35);
+  --code-comment:  #7F848E;
+
+  /* chip-on-inverse：深色模式下激活 tab 背景是亮色，徽章反过来用暗色 */
+  --chip-on-inverse-bg: rgba(0, 0, 0, 0.22);
+}
+
+/* ────────────────────────────────────────────────────────────
+ * 4) Sidebar 专属 token：常暗，两主题共享，不参与 .dark 翻转
+ * ──────────────────────────────────────────────────────────── */
+:root,
+.dark {
+  --sidebar-bg:              #0F0F11;
+  --sidebar-border:          rgba(255, 255, 255, 0.07);
+  --sidebar-divider:         rgba(255, 255, 255, 0.06);
+  --sidebar-text-primary:    rgba(255, 255, 255, 0.88);
+  --sidebar-text-secondary:  rgba(255, 255, 255, 0.55);
+  --sidebar-text-tertiary:   rgba(255, 255, 255, 0.35);
+  --sidebar-text-quaternary: rgba(255, 255, 255, 0.22);
+  --sidebar-hover-bg:        rgba(255, 255, 255, 0.05);
+  --sidebar-active-bg:       rgba(255, 255, 255, 0.06);
+  --sidebar-accent-bg:       rgba(45, 212, 191, 0.14);
+  --sidebar-accent-text:     #5EEAD4;
+  --sidebar-accent-rail:     #2DD4BF;
+}
+
+/* ────────────────────────────────────────────────────────────
+ * 5) 工具类：边框 / 卡片 / 入场动画
+ * ──────────────────────────────────────────────────────────── */
 @layer utilities {
   /* Level 1：ring border */
   .v-ring {
-    box-shadow: 0 0 0 1px #EBEBEB;
+    box-shadow: 0 0 0 1px var(--border-default);
   }
-  /* Level 1b：浅灰 ring */
+  /* Level 1b：浅 ring */
   .v-ring-light {
-    box-shadow: 0 0 0 1px #F0F0F0;
+    box-shadow: 0 0 0 1px var(--border-subtle);
   }
   /* 卡片：单层 1px 边框，无阴影 */
   .v-card {
-    border: 1px solid #EBEBEB;
+    border: 1px solid var(--border-default);
   }
   .v-card-full {
-    border: 1px solid #EBEBEB;
+    border: 1px solid var(--border-default);
   }
   /* 方向性边框 */
   .v-border-b {
-    box-shadow: 0 1px 0 0 #EBEBEB;
+    box-shadow: 0 1px 0 0 var(--border-default);
   }
   .v-border-r {
-    box-shadow: 1px 0 0 0 #EBEBEB;
+    box-shadow: 1px 0 0 0 var(--border-default);
   }
   /* hover：边框加深，无位移 */
   .v-card-full-hover {
     transition: border-color 0.15s ease;
   }
   .v-card-full-hover:hover {
-    border-color: #CECECE;
+    border-color: var(--border-strong);
+  }
+
+  /* ── 分组 hero 渐变：浅色从灰到透明，暗色从 elevated 到 canvas ── */
+  .hero-gradient {
+    background: linear-gradient(180deg, rgba(242,242,247,0.65) 0%, rgba(242,242,247,0.2) 100%);
   }
 
   /* ── 入场动画 ── */
@@ -73,7 +389,9 @@
   .v-delay-4 { animation-delay: 240ms; }
 }
 
-/* ── 关键帧 ── */
+/* ────────────────────────────────────────────────────────────
+ * 6) 关键帧
+ * ──────────────────────────────────────────────────────────── */
 @keyframes v-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -83,6 +401,9 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ────────────────────────────────────────────────────────────
+ * 7) 全局基础样式
+ * ──────────────────────────────────────────────────────────── */
 html {
   color-scheme: light;
   font-family: var(--font-sans);
@@ -91,27 +412,37 @@ html {
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
 }
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark .hero-gradient {
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-canvas) 100%);
+}
 
 body {
   min-height: 100vh;
-  background-color: #FFFFFF;
-  color: #000000;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
 }
 
-/* 文字选中高亮（紫色调） */
+/* 文字选中高亮 */
 ::selection {
-  background: rgba(124, 58, 237, 0.12);
-  color: #000000;
+  background: var(--accent-selection);
+  color: var(--text-primary);
 }
 
-/* 焦点环（紫色） */
+/* 焦点环 */
 :focus-visible {
-  outline: 2px solid rgba(124, 58, 237, 0.6);
+  outline: 2px solid var(--accent-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* 滚动条（细窄，仅 hover 显示） */
+* {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -120,9 +451,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--scrollbar-thumb-hover);
 }

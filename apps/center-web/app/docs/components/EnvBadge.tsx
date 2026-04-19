@@ -1,23 +1,44 @@
-// 环境标签组件，用于面包屑和侧边栏统一展示环境信息
+// 环境标签组件：使用主题可感知的 CSS 变量，light/dark 自动切换
+// prod 使用 accent（teal），统一"最重要信号"
 
-function getEnvThemeLight(env: string) {
+type EnvTokens = { dot: string; bg: string; border: string; text: string };
+
+function getEnvTheme(env: string): EnvTokens {
   const lower = env.toLowerCase();
   if (lower === "production" || lower === "prod") {
-    // prod 最重要，用唯一突出色紫色
-    return { dot: "#7C3AED", bg: "rgba(124,58,237,0.06)", border: "rgba(124,58,237,0.20)", text: "#7C3AED" };
+    return {
+      dot: "var(--env-prod-dot)",
+      bg: "var(--env-prod-bg)",
+      border: "var(--env-prod-border)",
+      text: "var(--env-prod-text)",
+    };
   }
   if (lower === "staging" || lower === "preview" || lower === "pre") {
-    // staging 保留功能性琥珀色（警告信号）
-    return { dot: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", text: "#B45309" };
+    return {
+      dot: "var(--env-staging-dot)",
+      bg: "var(--env-staging-bg)",
+      border: "var(--env-staging-border)",
+      text: "var(--env-staging-text)",
+    };
   }
   if (lower === "test" || lower === "testing") {
-    return { dot: "#666666", bg: "#F5F5F5", border: "#EBEBEB", text: "#444444" };
+    return {
+      dot: "var(--env-test-dot)",
+      bg: "var(--env-test-bg)",
+      border: "var(--env-test-border)",
+      text: "var(--env-test-text)",
+    };
   }
-  return { dot: "#999999", bg: "#F5F5F5", border: "#EBEBEB", text: "#666666" };
+  return {
+    dot: "var(--env-default-dot)",
+    bg: "var(--env-default-bg)",
+    border: "var(--env-default-border)",
+    text: "var(--env-default-text)",
+  };
 }
 
 export function EnvBadge({ env }: { env: string }) {
-  const theme = getEnvThemeLight(env);
+  const theme = getEnvTheme(env);
 
   return (
     <span

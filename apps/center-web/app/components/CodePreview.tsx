@@ -39,6 +39,8 @@ export interface CodePreviewProps {
 }
 
 /* ── CodePreview（Async Server Component） ─────────────────── */
+// Shiki 在 SSR 阶段无法感知主题，所以同时渲染 light / dark 两份 HTML，
+// 运行时借助 `dark:hidden` / `hidden dark:block` 决定显示哪一份。
 export async function CodePreview({
   code,
   language = "json",
@@ -46,33 +48,35 @@ export async function CodePreview({
   maxHeight = 400,
   className = "",
 }: CodePreviewProps) {
-  const html = await codeToHtml(code, {
-    lang: language,
-    theme: "one-dark-pro",
-  });
+  const [htmlLight, htmlDark] = await Promise.all([
+    codeToHtml(code, { lang: language, theme: "github-light" }),
+    codeToHtml(code, { lang: language, theme: "one-dark-pro" }),
+  ]);
 
   const langLabel = LANG_LABELS[language] ?? language.toUpperCase();
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-white/[0.06] bg-[#282c34] ${className}`}
+      className={`overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--code-bg)] ${className}`}
     >
       {/* ── 顶栏：语言标签 + 复制按钮 ── */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2">
-        <span className="text-[11px] font-medium tracking-wide text-white/35">
+      <div className="flex items-center justify-between border-b border-[var(--code-border)] px-4 py-2">
+        <span className="text-[11px] font-medium tracking-wide text-[var(--code-label)]">
           {langLabel}
         </span>
         {copyable && <CopyButton text={code} variant="dark" />}
       </div>
 
-      {/* ── 代码区 ── */}
+      {/* ── 代码区：双渲染，light / dark 切换 ── */}
       <div
         className="overflow-auto text-[13px] leading-[1.75]
                    [&_pre]:!bg-transparent [&_pre]:px-4 [&_pre]:py-4
                    [&_code]:font-mono"
         style={{ maxHeight }}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      >
+        <div className="dark:hidden" dangerouslySetInnerHTML={{ __html: htmlLight }} />
+        <div className="hidden dark:block" dangerouslySetInnerHTML={{ __html: htmlDark }} />
+      </div>
     </div>
   );
 }

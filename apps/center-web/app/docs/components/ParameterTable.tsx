@@ -70,7 +70,7 @@ function ParameterMeta({ parameter }: { parameter: CanonicalParameter }) {
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {enumValues.length > 0 && (
-        <span className="inline-flex flex-wrap items-center gap-1 rounded-full bg-[#F5F6F8] px-2.5 py-1 text-[11px] text-v-gray-500">
+        <span className="inline-flex flex-wrap items-center gap-1 rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 text-[11px] text-v-gray-500">
           <span className="font-medium text-v-gray-400">Enum</span>
           <span className="font-mono">{enumValues.map((value) => String(value)).join(" | ")}</span>
         </span>
@@ -89,14 +89,14 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
   const nested = hasNestedSchema(parameter);
 
   return (
-    <tr className="border-t border-[#F0F0F3] align-top">
+    <tr className="border-t border-[var(--border-subtle)] align-top">
       <td className="px-4 py-4 md:px-5">
         <div className="flex flex-wrap items-center gap-2">
           <code className="font-mono text-[13px] font-semibold text-v-black">
             {parameter.name}
           </code>
           {nested && (
-            <span className="rounded-full bg-[#F5F6F8] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-v-gray-400">
+            <span className="rounded-full bg-[var(--bg-subtle)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-v-gray-400">
               object
             </span>
           )}
@@ -110,7 +110,7 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
       <td className="px-4 py-4 md:px-5">
         <span
           className={`font-mono text-[11px] font-semibold ${
-            parameter.required ? "text-[#E5484D]" : "text-v-gray-400"
+            parameter.required ? "text-[var(--danger)]" : "text-v-gray-400"
           }`}
         >
           {parameter.required ? "必填" : "选填"}
@@ -154,17 +154,17 @@ function ParameterGroup({
   const requiredCount = parameters.filter((parameter) => parameter.required).length;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-v-gray-100 bg-white">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0F0F3] bg-v-gray-50/50 px-5 py-4">
+    <section className="overflow-hidden rounded-2xl border border-v-gray-100 bg-[var(--bg-surface)]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-v-gray-50/50 px-5 py-4">
         <div className="flex items-center gap-3">
           <h3 className="text-[14px] font-semibold text-v-black">{label}</h3>
-          <code className="rounded-full bg-white px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-v-gray-400">
+          <code className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-v-gray-400">
             {location}
           </code>
         </div>
         <div className="flex items-center gap-2 text-[12px] text-v-gray-400">
           <span>{parameters.length} 个参数</span>
-          <span className="h-1 w-1 rounded-full bg-[#D0D3DA]" />
+          <span className="h-1 w-1 rounded-full bg-[var(--border-strong)]" />
           <span>{requiredCount} 个必填</span>
         </div>
       </header>

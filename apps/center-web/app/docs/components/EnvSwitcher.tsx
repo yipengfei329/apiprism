@@ -2,18 +2,38 @@
 
 import Link from "next/link";
 
-function getEnvThemeLight(env: string) {
+function getEnvTheme(env: string) {
   const lower = env.toLowerCase();
   if (lower === "production" || lower === "prod") {
-    return { bg: "#F0FDF4", border: "#BBF7D0", text: "#15803D", dot: "#22C55E" };
+    return {
+      bg: "var(--env-prod-bg)",
+      border: "var(--env-prod-border)",
+      text: "var(--env-prod-text)",
+      dot: "var(--env-prod-dot)",
+    };
   }
   if (lower === "staging" || lower === "preview" || lower === "pre") {
-    return { bg: "#FFFBEB", border: "#FDE68A", text: "#B45309", dot: "#F59E0B" };
+    return {
+      bg: "var(--env-staging-bg)",
+      border: "var(--env-staging-border)",
+      text: "var(--env-staging-text)",
+      dot: "var(--env-staging-dot)",
+    };
   }
   if (lower === "test" || lower === "testing") {
-    return { bg: "#F5F3FF", border: "#DDD6FE", text: "#6D28D9", dot: "#8B5CF6" };
+    return {
+      bg: "var(--env-test-bg)",
+      border: "var(--env-test-border)",
+      text: "var(--env-test-text)",
+      dot: "var(--env-test-dot)",
+    };
   }
-  return { bg: "#EFF6FF", border: "#BFDBFE", text: "#1D4ED8", dot: "#3B82F6" };
+  return {
+    bg: "var(--env-default-bg)",
+    border: "var(--env-default-border)",
+    text: "var(--env-default-text)",
+    dot: "var(--env-default-dot)",
+  };
 }
 
 interface EnvSwitcherProps {
@@ -33,7 +53,7 @@ export function EnvSwitcher({ service, currentEnv, environments }: EnvSwitcherPr
     >
       {environments.map((env) => {
         const isActive = env === currentEnv;
-        const theme = getEnvThemeLight(env);
+        const theme = getEnvTheme(env);
         return (
           <Link
             key={env}
@@ -44,7 +64,7 @@ export function EnvSwitcher({ service, currentEnv, environments }: EnvSwitcherPr
             style={
               isActive
                 ? { backgroundColor: theme.bg, border: `1px solid ${theme.border}`, color: theme.text }
-                : { backgroundColor: "#F4F4F5", border: "1px solid transparent", color: "#8E8E93" }
+                : { backgroundColor: "var(--bg-subtle)", border: "1px solid transparent", color: "var(--text-tertiary)" }
             }
           >
             {isActive && (

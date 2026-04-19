@@ -49,9 +49,9 @@ export function RevisionBanner({
   };
 
   return (
-    <div className="sticky top-0 z-10 mb-6 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3">
+    <div className="sticky top-0 z-10 mb-6 rounded-lg border border-[var(--env-staging-border)] bg-[var(--env-staging-bg)] px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-[13px] text-[#92400E]">
+        <div className="flex items-center gap-2 text-[13px] text-[var(--env-staging-text)]">
           <svg className="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 1.5a.75.75 0 0 1 .67.41l6 11.5A.75.75 0 0 1 14 14.5H2a.75.75 0 0 1-.67-1.09l6-11.5A.75.75 0 0 1 8 1.5zm0 4a.75.75 0 0 0-.75.75V9a.75.75 0 0 0 1.5 0V6.25A.75.75 0 0 0 8 5.5zm0 6.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z" />
           </svg>
@@ -61,7 +61,7 @@ export function RevisionBanner({
               <span className="ml-1 font-mono font-semibold">#{seq}</span>
             )}
             {registeredAt && (
-              <span className="ml-2 text-[#B45309]">
+              <span className="ml-2 text-[var(--env-staging-text)] opacity-80">
                 {new Date(registeredAt).toLocaleString()}
               </span>
             )}
@@ -71,21 +71,21 @@ export function RevisionBanner({
         <div className="flex items-center gap-2">
           <Link
             href={baseHref}
-            className="rounded-md px-2.5 py-1 text-[12px] font-medium text-[#92400E] transition-colors hover:bg-[#FDE68A]/50"
+            className="rounded-md px-2.5 py-1 text-[12px] font-medium text-[var(--env-staging-text)] transition-colors hover:bg-[var(--env-staging-border)]/50"
           >
             返回最新
           </Link>
           <button
             onClick={handleActivate}
             disabled={loading}
-            className="rounded-md bg-[#B45309] px-2.5 py-1 text-[12px] font-medium text-white transition-colors hover:bg-[#92400E] disabled:opacity-50"
+            className="rounded-md bg-[var(--env-staging-dot)] px-2.5 py-1 text-[12px] font-medium text-[var(--text-on-accent)] transition-colors hover:opacity-80 disabled:opacity-50"
           >
             {loading ? "恢复中..." : "恢复此版本"}
           </button>
         </div>
       </div>
       {error && (
-        <p className="mt-2 text-[12px] text-[#B91C1C]">{error}</p>
+        <p className="mt-2 text-[12px] text-[var(--danger)]">{error}</p>
       )}
     </div>
   );

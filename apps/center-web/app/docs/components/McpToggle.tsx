@@ -71,11 +71,11 @@ export function McpToggle({
   }, []);
 
   return (
-    <div className="rounded-xl bg-white v-card-full p-5">
+    <div className="rounded-xl bg-[var(--bg-surface)] v-card-full p-5">
       {/* 标题行 + 开关 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Lightning size={16} weight="fill" className={enabled ? "text-amber-500" : "text-v-gray-400"} />
+          <Lightning size={16} weight="fill" className={enabled ? "text-[var(--env-staging-dot)]" : "text-v-gray-400"} />
           <span className="text-[13px] font-semibold text-v-black">MCP 服务</span>
           <span className="text-[11px] text-v-gray-400">
             {groupSlug ? "分组级" : "服务级"}
@@ -89,11 +89,11 @@ export function McpToggle({
           onClick={handleToggle}
           className={`relative inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer rounded-full
                       transition-colors duration-200 ease-in-out focus:outline-none
-                      ${enabled ? "bg-[#34C759]" : "bg-v-gray-100"}
+                      ${enabled ? "bg-[var(--accent)]" : "bg-v-gray-100"}
                       ${loading ? "opacity-60 cursor-wait" : ""}`}
         >
           <span
-            className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white
+            className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-[var(--bg-surface)]
                         shadow-sm ring-0 transition-transform duration-200 ease-in-out
                         ${enabled ? "translate-x-[22px]" : "translate-x-[2px]"} mt-[2px]`}
           />
@@ -102,7 +102,7 @@ export function McpToggle({
 
       {/* 错误提示 */}
       {error && (
-        <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-700">
+        <div className="mt-3 rounded-lg bg-[var(--danger-bg)] px-3 py-2 text-[12px] text-[var(--danger-text)]">
           {error}
         </div>
       )}
@@ -144,7 +144,7 @@ function EndpointRow({
   onCopy: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-[#F4F4F5] px-3 py-2">
+    <div className="flex items-center gap-2 rounded-lg bg-[var(--bg-subtle)] px-3 py-2">
       <span className="shrink-0 rounded bg-v-gray-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-v-gray-500 uppercase">
         {label}
       </span>
@@ -153,12 +153,12 @@ function EndpointRow({
         type="button"
         onClick={onCopy}
         className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium
-                   text-v-gray-400 transition-colors hover:text-v-gray-600 hover:bg-white/60 cursor-pointer"
+                   text-v-gray-400 transition-colors hover:text-v-gray-600 hover:bg-[var(--bg-surface)]/60 cursor-pointer"
       >
         {copied ? (
           <>
-            <Check size={13} weight="bold" className="text-green-600" />
-            <span className="text-green-600">已复制</span>
+            <Check size={13} weight="bold" className="text-[var(--accent)]" />
+            <span className="text-[var(--accent)]">已复制</span>
           </>
         ) : (
           <>
