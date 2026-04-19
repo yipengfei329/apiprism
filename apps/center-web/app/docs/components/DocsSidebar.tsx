@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useCallback, useRef, useEffect } from "react";
-import { ServiceCatalogItem, CanonicalGroup } from "../lib/api";
+import { createPortal } from "react-dom";
+import { ServiceCatalogItem, CanonicalGroup, RevisionSummary } from "../lib/api";
 import { MethodBadge } from "./MethodBadge";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import {
   Folder,
   User,
@@ -40,19 +42,40 @@ function parseDocsRoute(pathname: string): { service: string | null; environment
   };
 }
 
-// 环境色映射
+// 环境色映射（侧边栏常暗，使用 dark 语义值，不随主题翻转）
+// prod = accent teal（承担"最重要信号"角色）
 function getEnvTheme(env: string) {
   const lower = env.toLowerCase();
   if (lower === "production" || lower === "prod") {
-    return { dot: "#34C759", bg: "rgba(52,199,89,0.12)", border: "rgba(52,199,89,0.22)", text: "#4ADE80" };
+    return {
+      dot: "#2DD4BF",
+      bg: "rgba(45,212,191,0.12)",
+      border: "rgba(45,212,191,0.28)",
+      text: "#2DD4BF",
+    };
   }
   if (lower === "staging" || lower === "preview" || lower === "pre") {
-    return { dot: "#FF9F0A", bg: "rgba(255,159,10,0.12)", border: "rgba(255,159,10,0.22)", text: "#FBB042" };
+    return {
+      dot: "#FBBF24",
+      bg: "rgba(245,158,11,0.12)",
+      border: "rgba(245,158,11,0.22)",
+      text: "#FBBF24",
+    };
   }
   if (lower === "test" || lower === "testing") {
-    return { dot: "#A78BFA", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.22)", text: "#A78BFA" };
+    return {
+      dot: "#A78BFA",
+      bg: "rgba(167,139,250,0.14)",
+      border: "rgba(167,139,250,0.24)",
+      text: "#C4B5FD",
+    };
   }
-  return { dot: "#888888", bg: "rgba(136,136,136,0.12)", border: "rgba(136,136,136,0.20)", text: "#AAAAAA" };
+  return {
+    dot: "rgba(255,255,255,0.45)",
+    bg: "rgba(255,255,255,0.06)",
+    border: "rgba(255,255,255,0.10)",
+    text: "rgba(255,255,255,0.6)",
+  };
 }
 
 // ── 分组名 → 图标的智能映射 ──
@@ -157,38 +180,40 @@ function GroupItem({
       <Link
         href={groupHref}
         onClick={() => setLocalOpen((prev) => !(prev ?? isUrlActive))}
-        className="group/nav flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 hover:bg-white/[0.05]"
+        className="group/nav flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)]"
         style={{
-          backgroundColor: isHighlighted ? "rgba(255,255,255,0.06)" : undefined,
+          backgroundColor: isHighlighted ? "var(--sidebar-active-bg)" : undefined,
         }}
       >
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all duration-200"
           style={{
-            backgroundColor: isHighlighted ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.05)",
-            color: isHighlighted ? "#A78BFA" : "rgba(255,255,255,0.35)",
+            backgroundColor: isHighlighted ? "var(--sidebar-accent-bg)" : "var(--sidebar-hover-bg)",
+            color: isHighlighted ? "var(--sidebar-accent-text)" : "var(--sidebar-text-tertiary)",
             boxShadow: "none",
           }}
         >
           <GroupIcon size={14} weight={isHighlighted ? "fill" : "regular"} />
         </span>
         <span
-          className="flex-1 truncate text-[13.5px] font-medium leading-snug transition-colors duration-150 group-hover/nav:text-white/80"
+          className="flex-1 truncate text-[13.5px] font-medium leading-snug transition-colors duration-150 group-hover/nav:text-[var(--sidebar-text-primary)]"
           style={{
-            color: isHighlighted ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.55)",
+            color: isHighlighted
+              ? "var(--sidebar-text-primary)"
+              : "var(--sidebar-text-secondary)",
           }}
         >
           {groupDisplayName}
         </span>
         {operations && operations.length > 0 && (
-          <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/20">
+          <span className="shrink-0 font-mono text-[10px] tabular-nums text-[var(--sidebar-text-quaternary)]">
             {operations.length}
           </span>
         )}
         <CaretRight
           size={12}
           weight="bold"
-          className="shrink-0 text-white/20 transition-transform duration-200 ease-out"
+          className="shrink-0 text-[var(--sidebar-text-quaternary)] transition-transform duration-200 ease-out"
           style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}
         />
       </Link>
@@ -207,7 +232,7 @@ function GroupItem({
                   <span
                     className="inline-block h-[14px] w-8 animate-pulse rounded"
                     style={{
-                      backgroundColor: "rgba(255,255,255,0.05)",
+                      backgroundColor: "var(--sidebar-hover-bg)",
                       animationDelay: `${i * 80}ms`,
                     }}
                   />
@@ -231,17 +256,21 @@ function GroupItem({
                     <Link
                       href={opHref}
                       title={op.summary || op.operationId}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-[7px] transition-colors duration-150 hover:bg-white/[0.05]"
+                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-[7px] transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)]"
                       style={{
-                        backgroundColor: isActive ? "rgba(124,58,237,0.10)" : undefined,
-                        borderLeft: isActive ? "2px solid #7C3AED" : "2px solid transparent",
+                        backgroundColor: isActive ? "var(--sidebar-accent-bg)" : undefined,
+                        borderLeft: isActive
+                          ? "2px solid var(--sidebar-accent-rail)"
+                          : "2px solid transparent",
                       }}
                     >
                       <MethodBadge method={op.method} size="sm" />
                       <span
                         className="truncate text-[12.5px] leading-snug transition-colors duration-150"
                         style={{
-                          color: isActive ? "#C4B5FD" : "rgba(255,255,255,0.45)",
+                          color: isActive
+                            ? "var(--sidebar-accent-text)"
+                            : "var(--sidebar-text-tertiary)",
                           fontWeight: isActive ? 500 : 400,
                         }}
                       >
@@ -254,7 +283,7 @@ function GroupItem({
 
             {/* 空状态 */}
             {!loading && operations?.length === 0 && (
-              <li className="px-2.5 py-2 text-[12px] text-white/20">
+              <li className="px-2.5 py-2 text-[12px] text-[var(--sidebar-text-quaternary)]">
                 暂无接口
               </li>
             )}
@@ -262,6 +291,130 @@ function GroupItem({
         </div>
       </div>
     </li>
+  );
+}
+
+// ── 相对时间格式化（与 RevisionSwitcher 保持一致）──
+function formatRelative(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hour = Math.floor(min / 60);
+  if (hour < 24) return `${hour}h ago`;
+  const day = Math.floor(hour / 24);
+  if (day < 30) return `${day}d ago`;
+  const month = Math.floor(day / 30);
+  if (month < 12) return `${month}mo ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+// ── 侧边栏版本切换按钮（portal dropdown，不受父级 overflow:hidden 约束）──
+function SidebarRevisionButton({ service, environment }: { service: string; environment: string }) {
+  const [open, setOpen] = useState(false);
+  const [revisions, setRevisions] = useState<RevisionSummary[] | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(
+      `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/rev`,
+      { cache: "no-store" }
+    )
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setRevisions)
+      .catch(() => setRevisions([]));
+  }, [service, environment]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (!buttonRef.current?.contains(t) && !dropdownRef.current?.contains(t)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  if (!revisions || revisions.length === 0) return null;
+
+  const current = revisions.find((r) => r.current);
+  const baseHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}`;
+
+  const handleToggle = () => {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 6, left: rect.left });
+    }
+    setOpen((v) => !v);
+  };
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={handleToggle}
+        className="group/rev inline-flex cursor-pointer items-center gap-1 rounded-md border px-2.5 py-[3px] font-mono text-[10px] font-medium text-[var(--sidebar-text-secondary)] transition-colors duration-150 hover:border-[var(--sidebar-accent-rail)] hover:text-[var(--sidebar-accent-text)]"
+        style={{ borderColor: "rgba(255,255,255,0.10)" }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {current ? `#${current.seq}` : "rev"}
+        <svg className="h-2.5 w-2.5 shrink-0 opacity-50 transition-opacity group-hover/rev:opacity-100" viewBox="0 0 12 12" fill="none" aria-hidden>
+          <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && createPortal(
+        <div
+          ref={dropdownRef}
+          role="listbox"
+          className="fixed z-[9999] max-h-[280px] w-[268px] overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] py-1 shadow-lg"
+          style={dropdownPos}
+        >
+          {revisions.map((rev) => {
+            const href = rev.current
+              ? baseHref
+              : `${baseHref}?revision=${encodeURIComponent(rev.id)}`;
+            return (
+              <Link
+                key={rev.id}
+                href={href}
+                role="option"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-[var(--bg-subtle)]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[12px] font-semibold text-[var(--text-primary)]">
+                    #{rev.seq}
+                  </span>
+                  {rev.current && (
+                    <span className="rounded bg-[var(--env-prod-bg)] px-1.5 py-[1px] font-mono text-[10px] font-medium text-[var(--env-prod-text)]">
+                      当前
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
+                  <span className="font-mono">{rev.specHash.substring(0, 7)}</span>
+                  <span>·</span>
+                  <span>{formatRelative(rev.registeredAt)}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -289,28 +442,27 @@ export function DocsSidebar({
     <aside
       className="flex h-full w-[288px] shrink-0 flex-col"
       style={{
-        backgroundColor: "#0A0A0A",
-        borderRight: "1px solid #1F1F1F",
+        backgroundColor: "var(--sidebar-bg)",
       }}
     >
       {/* ── 头部：品牌 + 服务信息 ── */}
       {activeService && envTheme ? (
         <div
-          className="px-4 pt-5 pb-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+          className="px-4 pt-4 pb-4"
+          style={{ borderBottom: "1px solid var(--sidebar-border)" }}
         >
-          {/* APIPrism 品牌 + 收起按钮 */}
-          <div className="mb-4 flex items-center justify-between">
+          {/* APIPrism 品牌 + 主题切换 + 收起按钮 */}
+          <div className="mb-3 flex items-center justify-between">
             <Link href="/" className="group flex items-center gap-2">
               <div
                 className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-                style={{ background: "#7C3AED" }}
+                style={{ background: "var(--sidebar-accent-rail)" }}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                  <path d="M2 3h8M2 6h5M2 9h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M2 3h8M2 6h5M2 9h7" stroke="#042F2E" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
-              <span className="text-[13px] font-semibold tracking-tight text-white/70 transition-colors duration-150 group-hover:text-white/50">
+              <span className="text-[13px] font-semibold tracking-tight text-[var(--sidebar-text-secondary)] transition-colors duration-150 group-hover:text-[var(--sidebar-text-primary)]">
                 APIPrism
               </span>
             </Link>
@@ -318,7 +470,7 @@ export function DocsSidebar({
               <button
                 onClick={onCollapse}
                 aria-label="收起侧边栏"
-                className="flex cursor-pointer items-center justify-center rounded-md p-1.5 text-white/22 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/55"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-[var(--sidebar-text-quaternary)] transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-secondary)]"
               >
                 <SidebarSimple size={16} weight="regular" />
               </button>
@@ -327,7 +479,7 @@ export function DocsSidebar({
 
           {/* 服务名 */}
           <h2
-            className="truncate text-[15px] font-semibold leading-snug tracking-tight text-white/88"
+            className="truncate text-[15px] font-semibold leading-snug tracking-tight text-[var(--sidebar-text-primary)]"
             title={activeService.name}
           >
             {activeService.name}
@@ -336,7 +488,7 @@ export function DocsSidebar({
           {/* 环境 + 版本 */}
           <div className="mt-2.5 flex items-center gap-2">
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] font-mono text-[10px] font-medium uppercase tracking-wider"
+              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-[3px] font-mono text-[10px] font-medium uppercase tracking-wider"
               style={{
                 backgroundColor: envTheme.bg,
                 border: `1px solid ${envTheme.border}`,
@@ -349,39 +501,38 @@ export function DocsSidebar({
               />
               {activeService.environment}
             </span>
-            {activeService.version && (
-              <span className="font-mono text-[11px] text-white/22">
-                v{activeService.version}
-              </span>
-            )}
+            <SidebarRevisionButton
+              service={activeService.name}
+              environment={activeService.environment}
+            />
           </div>
         </div>
       ) : (
         <div
           className="flex items-center gap-2.5 px-4 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+          style={{ borderBottom: "1px solid var(--sidebar-border)" }}
         >
           <Link href="/" className="group flex items-center gap-2">
             <div
               className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-              style={{ background: "#7C3AED" }}
+              style={{ background: "var(--sidebar-accent-rail)" }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                <path d="M2 3h8M2 6h5M2 9h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M2 3h8M2 6h5M2 9h7" stroke="#042F2E" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="text-[13px] font-semibold tracking-tight text-white/80 transition-opacity duration-150 group-hover:opacity-60">
+            <span className="text-[13px] font-semibold tracking-tight text-[var(--sidebar-text-primary)] transition-opacity duration-150 group-hover:opacity-60">
               APIPrism
             </span>
           </Link>
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-white/22">
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--sidebar-text-quaternary)]">
             目录
           </span>
           {onCollapse && (
             <button
               onClick={onCollapse}
               aria-label="收起侧边栏"
-              className="ml-auto flex items-center justify-center rounded-md p-1.5 text-white/22 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/55"
+              className="ml-auto flex h-7 w-7 items-center justify-center rounded-md text-[var(--sidebar-text-quaternary)] transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-secondary)]"
             >
               <SidebarSimple size={16} weight="regular" />
             </button>
@@ -395,16 +546,16 @@ export function DocsSidebar({
           <>
             {/* 区域标签 */}
             <div className="mb-2 px-2.5">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/25">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-text-quaternary)]">
                 接口列表
               </span>
             </div>
 
             {activeService.groups.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
-                <Folder size={28} weight="thin" className="mb-2 text-white/10" />
-                <p className="text-[13px] text-white/30">暂无分组</p>
-                <p className="mt-0.5 text-[11px] text-white/15">注册服务后接口将自动显示在此处</p>
+                <Folder size={28} weight="thin" className="mb-2 text-[var(--sidebar-text-quaternary)]" />
+                <p className="text-[13px] text-[var(--sidebar-text-tertiary)]">暂无分组</p>
+                <p className="mt-0.5 text-[11px] text-[var(--sidebar-text-quaternary)]">注册服务后接口将自动显示在此处</p>
               </div>
             ) : (
               <ul className="space-y-0.5">
@@ -423,15 +574,15 @@ export function DocsSidebar({
           </>
         ) : services.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
-            <Globe size={28} weight="thin" className="mb-2 text-white/10" />
-            <p className="text-[13px] text-white/30">暂无已注册服务</p>
-            <p className="mt-0.5 text-[11px] text-white/15">连接服务以开始使用</p>
+            <Globe size={28} weight="thin" className="mb-2 text-[var(--sidebar-text-quaternary)]" />
+            <p className="text-[13px] text-[var(--sidebar-text-tertiary)]">暂无已注册服务</p>
+            <p className="mt-0.5 text-[11px] text-[var(--sidebar-text-quaternary)]">连接服务以开始使用</p>
           </div>
         ) : (
           <>
             {/* 区域标签 */}
             <div className="mb-2 px-2.5">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/25">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-text-quaternary)]">
                 服务列表
               </span>
             </div>
@@ -442,12 +593,18 @@ export function DocsSidebar({
                   <li key={`${s.name}::${s.environment}`}>
                     <Link
                       href={`/docs/${encodeURIComponent(s.name)}/${encodeURIComponent(s.environment)}`}
-                      className="group/svc flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 hover:bg-white/[0.05]"
+                      className="group/svc flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)]"
                     >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors duration-150 group-hover/svc:text-white/50" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)" }}>
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+                        style={{
+                          backgroundColor: "var(--sidebar-hover-bg)",
+                          color: "var(--sidebar-text-tertiary)",
+                        }}
+                      >
                         <Globe size={14} weight="regular" />
                       </span>
-                      <span className="flex-1 truncate text-[13.5px] font-medium text-white/62 transition-colors duration-150 group-hover/svc:text-white/88">
+                      <span className="flex-1 truncate text-[13.5px] font-medium text-[var(--sidebar-text-secondary)] transition-colors duration-150 group-hover/svc:text-[var(--sidebar-text-primary)]">
                         {s.name}
                       </span>
                       <span
@@ -468,18 +625,19 @@ export function DocsSidebar({
         )}
       </nav>
 
-      {/* ── 底部返回首页 ── */}
+      {/* ── 底部：返回首页（左） + 主题切换（右下角） ── */}
       <div
-        className="px-4 py-3.5"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderTop: "1px solid var(--sidebar-divider)" }}
       >
         <Link
           href="/"
-          className="group/back flex cursor-pointer items-center gap-1.5 text-[12.5px] text-white/28 transition-colors duration-150 hover:text-white/58"
+          className="group/back flex cursor-pointer items-center gap-1.5 text-[12.5px] text-[var(--sidebar-text-tertiary)] transition-colors duration-150 hover:text-[var(--sidebar-text-primary)]"
         >
           <ArrowLeft size={14} weight="regular" className="shrink-0 transition-transform duration-150 group-hover/back:-translate-x-0.5" />
           返回首页
         </Link>
+        <ThemeToggle variant="sidebar" />
       </div>
     </aside>
   );

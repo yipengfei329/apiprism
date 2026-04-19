@@ -27,7 +27,7 @@ export default async function GroupPage({ params }: Props) {
   return (
     <div>
       {/* 面包屑导航：sticky，毛玻璃 */}
-      <div className="sticky top-0 z-10 border-b border-v-gray-100 bg-white px-4 py-3 sm:px-8">
+      <div className="sticky top-0 z-10 border-b border-v-gray-100 bg-[var(--bg-surface)] px-4 py-3 sm:px-8">
         <div className="mx-auto max-w-[1100px]">
           <Breadcrumb
             items={[
@@ -46,7 +46,7 @@ export default async function GroupPage({ params }: Props) {
       </div>
 
       {/* 分组头部区域 */}
-      <div style={{ background: "linear-gradient(180deg, rgba(242,242,247,0.6) 0%, rgba(242,242,247,0.2) 100%)" }}>
+      <div className="hero-gradient">
         <div className="mx-auto max-w-[1100px] px-4 pb-8 pt-8 sm:px-8 sm:pt-14">
           <div className="flex items-start justify-between gap-4">
             <h1
@@ -97,7 +97,7 @@ export default async function GroupPage({ params }: Props) {
                 <Link
                   key={op.operationId}
                   href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}/${encodeURIComponent(op.operationId)}`}
-                  className="group flex items-start gap-4 rounded-xl bg-white/90 px-5 py-4 backdrop-blur-sm transition-all v-card-full v-card-full-hover"
+                  className="group flex items-start gap-4 rounded-xl bg-[var(--bg-surface)] px-5 py-4 backdrop-blur-sm transition-all v-card-full v-card-full-hover"
                 >
                   <div className="shrink-0 pt-0.5">
                     <MethodBadge method={op.method} size="md" />
