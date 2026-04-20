@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ServiceCatalogItem, CanonicalGroup, RevisionSummary } from "../lib/api";
@@ -116,27 +116,38 @@ function GroupItem({
   group,
   groupDisplayName,
   currentPath,
+  revision,
 }: {
   service: string;
   environment: string;
   group: string;
   groupDisplayName: string;
   currentPath: string;
+  revision: string | null;
 }) {
-  const groupHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}`;
+  // 当存在 revision 查询参数时，所有导航都带上该参数，保证在历史版本上下文中浏览
+  const querySuffix = revision ? `?revision=${encodeURIComponent(revision)}` : "";
+  const groupBasePath = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}`;
+  const groupHref = `${groupBasePath}${querySuffix}`;
 
   // isOpen 由两个信号共同决定：
   // 1. URL 命中分组路径（刷新页面也能保持展开）
   // 2. 本地点击状态（用户点击后立即展开，无需等待导航完成）
-  const isUrlActive = currentPath.startsWith(groupHref);
+  const isUrlActive = currentPath.startsWith(groupBasePath);
   const [localOpen, setLocalOpen] = useState<boolean | null>(null);
   const isOpen = localOpen ?? isUrlActive;
 
-  const isGroupPageActive = currentPath === groupHref;
+  const isGroupPageActive = currentPath === groupBasePath;
 
   const [operations, setOperations] = useState<CanonicalGroup["operations"] | null>(null);
   const [loading, setLoading] = useState(false);
   const fetchedRef = useRef(false);
+
+  // revision 切换时重置缓存，强制按新版本重新拉取接口列表
+  useEffect(() => {
+    fetchedRef.current = false;
+    setOperations(null);
+  }, [revision]);
 
   // isOpen 变为 true 时懒加载接口列表（点击或 URL 驱动均触发）
   const fetchOps = useCallback(async () => {
@@ -144,10 +155,10 @@ function GroupItem({
     fetchedRef.current = true;
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`,
-        { cache: "no-store" }
-      );
+      const url = revision
+        ? `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/rev/${encodeURIComponent(revision)}/groups/${encodeURIComponent(group)}`
+        : `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/groups/${encodeURIComponent(group)}`;
+      const res = await fetch(url, { cache: "no-store" });
       if (res.ok) {
         const data: CanonicalGroup = await res.json();
         setOperations(data.operations ?? []);
@@ -159,7 +170,7 @@ function GroupItem({
     } finally {
       setLoading(false);
     }
-  }, [service, environment, group]);
+  }, [service, environment, group, revision]);
 
   useEffect(() => {
     if (isOpen) fetchOps();
@@ -167,8 +178,8 @@ function GroupItem({
 
   // 检查当前路径是否有激活的子项
   const hasActiveChild = operations?.some((op) => {
-    const opHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/${encodeURIComponent(op.operationId)}`;
-    return currentPath === opHref;
+    const opBasePath = `${groupBasePath}/${encodeURIComponent(op.operationId)}`;
+    return currentPath === opBasePath;
   }) ?? false;
 
   const isHighlighted = isGroupPageActive || hasActiveChild;
@@ -249,8 +260,9 @@ function GroupItem({
             {/* 接口项 */}
             {!loading &&
               operations?.map((op) => {
-                const opHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/${encodeURIComponent(op.operationId)}`;
-                const isActive = currentPath === opHref;
+                const opBasePath = `${groupBasePath}/${encodeURIComponent(op.operationId)}`;
+                const opHref = `${opBasePath}${querySuffix}`;
+                const isActive = currentPath === opBasePath;
                 return (
                   <li key={op.operationId}>
                     <Link
@@ -311,7 +323,15 @@ function formatRelative(iso: string) {
 }
 
 // ── 侧边栏版本切换按钮（portal dropdown，不受父级 overflow:hidden 约束）──
-function SidebarRevisionButton({ service, environment }: { service: string; environment: string }) {
+function SidebarRevisionButton({
+  service,
+  environment,
+  viewingRevisionId,
+}: {
+  service: string;
+  environment: string;
+  viewingRevisionId: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [revisions, setRevisions] = useState<RevisionSummary[] | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -347,7 +367,10 @@ function SidebarRevisionButton({ service, environment }: { service: string; envi
 
   if (!revisions || revisions.length === 0) return null;
 
-  const current = revisions.find((r) => r.current);
+  const active = revisions.find((r) =>
+    viewingRevisionId ? r.id === viewingRevisionId : r.current
+  );
+  const viewingOlder = Boolean(viewingRevisionId && active && !active.current);
   const baseHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}`;
 
   const handleToggle = () => {
@@ -368,7 +391,12 @@ function SidebarRevisionButton({ service, environment }: { service: string; envi
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        {current ? `#${current.seq}` : "rev"}
+        {active ? `#${active.seq}` : "rev"}
+        {viewingOlder && (
+          <span className="rounded bg-[var(--env-staging-bg)] px-1 text-[9px] text-[var(--env-staging-text)]">
+            历史
+          </span>
+        )}
         <svg className="h-2.5 w-2.5 shrink-0 opacity-50 transition-opacity group-hover/rev:opacity-100" viewBox="0 0 12 12" fill="none" aria-hidden>
           <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -427,6 +455,8 @@ export function DocsSidebar({
   onCollapse?: () => void;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const revision = searchParams.get("revision");
   const { service: currentServiceName, environment: currentEnvironment } = parseDocsRoute(pathname);
 
   const activeService =
@@ -504,6 +534,7 @@ export function DocsSidebar({
             <SidebarRevisionButton
               service={activeService.name}
               environment={activeService.environment}
+              viewingRevisionId={revision}
             />
           </div>
         </div>
@@ -567,6 +598,7 @@ export function DocsSidebar({
                     group={group.slug}
                     groupDisplayName={group.name}
                     currentPath={pathname}
+                    revision={revision}
                   />
                 ))}
               </ul>

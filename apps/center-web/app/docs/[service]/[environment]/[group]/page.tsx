@@ -1,28 +1,48 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGroup, getMcpGroupStatus } from "../../../lib/api";
+import {
+  getGroup,
+  getMcpGroupStatus,
+  getRevisionGroup,
+  listRevisions,
+} from "../../../lib/api";
 import { HtmlText } from "../../../components/HtmlText";
 import { MethodBadge } from "../../../components/MethodBadge";
 import { Breadcrumb } from "../../../components/Breadcrumb";
 import { AgentDocLink } from "../../../components/AgentDocLink";
 import { McpToggle } from "../../../components/McpToggle";
+import { RevisionBanner } from "../../../components/RevisionBanner";
 
 
 type Props = {
   params: Promise<{ service: string; environment: string; group: string }>;
+  searchParams: Promise<{ revision?: string }>;
 };
 
-export default async function GroupPage({ params }: Props) {
+export default async function GroupPage({ params, searchParams }: Props) {
   const { service, environment, group } = await params;
+  const { revision: revisionParam } = await searchParams;
   const svc = decodeURIComponent(service);
   const env = decodeURIComponent(environment);
   const grpSlug = decodeURIComponent(group);
 
-  const [data, mcpStatus] = await Promise.all([
-    getGroup(svc, env, grpSlug),
-    getMcpGroupStatus(svc, env, grpSlug),
+  // 历史版本下：拉对应 revision 的分组 + 版本元信息用于顶部提示；不查 MCP 状态（历史版本只读）
+  const [data, mcpStatus, revisions] = await Promise.all([
+    revisionParam
+      ? getRevisionGroup(svc, env, revisionParam, grpSlug)
+      : getGroup(svc, env, grpSlug),
+    revisionParam ? Promise.resolve(null) : getMcpGroupStatus(svc, env, grpSlug),
+    revisionParam ? listRevisions(svc, env) : Promise.resolve([]),
   ]);
   if (!data) notFound();
+
+  const viewingRevision = revisionParam
+    ? revisions.find((r) => r.id === revisionParam) ?? null
+    : null;
+  const viewingOlder = Boolean(viewingRevision && !viewingRevision.current);
+  const querySuffix = revisionParam
+    ? `?revision=${encodeURIComponent(revisionParam)}`
+    : "";
 
   return (
     <div>
@@ -33,7 +53,7 @@ export default async function GroupPage({ params }: Props) {
             items={[
               {
                 label: svc,
-                href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}`,
+                href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}${querySuffix}`,
                 icon: "service",
               },
               {
@@ -44,6 +64,18 @@ export default async function GroupPage({ params }: Props) {
           />
         </div>
       </div>
+
+      {viewingOlder && viewingRevision && (
+        <div className="mx-auto max-w-[1100px] px-4 pt-4 sm:px-8">
+          <RevisionBanner
+            service={svc}
+            environment={env}
+            revisionId={viewingRevision.id}
+            seq={viewingRevision.seq}
+            registeredAt={viewingRevision.registeredAt}
+          />
+        </div>
+      )}
 
       {/* 分组头部区域 */}
       <div className="hero-gradient">
@@ -70,17 +102,19 @@ export default async function GroupPage({ params }: Props) {
         </div>
       </div>
 
-      {/* MCP 分组开关 */}
-      <div className="mx-auto max-w-[1100px] px-4 pt-6 sm:px-8 sm:pt-8">
-        <McpToggle
-          service={svc}
-          environment={env}
-          groupSlug={grpSlug}
-          initialEnabled={mcpStatus?.enabled ?? false}
-          initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
-          initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
-        />
-      </div>
+      {/* MCP 分组开关：查看历史版本时隐藏，避免基于过期快照操作 */}
+      {!viewingOlder && mcpStatus && (
+        <div className="mx-auto max-w-[1100px] px-4 pt-6 sm:px-8 sm:pt-8">
+          <McpToggle
+            service={svc}
+            environment={env}
+            groupSlug={grpSlug}
+            initialEnabled={mcpStatus.enabled ?? false}
+            initialSseEndpoint={mcpStatus.sseEndpoint ?? null}
+            initialStreamableEndpoint={mcpStatus.streamableEndpoint ?? null}
+          />
+        </div>
+      )}
 
       {/* 接口列表 */}
       <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-8 sm:py-12">
@@ -96,7 +130,7 @@ export default async function GroupPage({ params }: Props) {
               {data.operations.map((op) => (
                 <Link
                   key={op.operationId}
-                  href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}/${encodeURIComponent(op.operationId)}`}
+                  href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}/${encodeURIComponent(op.operationId)}${querySuffix}`}
                   className="group flex items-start gap-4 rounded-xl bg-[var(--bg-surface)] px-5 py-4 backdrop-blur-sm transition-all v-card-full v-card-full-hover"
                 >
                   <div className="shrink-0 pt-0.5">

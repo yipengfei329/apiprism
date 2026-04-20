@@ -180,38 +180,15 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {snapshot.groups.map((group) => {
-              // 旧版本只读展示，分组卡片不跳转（当前 group 路由查的是 current 版本）
-              if (viewingOlder) {
-                return (
-                  <div
-                    key={group.name}
-                    className="rounded-xl bg-[var(--bg-surface)] p-5 opacity-75 v-card-full"
-                  >
-                    <h3
-                      className="font-semibold text-[var(--text-primary)]"
-                      style={{ letterSpacing: "-0.015em" }}
-                    >
-                      {group.name}
-                    </h3>
-                    {group.description && (
-                      <HtmlText
-                        as="p"
-                        text={group.description}
-                        className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[var(--text-secondary)]"
-                      />
-                    )}
-                    <div className="mt-4 flex items-center justify-between">
-                      <p className="font-mono text-[12px] text-[var(--text-tertiary)]">
-                        {group.operations.length} 个接口
-                      </p>
-                    </div>
-                  </div>
-                );
-              }
+              // 历史版本下，分组卡片依然可以进入，通过 revision 查询参数传递上下文
+              const querySuffix = viewingOlder && revisionParam
+                ? `?revision=${encodeURIComponent(revisionParam)}`
+                : "";
+              const href = `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}${querySuffix}`;
               return (
                 <Link
                   key={group.name}
-                  href={`/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}`}
+                  href={href}
                   className="group rounded-xl bg-[var(--bg-surface)] p-5 transition-all v-card-full v-card-full-hover"
                 >
                   <h3

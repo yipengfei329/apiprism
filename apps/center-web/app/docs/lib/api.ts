@@ -242,6 +242,46 @@ export async function getRevisionSnapshot(
   }
 }
 
+export async function getRevisionGroup(
+  service: string,
+  environment: string,
+  revisionId: string,
+  group: string
+): Promise<CanonicalGroup | null> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/rev/${encodeURIComponent(revisionId)}/groups/${encodeURIComponent(group)}`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function getRevisionOperation(
+  service: string,
+  environment: string,
+  revisionId: string,
+  operationId: string
+): Promise<CanonicalOperation | null> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/rev/${encodeURIComponent(revisionId)}/operations/${encodeURIComponent(operationId)}`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function getMcpGroupStatus(
   service: string,
   environment: string,
