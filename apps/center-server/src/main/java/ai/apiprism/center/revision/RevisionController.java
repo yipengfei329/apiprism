@@ -2,6 +2,8 @@ package ai.apiprism.center.revision;
 
 import ai.apiprism.center.repository.RevisionSummary;
 import ai.apiprism.center.repository.StoredRegistration;
+import ai.apiprism.model.CanonicalGroup;
+import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +39,26 @@ public class RevisionController {
             @PathVariable String revisionId
     ) {
         return revisionService.getRevisionSnapshot(service, environment, revisionId);
+    }
+
+    @GetMapping("/services/{service}/env/{environment}/rev/{revisionId}/groups/{group}")
+    public CanonicalGroup getRevisionGroup(
+            @PathVariable String service,
+            @PathVariable String environment,
+            @PathVariable String revisionId,
+            @PathVariable String group
+    ) {
+        return revisionService.getRevisionGroup(service, environment, revisionId, group);
+    }
+
+    @GetMapping("/services/{service}/env/{environment}/rev/{revisionId}/operations/{operationId}")
+    public CanonicalOperation getRevisionOperation(
+            @PathVariable String service,
+            @PathVariable String environment,
+            @PathVariable String revisionId,
+            @PathVariable String operationId
+    ) {
+        return revisionService.getRevisionOperation(service, environment, revisionId, operationId);
     }
 
     @PostMapping("/services/{service}/env/{environment}/rev/{revisionId}/activate")

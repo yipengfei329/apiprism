@@ -5,6 +5,8 @@ import ai.apiprism.center.repository.RegistrationRepository;
 import ai.apiprism.center.repository.RevisionSummary;
 import ai.apiprism.center.repository.StoredRegistration;
 import ai.apiprism.mcp.event.ServiceRegisteredEvent;
+import ai.apiprism.model.CanonicalGroup;
+import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,32 @@ public class RevisionService {
     public CanonicalServiceSnapshot getRevisionSnapshot(String serviceName, String environment, String revisionId) {
         return repository.findRevision(serviceName, environment, revisionId)
                 .map(StoredRegistration::getSnapshot)
+                .orElseThrow(() -> new ai.apiprism.center.exceptions.RevisionNotFoundException(
+                        serviceName, environment, revisionId));
+    }
+
+    /**
+     * 读取指定 revision 下某个分组。先按 slug 精确匹配，再 fallback 到 name，
+     * 行为与 CatalogService.getGroupBySlug 保持一致。
+     */
+    public CanonicalGroup getRevisionGroup(String serviceName, String environment, String revisionId, String groupSlug) {
+        List<CanonicalGroup> groups = getRevisionSnapshot(serviceName, environment, revisionId).getGroups();
+        return groups.stream()
+                .filter(g -> groupSlug.equals(g.getSlug()))
+                .findFirst()
+                .or(() -> groups.stream().filter(g -> g.getName().equals(groupSlug)).findFirst())
+                .orElseThrow(() -> new ai.apiprism.center.exceptions.RevisionNotFoundException(
+                        serviceName, environment, revisionId));
+    }
+
+    /**
+     * 读取指定 revision 下某个接口。
+     */
+    public CanonicalOperation getRevisionOperation(String serviceName, String environment, String revisionId, String operationId) {
+        return getRevisionSnapshot(serviceName, environment, revisionId).getGroups().stream()
+                .flatMap(group -> group.getOperations().stream())
+                .filter(op -> op.getOperationId().equals(operationId))
+                .findFirst()
                 .orElseThrow(() -> new ai.apiprism.center.exceptions.RevisionNotFoundException(
                         serviceName, environment, revisionId));
     }
