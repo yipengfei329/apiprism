@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:22-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 
 RUN apk add --no-cache gcompat
@@ -18,7 +18,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     && pnpm config set store-dir /pnpm/store \
     && pnpm install --filter @apiprism/center-web... --frozen-lockfile
 
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 
 RUN apk add --no-cache gcompat
@@ -30,7 +30,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     && pnpm config set store-dir /pnpm/store \
     && pnpm --filter @apiprism/center-web build
 
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apk add --no-cache gcompat
