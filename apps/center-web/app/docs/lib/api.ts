@@ -203,6 +203,10 @@ export type RevisionSummary = {
   warningsCount: number;
   registeredAt: string;
   current: boolean;
+  endpointCount: number | null;
+  addedCount: number | null;
+  removedCount: number | null;
+  modifiedCount: number | null;
 };
 
 export async function listRevisions(

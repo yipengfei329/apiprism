@@ -13,11 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-
 /**
  * 注册服务：负责接收注册请求、调用规范化流水线、持久化注册快照。
  */
@@ -63,8 +58,8 @@ public class RegistrationService {
         }
 
         String incomingId = TSID.Factory.getTsid().toString();
-        // hash 包含 normalizer 版本号，逻辑变更时强制重写 snapshot
-        String specHash = sha256(OpenApiNormalizer.VERSION + "\n" + request.getSpec().getContent());
+        // 使用语义 hash：仅对规范化后的接口定义内容（路径、参数、结构等）做哈希，忽略格式空白
+        String specHash = SemanticHasher.hash(result.getSnapshot());
         StoredRegistration saved = repository.saveRevision(StoredRegistration.builder()
                 .id(incomingId)
                 .rawSpec(request.getSpec().getContent())
@@ -91,13 +86,4 @@ public class RegistrationService {
                 .build();
     }
 
-    private static String sha256(String content) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
 }

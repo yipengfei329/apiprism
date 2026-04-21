@@ -1,5 +1,6 @@
 package ai.apiprism.center.repository;
 
+import ai.apiprism.center.revision.RevisionDiff;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,4 +52,10 @@ public class StoredRegistration {
 
     /** 本 revision 注册入库的时间。 */
     private final Instant registeredAt;
+
+    /** 该 revision 的接口总数，首次持久化后填充，旧 revision 为 null。 */
+    private final Integer endpointCount;
+
+    /** 与前驱 revision 相比的接口变更统计，首次持久化后填充，旧 revision 为 null。 */
+    private final RevisionDiff diffStats;
 }

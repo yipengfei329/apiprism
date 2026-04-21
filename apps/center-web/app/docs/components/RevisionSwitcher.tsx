@@ -112,6 +112,26 @@ export function RevisionSwitcher({
                       当前
                     </span>
                   )}
+                  {rev.endpointCount != null && (
+                    <span className="text-[11px] text-[var(--text-tertiary)]">
+                      {rev.endpointCount}个
+                    </span>
+                  )}
+                  {rev.addedCount != null && rev.addedCount > 0 && (
+                    <span className="text-[11px] font-medium text-[var(--color-success,#16a34a)]">
+                      +{rev.addedCount}
+                    </span>
+                  )}
+                  {rev.removedCount != null && rev.removedCount > 0 && (
+                    <span className="text-[11px] font-medium text-[var(--color-danger,#dc2626)]">
+                      -{rev.removedCount}
+                    </span>
+                  )}
+                  {rev.modifiedCount != null && rev.modifiedCount > 0 && (
+                    <span className="text-[11px] font-medium text-[var(--color-warning,#d97706)]">
+                      ~{rev.modifiedCount}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
                   <span className="font-mono">{rev.specHash.substring(0, 7)}</span>
