@@ -35,4 +35,16 @@ public class RevisionSummary {
     private final Instant registeredAt;
 
     private final boolean current;
+
+    /** 该 revision 的接口总数，旧 revision 为 null。 */
+    private final Integer endpointCount;
+
+    /** 相比前驱 revision 新增的接口数，旧 revision 为 null。 */
+    private final Integer addedCount;
+
+    /** 相比前驱 revision 删除的接口数，旧 revision 为 null。 */
+    private final Integer removedCount;
+
+    /** 相比前驱 revision 变更的接口数，旧 revision 为 null。 */
+    private final Integer modifiedCount;
 }

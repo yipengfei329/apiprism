@@ -6,6 +6,8 @@ import ai.apiprism.center.repository.FileSpecStore;
 import ai.apiprism.center.repository.RegistrationRepository;
 import ai.apiprism.center.repository.RevisionSummary;
 import ai.apiprism.center.repository.StoredRegistration;
+import ai.apiprism.center.revision.RevisionDiff;
+import ai.apiprism.center.revision.RevisionDiffCalculator;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -72,12 +74,16 @@ public class JdbcRegistrationRepository implements RegistrationRepository {
         String previousId = currentOpt.map(StoredRegistration::getId).orElse(null);
         long seq = nextRevisionSeq(serviceName, environment);
 
+        // 计算与前驱 revision 的接口变更差异
+        CanonicalServiceSnapshot previousSnapshot = currentOpt.map(StoredRegistration::getSnapshot).orElse(null);
+        RevisionDiff diff = RevisionDiffCalculator.compute(previousSnapshot, incoming.getSnapshot());
+
         // 写文件在前，DB 失败时清理文件
         fileSpecStore.saveSnapshot(incoming.getId(), incoming.getSnapshot());
         fileSpecStore.saveRawSpec(incoming.getId(), incoming.getRawSpec(), incoming.getSpecFormat());
 
         try {
-            insertRevisionWithRetry(incoming, serviceName, environment, seq, previousId, now);
+            insertRevisionWithRetry(incoming, serviceName, environment, seq, previousId, diff, now);
 
             CanonicalServiceSnapshot snapshot = incoming.getSnapshot();
             jdbc.update("""
@@ -112,30 +118,32 @@ public class JdbcRegistrationRepository implements RegistrationRepository {
                 .source(SOURCE_REGISTER)
                 .current(true)
                 .registeredAt(now.toInstant())
+                .endpointCount(diff.totalEndpoints())
+                .diffStats(diff)
                 .build();
     }
 
     private void insertRevisionWithRetry(StoredRegistration incoming, String serviceName, String environment,
-                                          long seq, String previousId, Timestamp now) {
+                                          long seq, String previousId, RevisionDiff diff, Timestamp now) {
         try {
-            insertRevisionRow(incoming, serviceName, environment, seq, previousId, now);
+            insertRevisionRow(incoming, serviceName, environment, seq, previousId, diff, now);
         } catch (DuplicateKeyException e) {
             // 并发情况下 seq 冲突，重新取一次
             long retrySeq = nextRevisionSeq(serviceName, environment);
             log.warn("Revision seq conflict for {} ({}), retrying with seq {}", serviceName, environment, retrySeq);
-            insertRevisionRow(incoming, serviceName, environment, retrySeq, previousId, now);
+            insertRevisionRow(incoming, serviceName, environment, retrySeq, previousId, diff, now);
         }
     }
 
     private void insertRevisionRow(StoredRegistration incoming, String serviceName, String environment,
-                                    long seq, String previousId, Timestamp now) {
+                                    long seq, String previousId, RevisionDiff diff, Timestamp now) {
         CanonicalServiceSnapshot snapshot = incoming.getSnapshot();
         jdbc.update("""
                 INSERT INTO service_snapshot_revisions
                     (id, service_name, environment, revision_seq, spec_hash, title, version,
                      adapter_type, spec_format, warnings, extensions, source,
-                     previous_revision_id, registered_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     previous_revision_id, registered_at, endpoint_count, diff_stats)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 incoming.getId(),
                 serviceName,
@@ -150,7 +158,9 @@ public class JdbcRegistrationRepository implements RegistrationRepository {
                 toJson(incoming.getExtensions()),
                 SOURCE_REGISTER,
                 previousId,
-                now);
+                now,
+                diff.totalEndpoints(),
+                toJson(diff));
     }
 
     private long nextRevisionSeq(String serviceName, String environment) {
@@ -206,25 +216,37 @@ public class JdbcRegistrationRepository implements RegistrationRepository {
 
         return jdbc.query("""
                         SELECT id, service_name, environment, revision_seq, spec_hash, title, version,
-                               adapter_type, source, warnings, registered_at
+                               adapter_type, source, warnings, registered_at, endpoint_count, diff_stats
                         FROM service_snapshot_revisions
                         WHERE service_name = ? AND environment = ?
                         ORDER BY revision_seq DESC
                         """,
-                (rs, i) -> RevisionSummary.builder()
-                        .id(rs.getString("id"))
-                        .serviceName(rs.getString("service_name"))
-                        .environment(rs.getString("environment"))
-                        .seq(rs.getLong("revision_seq"))
-                        .specHash(rs.getString("spec_hash"))
-                        .title(rs.getString("title"))
-                        .version(rs.getString("version"))
-                        .adapterType(rs.getString("adapter_type"))
-                        .source(rs.getString("source"))
-                        .warningsCount(fromJsonList(rs.getString("warnings")).size())
-                        .registeredAt(rs.getTimestamp("registered_at").toInstant())
-                        .current(rs.getString("id").equals(currentId))
-                        .build(),
+                (rs, i) -> {
+                    RevisionDiff diff = fromJsonDiff(rs.getString("diff_stats"));
+                    int added = diff == null ? 0 : diff.added().size();
+                    int removed = diff == null ? 0 : diff.removed().size();
+                    int modified = diff == null ? 0 : diff.modified().size();
+                    int endpointCount = rs.getInt("endpoint_count");
+                    boolean endpointCountNull = rs.wasNull();
+                    return RevisionSummary.builder()
+                            .id(rs.getString("id"))
+                            .serviceName(rs.getString("service_name"))
+                            .environment(rs.getString("environment"))
+                            .seq(rs.getLong("revision_seq"))
+                            .specHash(rs.getString("spec_hash"))
+                            .title(rs.getString("title"))
+                            .version(rs.getString("version"))
+                            .adapterType(rs.getString("adapter_type"))
+                            .source(rs.getString("source"))
+                            .warningsCount(fromJsonList(rs.getString("warnings")).size())
+                            .registeredAt(rs.getTimestamp("registered_at").toInstant())
+                            .current(rs.getString("id").equals(currentId))
+                            .endpointCount(endpointCountNull ? null : endpointCount)
+                            .addedCount(diff == null ? null : added)
+                            .removedCount(diff == null ? null : removed)
+                            .modifiedCount(diff == null ? null : modified)
+                            .build();
+                },
                 serviceName, environment);
     }
 
@@ -344,6 +366,18 @@ public class JdbcRegistrationRepository implements RegistrationRepository {
         } catch (JsonProcessingException e) {
             log.warn("Failed to deserialize extensions JSON, returning empty map", e);
             return Map.of();
+        }
+    }
+
+    private RevisionDiff fromJsonDiff(String json) {
+        if (json == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, RevisionDiff.class);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to deserialize diff_stats JSON, returning null", e);
+            return null;
         }
     }
 
