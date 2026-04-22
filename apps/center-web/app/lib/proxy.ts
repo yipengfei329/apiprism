@@ -44,7 +44,7 @@ export async function proxyToInternalApi(
   headers.set("X-Forwarded-Host", origin.host);
   headers.set("X-Forwarded-Proto", origin.protocol.replace(":", ""));
 
-  const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const hasBody = request.method !== "GET" && request.method !== "HEAD" && request.method !== "DELETE";
   const body = hasBody ? await request.arrayBuffer() : undefined;
   const upstreamResponse = await fetch(upstreamUrl, {
     method: request.method,
