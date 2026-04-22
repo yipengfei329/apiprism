@@ -13,7 +13,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@phosphor-icons/react": "^2.1.10",
-    "@uiw/react-json-view": "2.0.0-alpha.41",
+    "@uiw/react-json-view": "2.0.0-alpha.42",
     "next": "16.2.3",
     "next-themes": "^0.4.6",
     "react": "19.2.5",
