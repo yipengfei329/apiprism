@@ -63,7 +63,7 @@ public class ApiPrismProperties {
      *     - com.example.security.SessionUserInfo
      *     - com.example.auth.CurrentUser
      * </pre>
-     * 对于可修改源码的自定义注解，推荐使用 {@link ApiHidden} 元注解方式替代此配置。
+     * 对于可修改源码的自定义注解，推荐使用 {@link ApiParamIgnore} 元注解方式替代此配置。
      */
     private List<String> excludedParameterTypes = new ArrayList<>();
 

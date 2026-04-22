@@ -1,6 +1,6 @@
 package ai.apiprism.adapter.starter.springdoc;
 
-import ai.apiprism.adapter.starter.ApiHidden;
+import ai.apiprism.adapter.starter.ApiParamIgnore;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import org.slf4j.Logger;
@@ -20,8 +20,8 @@ import java.util.Set;
  *
  * <p>过滤规则（满足其一即排除）：
  * <ol>
- *   <li>参数直接标注了 {@link ApiHidden}；</li>
- *   <li>参数上的某个注解本身以 {@link ApiHidden} 为元注解（例如 {@code @SessionUser}）；</li>
+ *   <li>参数直接标注了 {@link ApiParamIgnore}；</li>
+ *   <li>参数上的某个注解本身以 {@link ApiParamIgnore} 为元注解（例如 {@code @SessionUser}）；</li>
  *   <li>参数类型属于内置排除列表（Spring MVC 框架注入的非 HTTP 参数）；</li>
  *   <li>参数类型全限定名在用户配置的 {@code apiprism.excluded-parameter-types} 列表中。</li>
  * </ol>
@@ -92,13 +92,13 @@ public class ApiPrismOperationCustomizer implements OperationCustomizer {
     }
 
     private boolean shouldExclude(MethodParameter param) {
-        // 1. 直接标注 @ApiHidden
-        if (param.hasParameterAnnotation(ApiHidden.class)) {
+        // 1. 直接标注 @ApiParamIgnore
+        if (param.hasParameterAnnotation(ApiParamIgnore.class)) {
             return true;
         }
-        // 2. 参数上的注解以 @ApiHidden 为元注解（如 @SessionUser 本身带有 @ApiHidden）
+        // 2. 参数上的注解以 @ApiParamIgnore 为元注解（如 @SessionUser 本身带有 @ApiParamIgnore）
         for (Annotation ann : param.getParameterAnnotations()) {
-            if (ann.annotationType().isAnnotationPresent(ApiHidden.class)) {
+            if (ann.annotationType().isAnnotationPresent(ApiParamIgnore.class)) {
                 return true;
             }
         }
