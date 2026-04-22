@@ -16,6 +16,7 @@ import { RevisionBanner } from "../../components/RevisionBanner";
 import { ServiceActions } from "./ServiceActions";
 import { ServiceStats } from "../../components/ServiceStats";
 import { ServiceSecuritySchemes } from "../../components/ServiceSecuritySchemes";
+import { SortableGroupGrid } from "./SortableGroupGrid";
 
 
 type Props = {
@@ -185,11 +186,11 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
 
         {snapshot.groups.length === 0 ? (
           <p className="text-[var(--text-tertiary)]">该服务下暂无接口分组。</p>
-        ) : (
+        ) : viewingOlder ? (
+          // 历史版本：只读，分组卡片保留 revision 查询参数，不展示拖拽手柄
           <div className="grid gap-3 sm:grid-cols-2">
             {snapshot.groups.map((group) => {
-              // 历史版本下，分组卡片依然可以进入，通过 revision 查询参数传递上下文
-              const querySuffix = viewingOlder && revisionParam
+              const querySuffix = revisionParam
                 ? `?revision=${encodeURIComponent(revisionParam)}`
                 : "";
               const href = `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}${querySuffix}`;
@@ -228,6 +229,13 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
               );
             })}
           </div>
+        ) : (
+          // 当前版本：支持拖拽排序
+          <SortableGroupGrid
+            service={svc}
+            environment={env}
+            groups={snapshot.groups}
+          />
         )}
       </section>
     </div>
