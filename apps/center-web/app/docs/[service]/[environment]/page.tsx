@@ -14,6 +14,7 @@ import { EnvSwitcher } from "../../components/EnvSwitcher";
 import { RevisionSwitcher } from "../../components/RevisionSwitcher";
 import { RevisionBanner } from "../../components/RevisionBanner";
 import { ServiceActions } from "./ServiceActions";
+import { ServiceStats } from "../../components/ServiceStats";
 
 
 type Props = {
@@ -152,6 +153,9 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
           </div>
         )}
       </header>
+
+      {/* 统计面板 */}
+      <ServiceStats snapshot={snapshot} />
 
       {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
       {!viewingOlder && (
