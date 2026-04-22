@@ -1,4 +1,4 @@
-import { CanonicalOperation } from "../lib/api";
+import { CanonicalOperation, CanonicalSecurityScheme } from "../lib/api";
 import { SchemaTable } from "./SchemaTable";
 import { schemaTypeLabel } from "./schemaUtils";
 import { generateExample } from "./generateExample";
@@ -7,6 +7,7 @@ import { ResponseTabs } from "./ResponseTabs";
 import { OnThisPage, type SectionItem } from "./OnThisPage";
 import { ParameterTable } from "./ParameterTable";
 import { RequestBodyTabs } from "./RequestBodyTabs";
+import { SecuritySchemeBadge } from "./SecuritySchemeBadge";
 
 // ── 必填 / 选填标记 ──
 
@@ -28,14 +29,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     </h2>
   );
 }
-
-// ── 锁图标 ──
-
-const LockIcon = () => (
-  <svg className="mr-1.5 inline-block h-3.5 w-3.5 text-v-gray-400" viewBox="0 0 16 16" fill="currentColor">
-    <path fillRule="evenodd" d="M8 1a3.5 3.5 0 00-3.5 3.5V7A1.5 1.5 0 003 8.5v5A1.5 1.5 0 004.5 15h7a1.5 1.5 0 001.5-1.5v-5A1.5 1.5 0 0011.5 7V4.5A3.5 3.5 0 008 1zm2 6V4.5a2 2 0 10-4 0V7h4z" clipRule="evenodd" />
-  </svg>
-);
 
 // ── 计算页面有哪些可跳转分区 ──
 
@@ -61,7 +54,13 @@ function buildSectionList(op: CanonicalOperation): SectionItem[] {
 
 // ── 文档 Tab 内容 ──
 
-export async function OperationWiki({ op }: { op: CanonicalOperation }) {
+export async function OperationWiki({
+  op,
+  securitySchemes,
+}: {
+  op: CanonicalOperation;
+  securitySchemes?: Record<string, CanonicalSecurityScheme>;
+}) {
   const sections = buildSectionList(op);
 
   // 服务端预生成请求体示例
@@ -158,13 +157,11 @@ export async function OperationWiki({ op }: { op: CanonicalOperation }) {
             <SectionTitle>安全认证</SectionTitle>
             <div className="flex flex-wrap gap-2.5">
               {op.securityRequirements.map((s) => (
-                <span
+                <SecuritySchemeBadge
                   key={s}
-                  className="inline-flex items-center rounded-xl bg-v-gray-50/60 px-4 py-2 text-[13px] text-v-gray-600"
-                >
-                  <LockIcon />
-                  {s}
-                </span>
+                  name={s}
+                  scheme={securitySchemes?.[s]}
+                />
               ))}
             </div>
           </section>

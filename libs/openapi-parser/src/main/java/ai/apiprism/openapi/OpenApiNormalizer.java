@@ -2,10 +2,12 @@ package ai.apiprism.openapi;
 
 import ai.apiprism.openapi.exceptions.NormalizationException;
 import ai.apiprism.model.CanonicalGroup;
+import ai.apiprism.model.CanonicalOAuthFlow;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalParameter;
 import ai.apiprism.model.CanonicalRequestBody;
 import ai.apiprism.model.CanonicalResponse;
+import ai.apiprism.model.CanonicalSecurityScheme;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import ai.apiprism.model.ServiceRef;
 import io.swagger.parser.OpenAPIParser;
@@ -18,6 +20,9 @@ import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.security.OAuthFlow;
+import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 
@@ -44,7 +49,7 @@ public class OpenApiNormalizer {
      * 当 normalize 产出的结构因逻辑变更而不同于旧版本时递增此值，
      * 使注册端的 specHash 失效，强制重写已持久化的 snapshot。
      */
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     private static final int MAX_SCHEMA_DEPTH = 8;
 
@@ -142,6 +147,7 @@ public class OpenApiNormalizer {
                 .version(version)
                 .serverUrls(serverUrls)
                 .groups(groups)
+                .securitySchemes(extractSecuritySchemes(openApi))
                 .updatedAt(Instant.now())
                 .build();
         return NormalizationResult.builder()
@@ -357,6 +363,53 @@ public class OpenApiNormalizer {
         }
         // 非段落分隔（如同一句延续），保持原样
         return description;
+    }
+
+    /**
+     * 提取 OpenAPI components.securitySchemes 为归一化模型。
+     */
+    private Map<String, CanonicalSecurityScheme> extractSecuritySchemes(OpenAPI openApi) {
+        var rawSchemes = Optional.ofNullable(openApi.getComponents())
+                .map(c -> c.getSecuritySchemes())
+                .orElse(null);
+        if (rawSchemes == null || rawSchemes.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, CanonicalSecurityScheme> result = new LinkedHashMap<>();
+        rawSchemes.forEach((name, scheme) -> {
+            if (scheme == null) return;
+            result.put(name, CanonicalSecurityScheme.builder()
+                    .type(scheme.getType() != null ? scheme.getType().toString().toLowerCase() : null)
+                    .scheme(scheme.getScheme())
+                    .bearerFormat(scheme.getBearerFormat())
+                    .in(scheme.getIn() != null ? scheme.getIn().toString().toLowerCase() : null)
+                    .paramName(scheme.getName())
+                    .openIdConnectUrl(scheme.getOpenIdConnectUrl())
+                    .description(scheme.getDescription())
+                    .oauthFlows(extractOAuthFlows(scheme.getFlows()))
+                    .build());
+        });
+        return result;
+    }
+
+    private List<CanonicalOAuthFlow> extractOAuthFlows(OAuthFlows flows) {
+        if (flows == null) return List.of();
+        List<CanonicalOAuthFlow> result = new ArrayList<>();
+        if (flows.getImplicit() != null) result.add(toOAuthFlow("implicit", flows.getImplicit()));
+        if (flows.getPassword() != null) result.add(toOAuthFlow("password", flows.getPassword()));
+        if (flows.getClientCredentials() != null) result.add(toOAuthFlow("clientCredentials", flows.getClientCredentials()));
+        if (flows.getAuthorizationCode() != null) result.add(toOAuthFlow("authorizationCode", flows.getAuthorizationCode()));
+        return result;
+    }
+
+    private CanonicalOAuthFlow toOAuthFlow(String flowType, OAuthFlow flow) {
+        return CanonicalOAuthFlow.builder()
+                .flowType(flowType)
+                .authorizationUrl(flow.getAuthorizationUrl())
+                .tokenUrl(flow.getTokenUrl())
+                .refreshUrl(flow.getRefreshUrl())
+                .scopes(flow.getScopes() != null ? new LinkedHashMap<>(flow.getScopes()) : Map.of())
+                .build();
     }
 
     /**
