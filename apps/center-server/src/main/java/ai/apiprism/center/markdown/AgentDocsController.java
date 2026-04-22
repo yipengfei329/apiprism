@@ -2,6 +2,8 @@ package ai.apiprism.center.markdown;
 
 import ai.apiprism.center.catalog.CatalogService;
 import ai.apiprism.center.config.CenterProperties;
+import ai.apiprism.center.exceptions.RegistrationNotFoundException;
+import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,14 +49,30 @@ public class AgentDocsController {
         return agentMarkdownRenderer.renderServiceIndex(snapshot, baseUrl);
     }
 
-    @GetMapping(value = "/{service}/{env}/{operationId}/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
-    public String operationDocs(
+    /**
+     * 统一的第三段 identifier 端点：先尝试按分组 slug 解析，不匹配再按 operationId 解析。
+     * 这样分组和接口可以共用同一个 URL 模式 /{service}/{env}/{identifier}/apidocs.md。
+     */
+    @GetMapping(value = "/{service}/{env}/{identifier}/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
+    public String groupOrOperationDocs(
             @PathVariable String service,
             @PathVariable String env,
-            @PathVariable String operationId
+            @PathVariable String identifier,
+            HttpServletRequest request
     ) {
+        String baseUrl = resolveBaseUrl(request);
         CanonicalServiceSnapshot snapshot = catalogService.getService(service, env);
-        CanonicalOperation operation = catalogService.getOperation(service, env, operationId);
+
+        // 先尝试分组 slug
+        try {
+            CanonicalGroup group = catalogService.getGroupBySlug(service, env, identifier);
+            return agentMarkdownRenderer.renderGroupIndex(snapshot, group, baseUrl);
+        } catch (RegistrationNotFoundException ignored) {
+            // identifier 不是分组 slug，继续尝试 operationId
+        }
+
+        // 再尝试 operationId
+        CanonicalOperation operation = catalogService.getOperation(service, env, identifier);
         return agentMarkdownRenderer.renderAgentOperation(snapshot, operation);
     }
 

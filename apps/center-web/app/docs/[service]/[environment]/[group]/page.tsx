@@ -87,7 +87,7 @@ export default async function GroupPage({ params, searchParams }: Props) {
             >
               {data.name}
             </h1>
-            <AgentDocLink path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/apidocs.md`} />
+            <AgentDocLink path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}/apidocs.md`} />
           </div>
           {data.description && (
             <HtmlText

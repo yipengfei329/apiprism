@@ -159,6 +159,49 @@ public class AgentMarkdownRenderer {
     }
 
     /**
+     * 渲染分组级 API 索引。
+     * @param snapshot 服务快照（提供 base URL 等元信息）
+     * @param group    目标分组
+     * @param baseUrl  Center 对外根地址，用于生成完整链接
+     */
+    public String renderGroupIndex(CanonicalServiceSnapshot snapshot, CanonicalGroup group, String baseUrl) {
+        StringBuilder md = new StringBuilder();
+
+        md.append("# ").append(group.getName()).append(" — ")
+                .append(snapshot.getRef().getName()).append(" API Index\n\n");
+        md.append("> Service: `").append(snapshot.getRef().getName())
+                .append("` | Environment: `").append(snapshot.getRef().getEnvironment())
+                .append("` | Group: `").append(group.getName()).append("`\n\n");
+
+        if (group.getDescription() != null && !group.getDescription().isBlank()) {
+            md.append(group.getDescription()).append("\n\n");
+        }
+
+        md.append("Follow the links to view detailed specifications for each operation.\n\n");
+        md.append("**").append(group.getOperations().size()).append(" operation")
+                .append(group.getOperations().size() == 1 ? "" : "s").append("**\n\n");
+        md.append("---\n\n");
+
+        if (!group.getOperations().isEmpty()) {
+            md.append("| Operation | Method | Path | Description |\n");
+            md.append("|-----------|--------|------|-------------|\n");
+            for (CanonicalOperation op : group.getOperations()) {
+                String link = baseUrl + "/" + snapshot.getRef().getName()
+                        + "/" + snapshot.getRef().getEnvironment()
+                        + "/" + op.getOperationId() + "/apidocs.md";
+                String desc = op.getSummary() != null ? escapePipe(op.getSummary()) : "";
+                md.append("| [").append(op.getOperationId()).append("](").append(link).append(")")
+                        .append(" | ").append(op.getMethod())
+                        .append(" | `").append(op.getPath()).append("`")
+                        .append(" | ").append(desc)
+                        .append(" |\n");
+            }
+        }
+
+        return md.toString();
+    }
+
+    /**
      * 渲染全局服务目录。
      * @param baseUrl Center 对外根地址，用于生成完整链接
      */

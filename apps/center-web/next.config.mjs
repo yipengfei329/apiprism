@@ -7,7 +7,7 @@ const nextConfig = {
       // Agent Doc 前端友好 URL → 内部 proxy
       { source: "/apidocs.md", destination: "/api/v1/apidocs.md" },
       { source: "/:service/:env/apidocs.md", destination: "/api/v1/:service/:env/apidocs.md" },
-      { source: "/:service/:env/:operationId/apidocs.md", destination: "/api/v1/:service/:env/:operationId/apidocs.md" },
+      { source: "/:service/:env/:identifier/apidocs.md", destination: "/api/v1/:service/:env/:identifier/apidocs.md" },
     ];
   },
 };
