@@ -6,6 +6,7 @@ import ai.apiprism.adapter.starter.registration.ApiPrismRegistrationClient;
 import ai.apiprism.adapter.starter.openapi.ApiPrismOpenApiSupplier;
 import ai.apiprism.adapter.starter.openapi.HttpOpenApiSupplier;
 import ai.apiprism.adapter.starter.openapi.SpringDocOpenApiSupplier;
+import ai.apiprism.adapter.starter.springdoc.ApiPrismOperationCustomizer;
 import ai.apiprism.adapter.starter.registration.ApiPrismRegistrationListener;
 import ai.apiprism.adapter.starter.registration.RegistrationRequestFactory;
 import ai.apiprism.adapter.starter.registration.ServiceMetadataResolver;
@@ -54,7 +55,7 @@ public class ApiPrismAutoConfiguration {
         return new ApiPrismRegistrationClient(restClientBuilder.requestFactory(requestFactory).build());
     }
 
-    // 当 SpringDoc 在类路径时，优先使用进程内获取 OpenAPI 文档
+    // 当 SpringDoc 在类路径时，优先使用进程内获取 OpenAPI 文档，并注册参数过滤定制器
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(name = "org.springdoc.webmvc.api.OpenApiResource")
     static class SpringDocOpenApiSupplierConfiguration {
@@ -67,6 +68,16 @@ public class ApiPrismAutoConfiguration {
         ) {
             log.info("SpringDoc detected on classpath, enabling in-process OpenAPI document access");
             return new SpringDocOpenApiSupplier(properties, openApiResourceProvider);
+        }
+
+        /**
+         * 自动过滤 @ApiHidden 标注的参数、Spring 框架注入类型以及用户配置的排除类型，
+         * 防止这些"服务端注入"参数被 Springdoc 误识别为 query 参数暴露在文档中。
+         */
+        @Bean
+        @ConditionalOnMissingBean(name = "apiPrismOperationCustomizer")
+        ApiPrismOperationCustomizer apiPrismOperationCustomizer(ApiPrismProperties properties) {
+            return new ApiPrismOperationCustomizer(properties.getExcludedParameterTypes());
         }
     }
 
