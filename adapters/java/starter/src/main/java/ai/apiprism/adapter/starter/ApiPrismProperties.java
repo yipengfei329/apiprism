@@ -50,6 +50,23 @@ public class ApiPrismProperties {
     /** OpenAPI 规格文档路径（默认 {@code /v3/api-docs}）。 */
     private String openapiPath = "/v3/api-docs";
 
+    /**
+     * 从 API 文档中排除的参数类型全限定名列表。
+     * <p>
+     * 用于过滤由 Spring MVC {@code HandlerMethodArgumentResolver} 注入（而非来自 HTTP 请求）、
+     * 但被 Springdoc 误识别为 query 参数的类型，如自定义 Session 或 Auth 注入类型。
+     * <p>
+     * 示例（{@code application.yml}）：
+     * <pre>
+     * apiprism:
+     *   excluded-parameter-types:
+     *     - com.example.security.SessionUserInfo
+     *     - com.example.auth.CurrentUser
+     * </pre>
+     * 对于可修改源码的自定义注解，推荐使用 {@link ApiParamIgnore} 元注解方式替代此配置。
+     */
+    private List<String> excludedParameterTypes = new ArrayList<>();
+
     /** 注册重试策略配置。 */
     private Retry retry = new Retry();
 
