@@ -9,8 +9,11 @@ import ai.apiprism.model.CanonicalServiceSnapshot;
 import ai.apiprism.openapi.OpenApiNormalizer;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -20,9 +23,11 @@ import java.util.Set;
 public class CatalogService {
 
     private final RegistrationRepository repository;
+    private final TagOrderRepository tagOrderRepository;
 
-    public CatalogService(RegistrationRepository repository) {
+    public CatalogService(RegistrationRepository repository, TagOrderRepository tagOrderRepository) {
         this.repository = repository;
+        this.tagOrderRepository = tagOrderRepository;
     }
 
     public List<ServiceCatalogItem> listServices() {
@@ -34,7 +39,8 @@ public class CatalogService {
 
     public CanonicalServiceSnapshot getService(String serviceName, String environment) {
         CanonicalServiceSnapshot snapshot = require(serviceName, environment).getSnapshot();
-        return ensureSlugs(snapshot);
+        snapshot = ensureSlugs(snapshot);
+        return applyTagOrder(snapshot, serviceName, environment);
     }
 
     public StoredRegistration getRegistration(String serviceName, String environment) {
@@ -87,6 +93,20 @@ public class CatalogService {
     }
 
     /**
+     * 按用户保存的排序重排分组。未出现在保存顺序中的新分组追加到末尾（spec 升级时自然处理）。
+     */
+    private CanonicalServiceSnapshot applyTagOrder(CanonicalServiceSnapshot snapshot,
+                                                    String serviceName, String environment) {
+        Map<String, Integer> order = tagOrderRepository.findOrder(serviceName, environment);
+        if (order.isEmpty()) {
+            return snapshot;
+        }
+        List<CanonicalGroup> sorted = new ArrayList<>(snapshot.getGroups());
+        sorted.sort(Comparator.comparingInt(g -> order.getOrDefault(g.getSlug(), Integer.MAX_VALUE)));
+        return snapshot.toBuilder().clearGroups().groups(sorted).build();
+    }
+
+    /**
      * 为旧数据补全缺失的 group slug。
      * 新注册的数据在 OpenApiNormalizer 中已生成 slug，此处仅处理 null 的情况。
      */
@@ -115,13 +135,21 @@ public class CatalogService {
 
     private ServiceCatalogItem toCatalogItem(StoredRegistration registration) {
         CanonicalServiceSnapshot snapshot = ensureSlugs(registration.getSnapshot());
+        String serviceName = snapshot.getRef().getName();
+        String environment = snapshot.getRef().getEnvironment();
+        Map<String, Integer> order = tagOrderRepository.findOrder(serviceName, environment);
+        List<CanonicalGroup> groups = snapshot.getGroups();
+        if (!order.isEmpty()) {
+            groups = new ArrayList<>(groups);
+            groups.sort(Comparator.comparingInt(g -> order.getOrDefault(g.getSlug(), Integer.MAX_VALUE)));
+        }
         return ServiceCatalogItem.builder()
-                .name(snapshot.getRef().getName())
-                .environment(snapshot.getRef().getEnvironment())
+                .name(serviceName)
+                .environment(environment)
                 .title(snapshot.getTitle())
                 .version(snapshot.getVersion())
                 .updatedAt(snapshot.getUpdatedAt())
-                .groups(snapshot.getGroups().stream()
+                .groups(groups.stream()
                         .map(g -> ServiceCatalogItem.GroupRef.builder()
                                 .name(g.getName())
                                 .slug(g.getSlug())

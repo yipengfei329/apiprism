@@ -323,6 +323,8 @@ public class JdbcRegistrationRepository implements RegistrationRepository {
 
         jdbc.update("DELETE FROM mcp_endpoints WHERE service_name = ? AND environment = ?",
                 serviceName, environment);
+        jdbc.update("DELETE FROM tag_order WHERE service_name = ? AND environment = ?",
+                serviceName, environment);
         jdbc.update("DELETE FROM service_snapshots WHERE service_name = ? AND environment = ?",
                 serviceName, environment);
         jdbc.update("DELETE FROM service_snapshot_revisions WHERE service_name = ? AND environment = ?",

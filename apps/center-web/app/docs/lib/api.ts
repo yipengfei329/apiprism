@@ -306,6 +306,29 @@ export async function getRevisionOperation(
   }
 }
 
+// ---- 分组排序 ----
+
+/** slug → 0-based position 映射，空对象表示尚未保存过顺序 */
+export type TagOrder = Record<string, number>;
+
+export async function getTagOrder(
+  service: string,
+  environment: string
+): Promise<TagOrder> {
+  try {
+    const res = await fetch(
+      getInternalApiUrl(
+        `/api/v1/services/${encodeURIComponent(service)}/env/${encodeURIComponent(environment)}/tag-order`
+      ),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return {};
+    return res.json();
+  } catch {
+    return {};
+  }
+}
+
 export async function getMcpGroupStatus(
   service: string,
   environment: string,

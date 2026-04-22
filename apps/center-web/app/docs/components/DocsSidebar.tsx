@@ -507,13 +507,25 @@ export function DocsSidebar({
             )}
           </div>
 
-          {/* 服务名 */}
-          <h2
-            className="truncate text-[15px] font-semibold leading-snug tracking-tight text-[var(--sidebar-text-primary)]"
-            title={activeService.name}
+          {/* 服务名：可点击，跳回服务概览页 */}
+          <Link
+            href={`/docs/${encodeURIComponent(activeService.name)}/${encodeURIComponent(activeService.environment)}`}
+            className="group/svc-hd block truncate"
+            title={`返回 ${activeService.name} 服务首页`}
           >
-            {activeService.name}
-          </h2>
+            <h2
+              className="truncate text-[17px] font-bold leading-snug"
+              style={{
+                letterSpacing: "-0.025em",
+                background: "linear-gradient(90deg, rgba(255,255,255,0.95) 0%, rgba(134,239,172,0.8) 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              {activeService.name}
+            </h2>
+            <span className="mt-0.5 block h-px w-0 bg-[rgba(134,239,172,0.35)] transition-all duration-200 group-hover/svc-hd:w-full" />
+          </Link>
 
           {/* 环境 + 版本 */}
           <div className="mt-2.5 flex items-center gap-2">

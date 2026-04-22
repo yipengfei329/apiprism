@@ -22,6 +22,7 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.OAuthFlow;
 import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
@@ -89,6 +90,9 @@ public class OpenApiNormalizer {
         Map<String, String> tagDescriptions = extractTagDescriptions(openApi);
         Map<String, List<CanonicalOperation>> groupedOperations = new LinkedHashMap<>();
 
+        // 文档级全局 security，当 operation 未定义自己的 security 时作为 fallback
+        List<SecurityRequirement> globalSecurity = Optional.ofNullable(openApi.getSecurity()).orElseGet(List::of);
+
         if (openApi.getPaths() != null) {
             openApi.getPaths().forEach((path, pathItem) -> {
                 for (Map.Entry<PathItem.HttpMethod, Operation> entry : pathItem.readOperationsMap().entrySet()) {
@@ -98,7 +102,7 @@ public class OpenApiNormalizer {
                             .map(tags -> tags.getFirst())
                             .orElse("default");
                     groupedOperations.computeIfAbsent(groupName, ignored -> new ArrayList<>())
-                            .add(toOperation(path, pathItem, entry.getKey(), operation));
+                            .add(toOperation(path, pathItem, entry.getKey(), operation, globalSecurity));
                 }
             });
         }
@@ -162,7 +166,8 @@ public class OpenApiNormalizer {
         return descriptions;
     }
 
-    private CanonicalOperation toOperation(String path, PathItem pathItem, PathItem.HttpMethod method, Operation operation) {
+    private CanonicalOperation toOperation(String path, PathItem pathItem, PathItem.HttpMethod method,
+                                            Operation operation, List<SecurityRequirement> globalSecurity) {
         String operationId = firstNonBlank(operation.getOperationId(), fallbackOperationId(method, path));
         List<CanonicalParameter> parameters = mergeParameters(pathItem, operation).stream()
                 .map(this::toParameter)
@@ -174,9 +179,12 @@ public class OpenApiNormalizer {
                         .sorted(Comparator.comparingInt(response -> responseSortKey(response.getStatusCode())))
                         .toList())
                 .orElseGet(List::of);
-        List<String> securityRequirements = Optional.ofNullable(operation.getSecurity())
-                .orElseGet(List::of)
-                .stream()
+        // operation.getSecurity() == null → 继承文档级全局声明
+        // operation.getSecurity() == 空列表 [] → 显式声明该接口不需要认证
+        List<SecurityRequirement> effectiveSecurity = operation.getSecurity() != null
+                ? operation.getSecurity()
+                : globalSecurity;
+        List<String> securityRequirements = effectiveSecurity.stream()
                 .flatMap(requirement -> requirement.keySet().stream())
                 .distinct()
                 .toList();

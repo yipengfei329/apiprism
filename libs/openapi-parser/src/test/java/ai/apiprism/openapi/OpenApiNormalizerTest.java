@@ -513,4 +513,79 @@ class OpenApiNormalizerTest {
         assertEquals(List.of("200", "201", "2XX", "404", "default"),
                 responses.stream().map(CanonicalResponse::getStatusCode).toList());
     }
+
+    @Test
+    void inheritsGlobalSecurityWhenOperationHasNone() {
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Secure API
+                  version: 1.0.0
+                security:
+                  - bearerAuth: []
+                components:
+                  securitySchemes:
+                    bearerAuth:
+                      type: http
+                      scheme: bearer
+                paths:
+                  /users:
+                    get:
+                      operationId: listUsers
+                      responses:
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("secure-svc", "prod", null, null, null, spec);
+        CanonicalOperation op = result.getSnapshot().getGroups().getFirst().getOperations().getFirst();
+        assertEquals(List.of("bearerAuth"), op.getSecurityRequirements());
+    }
+
+    @Test
+    void operationLevelSecurityOverridesGlobal() {
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Secure API
+                  version: 1.0.0
+                security:
+                  - globalAuth: []
+                components:
+                  securitySchemes:
+                    globalAuth:
+                      type: http
+                      scheme: bearer
+                    opAuth:
+                      type: apiKey
+                      in: header
+                      name: X-API-Key
+                paths:
+                  /public:
+                    get:
+                      operationId: publicEndpoint
+                      security: []
+                      responses:
+                        '200':
+                          description: OK
+                  /private:
+                    get:
+                      operationId: privateEndpoint
+                      security:
+                        - opAuth: []
+                      responses:
+                        '200':
+                          description: OK
+                """;
+
+        NormalizationResult result = normalizer.normalize("secure-svc", "prod", null, null, null, spec);
+        var ops = result.getSnapshot().getGroups().stream()
+                .flatMap(g -> g.getOperations().stream())
+                .collect(java.util.stream.Collectors.toMap(CanonicalOperation::getOperationId, o -> o));
+
+        // 显式 security: [] 表示该接口无需认证
+        assertEquals(List.of(), ops.get("publicEndpoint").getSecurityRequirements());
+        // 显式 security 覆盖全局
+        assertEquals(List.of("opAuth"), ops.get("privateEndpoint").getSecurityRequirements());
+    }
 }
