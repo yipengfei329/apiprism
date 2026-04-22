@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, ReactNode } from "react";
+import { useState, useEffect, useCallback, ReactNode, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { ServiceCatalogItem } from "../lib/api";
 import { DocsSidebar } from "./DocsSidebar";
@@ -82,7 +82,9 @@ export function SidebarLayout({
           }}
         >
           <div style={{ width: 288 }} className="h-full">
-            <DocsSidebar services={services} onCollapse={handleCollapse} />
+            <Suspense fallback={null}>
+              <DocsSidebar services={services} onCollapse={handleCollapse} />
+            </Suspense>
           </div>
         </div>
       ) : (
@@ -95,7 +97,9 @@ export function SidebarLayout({
             transition: "transform 220ms cubic-bezier(0.16,1,0.3,1)",
           }}
         >
-          <DocsSidebar services={services} onCollapse={handleCollapse} />
+          <Suspense fallback={null}>
+            <DocsSidebar services={services} onCollapse={handleCollapse} />
+          </Suspense>
         </div>
       )}
 
