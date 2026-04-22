@@ -8,6 +8,7 @@ import lombok.extern.jackson.Jacksonized;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 中心内部持久化和查询使用的规范化服务快照。
@@ -46,6 +47,12 @@ public class CanonicalServiceSnapshot {
      */
     @Singular(value = "group", ignoreNullCollections = true)
     List<CanonicalGroup> groups;
+
+    /**
+     * 服务级安全方案定义（来自 OpenAPI components.securitySchemes）。
+     */
+    @Singular(value = "securityScheme", ignoreNullCollections = true)
+    Map<String, CanonicalSecurityScheme> securitySchemes;
 
     /**
      * 快照生成时间。

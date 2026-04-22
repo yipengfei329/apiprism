@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getOperation, getRevisionOperation, listRevisions } from "../../../../lib/api";
+import { getOperation, getRevisionOperation, getServiceSnapshot, getRevisionSnapshot, listRevisions } from "../../../../lib/api";
 import { OperationDetail } from "../../../../components/OperationDetail";
 import { OperationWiki } from "../../../../components/OperationWiki";
 import { Breadcrumb } from "../../../../components/Breadcrumb";
@@ -19,10 +19,13 @@ export default async function OperationPage({ params, searchParams }: Props) {
   const grpSlug = decodeURIComponent(group);
   const opId = decodeURIComponent(operationId);
 
-  const [op, revisions] = await Promise.all([
+  const [op, snapshot, revisions] = await Promise.all([
     revisionParam
       ? getRevisionOperation(svc, env, revisionParam, opId)
       : getOperation(svc, env, opId),
+    revisionParam
+      ? getRevisionSnapshot(svc, env, revisionParam)
+      : getServiceSnapshot(svc, env),
     revisionParam ? listRevisions(svc, env) : Promise.resolve([]),
   ]);
   if (!op) notFound();
@@ -75,7 +78,7 @@ export default async function OperationPage({ params, searchParams }: Props) {
 
       {/* 接口详情：头部 + 选项卡 + 内容 */}
       <OperationDetail op={op} service={svc} environment={env}>
-        <OperationWiki op={op} />
+        <OperationWiki op={op} securitySchemes={snapshot?.securitySchemes} />
       </OperationDetail>
     </div>
   );

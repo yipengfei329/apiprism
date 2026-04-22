@@ -52,6 +52,25 @@ export type CanonicalResponse = {
   schema: JsonSchema | null;
 };
 
+export type CanonicalOAuthFlow = {
+  flowType: string;
+  authorizationUrl: string | null;
+  tokenUrl: string | null;
+  refreshUrl: string | null;
+  scopes: Record<string, string>;
+};
+
+export type CanonicalSecurityScheme = {
+  type: string | null;
+  scheme: string | null;
+  bearerFormat: string | null;
+  in: string | null;
+  paramName: string | null;
+  openIdConnectUrl: string | null;
+  description: string | null;
+  oauthFlows: CanonicalOAuthFlow[];
+};
+
 export type CanonicalOperation = {
   operationId: string;
   method: string;
@@ -83,6 +102,7 @@ export type CanonicalServiceSnapshot = {
   version: string;
   serverUrls: string[];
   groups: CanonicalGroup[];
+  securitySchemes: Record<string, CanonicalSecurityScheme>;
   updatedAt: string;
 };
 

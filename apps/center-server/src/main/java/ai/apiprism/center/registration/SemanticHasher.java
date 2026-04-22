@@ -1,10 +1,12 @@
 package ai.apiprism.center.registration;
 
 import ai.apiprism.model.CanonicalGroup;
+import ai.apiprism.model.CanonicalOAuthFlow;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalParameter;
 import ai.apiprism.model.CanonicalRequestBody;
 import ai.apiprism.model.CanonicalResponse;
+import ai.apiprism.model.CanonicalSecurityScheme;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +30,7 @@ public class SemanticHasher {
     /**
      * 语义哈希算法版本前缀，算法逻辑变更时递增，强制所有服务在下次注册时创建新 revision。
      */
-    public static final String VERSION = "smh:1";
+    public static final String VERSION = "smh:2";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -68,6 +70,7 @@ public class SemanticHasher {
                         .map(SemanticHasher::buildGroup)
                         .toList();
         root.put("groups", groups);
+        root.put("securitySchemes", buildSecuritySchemes(s.getSecuritySchemes()));
 
         return MAPPER.writeValueAsString(root);
     }
@@ -171,6 +174,33 @@ public class SemanticHasher {
                 result.add(item);
             }
         }
+        return result;
+    }
+
+    private static Map<String, Object> buildSecuritySchemes(Map<String, CanonicalSecurityScheme> schemes) {
+        if (schemes == null || schemes.isEmpty()) return Map.of();
+        Map<String, Object> result = new TreeMap<>();
+        schemes.forEach((name, s) -> {
+            Map<String, Object> m = new TreeMap<>();
+            m.put("bearerFormat", s.getBearerFormat());
+            m.put("description", s.getDescription());
+            m.put("in", s.getIn());
+            m.put("openIdConnectUrl", s.getOpenIdConnectUrl());
+            m.put("oauthFlows", s.getOauthFlows() == null ? List.of() :
+                    s.getOauthFlows().stream().map(f -> {
+                        Map<String, Object> fm = new TreeMap<>();
+                        fm.put("authorizationUrl", f.getAuthorizationUrl());
+                        fm.put("flowType", f.getFlowType());
+                        fm.put("refreshUrl", f.getRefreshUrl());
+                        fm.put("scopes", f.getScopes() == null ? Map.of() : new TreeMap<>(f.getScopes()));
+                        fm.put("tokenUrl", f.getTokenUrl());
+                        return fm;
+                    }).toList());
+            m.put("paramName", s.getParamName());
+            m.put("scheme", s.getScheme());
+            m.put("type", s.getType());
+            result.put(name, m);
+        });
         return result;
     }
 
