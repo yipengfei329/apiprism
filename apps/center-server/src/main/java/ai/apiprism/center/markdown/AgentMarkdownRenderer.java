@@ -144,7 +144,7 @@ public class AgentMarkdownRenderer {
                 for (CanonicalOperation op : group.getOperations()) {
                     String link = baseUrl + "/" + snapshot.getRef().getName()
                             + "/" + snapshot.getRef().getEnvironment()
-                            + "/" + op.getOperationId() + "/apidocs.md";
+                            + "/" + group.getSlug() + "/" + op.getOperationId() + "/apidocs.md";
                     String desc = op.getSummary() != null ? escapePipe(op.getSummary()) : "";
                     md.append("| [").append(op.getOperationId()).append("](").append(link).append(")")
                             .append(" | ").append(op.getMethod())
@@ -188,7 +188,7 @@ public class AgentMarkdownRenderer {
             for (CanonicalOperation op : group.getOperations()) {
                 String link = baseUrl + "/" + snapshot.getRef().getName()
                         + "/" + snapshot.getRef().getEnvironment()
-                        + "/" + op.getOperationId() + "/apidocs.md";
+                        + "/" + group.getSlug() + "/" + op.getOperationId() + "/apidocs.md";
                 String desc = op.getSummary() != null ? escapePipe(op.getSummary()) : "";
                 md.append("| [").append(op.getOperationId()).append("](").append(link).append(")")
                         .append(" | ").append(op.getMethod())
