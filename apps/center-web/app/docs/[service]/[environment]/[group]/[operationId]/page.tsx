@@ -77,7 +77,7 @@ export default async function OperationPage({ params, searchParams }: Props) {
       )}
 
       {/* 接口详情：头部 + 选项卡 + 内容 */}
-      <OperationDetail op={op} service={svc} environment={env}>
+      <OperationDetail op={op} service={svc} environment={env} group={grpSlug}>
         <OperationWiki op={op} securitySchemes={snapshot?.securitySchemes} />
       </OperationDetail>
     </div>

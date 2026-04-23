@@ -2,6 +2,7 @@ package ai.apiprism.center.markdown;
 
 import ai.apiprism.center.catalog.CatalogService;
 import ai.apiprism.center.config.CenterProperties;
+import ai.apiprism.model.CanonicalGroup;
 import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,10 +48,24 @@ public class AgentDocsController {
         return agentMarkdownRenderer.renderServiceIndex(snapshot, baseUrl);
     }
 
-    @GetMapping(value = "/{service}/{env}/{operationId}/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/{service}/{env}/{groupSlug}/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
+    public String groupDocs(
+            @PathVariable String service,
+            @PathVariable String env,
+            @PathVariable String groupSlug,
+            HttpServletRequest request
+    ) {
+        String baseUrl = resolveBaseUrl(request);
+        CanonicalServiceSnapshot snapshot = catalogService.getService(service, env);
+        CanonicalGroup group = catalogService.getGroupBySlug(service, env, groupSlug);
+        return agentMarkdownRenderer.renderGroupIndex(snapshot, group, baseUrl);
+    }
+
+    @GetMapping(value = "/{service}/{env}/{groupSlug}/{operationId}/apidocs.md", produces = MediaType.TEXT_PLAIN_VALUE)
     public String operationDocs(
             @PathVariable String service,
             @PathVariable String env,
+            @PathVariable String groupSlug,
             @PathVariable String operationId
     ) {
         CanonicalServiceSnapshot snapshot = catalogService.getService(service, env);

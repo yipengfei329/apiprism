@@ -57,11 +57,13 @@ export function OperationDetail({
   op,
   service,
   environment,
+  group,
   children,
 }: {
   op: CanonicalOperation;
   service: string;
   environment: string;
+  group: string;
   /** 由服务端预渲染的文档 Tab 内容（OperationWiki） */
   children: ReactNode;
 }) {
@@ -80,7 +82,7 @@ export function OperationDetail({
             >
               {op.summary || op.operationId}
             </h1>
-            <AgentDocLink path={`/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(op.operationId)}/apidocs.md`} />
+            <AgentDocLink path={`/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/${encodeURIComponent(op.operationId)}/apidocs.md`} />
           </div>
 
           {op.operationId && (

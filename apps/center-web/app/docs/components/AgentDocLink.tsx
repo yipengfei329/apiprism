@@ -11,13 +11,28 @@ interface AgentDocLinkProps {
 export function AgentDocLink({ path }: AgentDocLinkProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleCopy = useCallback(async () => {
     const url = `${window.location.origin}${path}`;
-    navigator.clipboard.writeText(url).then(() => {
+    try {
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    });
+    } catch {
+      // navigator.clipboard 不可用时（非安全上下文、权限被拒等）的降级方案
+      const el = document.createElement("textarea");
+      el.value = url;
+      el.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } finally {
+        document.body.removeChild(el);
+      }
+    }
   }, [path]);
 
   return (
