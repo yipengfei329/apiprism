@@ -24,6 +24,10 @@ function hasNestedSchema(parameter: CanonicalParameter): boolean {
     return Object.keys(schema.items.properties).length > 0;
   }
 
+  if (schema.additionalProperties?.properties) {
+    return Object.keys(schema.additionalProperties.properties).length > 0;
+  }
+
   return false;
 }
 

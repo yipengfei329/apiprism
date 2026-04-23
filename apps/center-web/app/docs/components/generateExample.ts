@@ -20,7 +20,7 @@ export function generateExample(
   // 枚举取第一个值
   if (schema.enum && schema.enum.length > 0) return schema.enum[0];
 
-  const { type, format, properties, items } = schema;
+  const { type, format, properties, items, additionalProperties } = schema;
 
   // 有 properties 视为 object
   if (properties && Object.keys(properties).length > 0) {
@@ -29,6 +29,11 @@ export function generateExample(
       obj[key] = generateExample(prop, visited);
     }
     return obj;
+  }
+
+  // Map<K,V> 类型：用示例 key 展示值类型
+  if (additionalProperties) {
+    return { key: generateExample(additionalProperties, visited) };
   }
 
   switch (type) {

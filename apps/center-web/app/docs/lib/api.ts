@@ -24,6 +24,7 @@ export type JsonSchema = {
   description?: string;
   properties?: Record<string, JsonSchema>;
   items?: JsonSchema;
+  additionalProperties?: JsonSchema;
   required?: string[];
   enum?: unknown[];
   example?: unknown;
