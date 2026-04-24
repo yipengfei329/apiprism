@@ -49,7 +49,7 @@ function PropertyRow({
       (schema.additionalProperties?.properties != null &&
         Object.keys(schema.additionalProperties.properties).length > 0));
 
-  const [expanded, setExpanded] = useState(depth === 0);
+  const [expanded, setExpanded] = useState(depth <= 1);
 
   const childSchema =
     schema.type === "array" && schema.items?.properties
