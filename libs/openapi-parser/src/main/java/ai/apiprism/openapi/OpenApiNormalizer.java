@@ -14,7 +14,7 @@ import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
-import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
@@ -50,7 +50,7 @@ public class OpenApiNormalizer {
      * 当 normalize 产出的结构因逻辑变更而不同于旧版本时递增此值，
      * 使注册端的 specHash 失效，强制重写已持久化的 snapshot。
      */
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
 
     private static final int MAX_SCHEMA_DEPTH = 8;
 
@@ -328,9 +328,40 @@ public class OpenApiNormalizer {
             if (schema.getRequired() != null && !schema.getRequired().isEmpty()) {
                 map.put("required", List.copyOf(schema.getRequired()));
             }
-            // 数组元素
-            if (schema instanceof ArraySchema arr && arr.getItems() != null) {
-                map.put("items", schemaToMap(arr.getItems(), visited, depth + 1));
+            // 数组元素 — 兼容 ArraySchema 及 setResolveFully 产生的通用 Schema（type:"array"）
+            if (schema.getItems() != null) {
+                map.put("items", schemaToMap(schema.getItems(), visited, depth + 1));
+            }
+            // additionalProperties（Map<K,V> 的值类型）
+            Object addlRaw = schema.getAdditionalProperties();
+            if (addlRaw instanceof Schema<?> addlProps) {
+                map.put("additionalProperties", schemaToMap(addlProps, visited, depth + 1));
+            }
+            // allOf / anyOf / oneOf — SpringDoc 用于继承与组合类型
+            if (schema instanceof ComposedSchema composed) {
+                List<Schema> subs = new ArrayList<>();
+                if (composed.getAllOf() != null) subs.addAll(composed.getAllOf());
+                if (composed.getAnyOf() != null) subs.addAll(composed.getAnyOf());
+                if (composed.getOneOf() != null) subs.addAll(composed.getOneOf());
+                for (Schema<?> sub : subs) {
+                    Map<String, Object> subMap = schemaToMap((Schema<?>) sub, visited, depth);
+                    if (subMap == null) continue;
+                    if (subMap.get("properties") instanceof Map<?, ?> subProps) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> existing = (Map<String, Object>)
+                                map.computeIfAbsent("properties", k -> new LinkedHashMap<>());
+                        subProps.forEach((k, v) -> existing.putIfAbsent((String) k, v));
+                    }
+                    if (subMap.get("required") instanceof List<?> subReq) {
+                        @SuppressWarnings("unchecked")
+                        List<String> existing = new ArrayList<>(
+                                map.get("required") instanceof List<?> r ? (List<String>) r : List.of());
+                        subReq.forEach(r -> { if (!existing.contains((String) r)) existing.add((String) r); });
+                        if (!existing.isEmpty()) map.put("required", existing);
+                    }
+                    if (!map.containsKey("type") && subMap.containsKey("type")) map.put("type", subMap.get("type"));
+                    if (!map.containsKey("description") && subMap.containsKey("description")) map.put("description", subMap.get("description"));
+                }
             }
             return map;
         } finally {

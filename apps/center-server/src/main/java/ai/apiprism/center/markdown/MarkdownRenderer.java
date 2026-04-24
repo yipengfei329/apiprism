@@ -7,8 +7,11 @@ import ai.apiprism.model.CanonicalResponse;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class MarkdownRenderer {
@@ -134,31 +137,61 @@ public class MarkdownRenderer {
     }
 
     /**
-     * 当 schema 含 properties 时，渲染 markdown 属性表格。
+     * 当 schema 含 properties 时，递归渲染 markdown 属性表格（点号路径表示嵌套层级）。
      */
     @SuppressWarnings("unchecked")
     private void renderSchemaProperties(StringBuilder builder, Map<String, Object> schema) {
         if (schema == null) return;
+        // 顶层为 array 时展示 items 的属性
+        Map<String, Object> target = schema;
+        if ("array".equals(schema.get("type")) && schema.get("items") instanceof Map<?, ?> items) {
+            target = (Map<String, Object>) items;
+        }
+        if (target.get("properties") == null) return;
+
+        builder.append("\n| 字段路径 | 类型 | 必填 | 说明 |\n");
+        builder.append("|---------|------|------|------|\n");
+        appendPropertiesRows(builder, target, "", Collections.newSetFromMap(new IdentityHashMap<>()));
+        builder.append('\n');
+    }
+
+    @SuppressWarnings("unchecked")
+    private void appendPropertiesRows(StringBuilder builder, Map<String, Object> schema,
+                                      String prefix, Set<Map<String, Object>> visited) {
+        if (schema == null || visited.contains(schema)) return;
+        visited.add(schema);
         Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
-        if (properties == null || properties.isEmpty()) return;
+        if (properties == null || properties.isEmpty()) {
+            visited.remove(schema);
+            return;
+        }
         List<String> required = schema.get("required") instanceof List<?> list
                 ? list.stream().map(Object::toString).toList()
                 : List.of();
 
-        builder.append("\n  | Field | Type | Required | Description |\n");
-        builder.append("  |-------|------|----------|-------------|\n");
         for (Map.Entry<String, Object> entry : properties.entrySet()) {
-            Map<String, Object> prop = (Map<String, Object>) entry.getValue();
-            String name = entry.getKey();
+            if (!(entry.getValue() instanceof Map<?, ?> propRaw)) continue;
+            Map<String, Object> prop = (Map<String, Object>) propRaw;
+            String path = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
             String typeLabel = schemaTypeLabel(prop);
-            boolean isRequired = required.contains(name);
+            boolean isRequired = required.contains(entry.getKey());
             String desc = prop.get("description") != null ? prop.get("description").toString() : "";
-            builder.append("  | ").append(name)
+            builder.append("| ").append(path)
                     .append(" | ").append(typeLabel != null ? typeLabel : "")
                     .append(" | ").append(isRequired ? "Yes" : "No")
-                    .append(" | ").append(desc)
-                    .append(" |\n");
+                    .append(" | ").append(desc).append(" |\n");
+            // 递归嵌套 object
+            if (prop.get("properties") != null) {
+                appendPropertiesRows(builder, prop, path, visited);
+            }
+            // 递归 array items
+            if ("array".equals(prop.get("type")) && prop.get("items") instanceof Map<?, ?> itemsRaw) {
+                Map<String, Object> itemSchema = (Map<String, Object>) itemsRaw;
+                if (itemSchema.get("properties") != null) {
+                    appendPropertiesRows(builder, itemSchema, path + "[]", visited);
+                }
+            }
         }
-        builder.append('\n');
+        visited.remove(schema);
     }
 }

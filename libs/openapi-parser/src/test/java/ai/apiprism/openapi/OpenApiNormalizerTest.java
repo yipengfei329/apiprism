@@ -588,4 +588,173 @@ class OpenApiNormalizerTest {
         // 显式 security 覆盖全局
         assertEquals(List.of("opAuth"), ops.get("privateEndpoint").getSecurityRequirements());
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void handlesAllOfComposedSchema() {
+        // SpringDoc 为继承类生成 allOf：父类属性 + 子类属性均应出现在 properties 中
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                paths:
+                  /orders:
+                    get:
+                      operationId: getOrder
+                      responses:
+                        '200':
+                          description: OK
+                          content:
+                            application/json:
+                              schema:
+                                $ref: '#/components/schemas/OrderResponse'
+                components:
+                  schemas:
+                    BaseDTO:
+                      type: object
+                      properties:
+                        requestId:
+                          type: string
+                        timestamp:
+                          type: integer
+                          format: int64
+                    OrderResponse:
+                      allOf:
+                        - $ref: '#/components/schemas/BaseDTO'
+                        - type: object
+                          required: [orderId]
+                          properties:
+                            orderId:
+                              type: string
+                            status:
+                              type: string
+                """;
+
+        NormalizationResult result = normalizer.normalize("order-service", "dev", null, null, null, spec);
+        Map<String, Object> schema = result.getSnapshot().getGroups().getFirst()
+                .getOperations().getFirst().getResponses().getFirst().getSchema();
+
+        assertNotNull(schema);
+        Map<String, Object> props = (Map<String, Object>) schema.get("properties");
+        assertNotNull(props, "allOf 合并后 properties 不应为 null");
+        // 父类字段
+        assertTrue(props.containsKey("requestId"), "应包含父类字段 requestId");
+        assertTrue(props.containsKey("timestamp"), "应包含父类字段 timestamp");
+        // 子类字段
+        assertTrue(props.containsKey("orderId"), "应包含子类字段 orderId");
+        assertTrue(props.containsKey("status"), "应包含子类字段 status");
+        // required 也应合并
+        List<String> required = (List<String>) schema.get("required");
+        assertNotNull(required);
+        assertTrue(required.contains("orderId"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void extractsAdditionalProperties() {
+        // Map<String, String> 在 OpenAPI 中用 additionalProperties 表示值类型
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                paths:
+                  /metadata:
+                    get:
+                      operationId: getMetadata
+                      responses:
+                        '200':
+                          description: OK
+                          content:
+                            application/json:
+                              schema:
+                                type: object
+                                properties:
+                                  tags:
+                                    type: object
+                                    additionalProperties:
+                                      type: string
+                                  counts:
+                                    type: object
+                                    additionalProperties:
+                                      type: integer
+                                      format: int32
+                """;
+
+        NormalizationResult result = normalizer.normalize("meta-service", "dev", null, null, null, spec);
+        Map<String, Object> schema = result.getSnapshot().getGroups().getFirst()
+                .getOperations().getFirst().getResponses().getFirst().getSchema();
+
+        Map<String, Object> props = (Map<String, Object>) schema.get("properties");
+        assertNotNull(props);
+
+        Map<String, Object> tags = (Map<String, Object>) props.get("tags");
+        assertNotNull(tags);
+        Map<String, Object> tagsAddl = (Map<String, Object>) tags.get("additionalProperties");
+        assertNotNull(tagsAddl, "tags.additionalProperties 应被提取");
+        assertEquals("string", tagsAddl.get("type"));
+
+        Map<String, Object> counts = (Map<String, Object>) props.get("counts");
+        assertNotNull(counts);
+        Map<String, Object> countsAddl = (Map<String, Object>) counts.get("additionalProperties");
+        assertNotNull(countsAddl, "counts.additionalProperties 应被提取");
+        assertEquals("integer", countsAddl.get("type"));
+        assertEquals("int32", countsAddl.get("format"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void extractsItemsFromNonArraySchemaInstance() {
+        // setResolveFully 可能产生 type:"array" 的通用 Schema 而非 ArraySchema 子类；
+        // 内联 $ref 后 items 仍应被正确提取。
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                paths:
+                  /orders:
+                    get:
+                      operationId: listOrders
+                      responses:
+                        '200':
+                          description: OK
+                          content:
+                            application/json:
+                              schema:
+                                type: object
+                                properties:
+                                  data:
+                                    type: array
+                                    items:
+                                      $ref: '#/components/schemas/Item'
+                components:
+                  schemas:
+                    Item:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        value:
+                          type: number
+                """;
+
+        NormalizationResult result = normalizer.normalize("list-service", "dev", null, null, null, spec);
+        Map<String, Object> schema = result.getSnapshot().getGroups().getFirst()
+                .getOperations().getFirst().getResponses().getFirst().getSchema();
+
+        Map<String, Object> props = (Map<String, Object>) schema.get("properties");
+        assertNotNull(props);
+        Map<String, Object> data = (Map<String, Object>) props.get("data");
+        assertNotNull(data);
+        assertEquals("array", data.get("type"));
+
+        Map<String, Object> items = (Map<String, Object>) data.get("items");
+        assertNotNull(items, "data.items 应被正确提取（不依赖 instanceof ArraySchema）");
+        Map<String, Object> itemProps = (Map<String, Object>) items.get("properties");
+        assertNotNull(itemProps);
+        assertTrue(itemProps.containsKey("id"));
+        assertTrue(itemProps.containsKey("value"));
+    }
 }

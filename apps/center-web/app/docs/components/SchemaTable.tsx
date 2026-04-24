@@ -44,16 +44,20 @@ function PropertyRow({
     ((schema.properties && Object.keys(schema.properties).length > 0) ||
       (schema.type === "array" &&
         schema.items?.properties &&
-        Object.keys(schema.items.properties).length > 0));
+        Object.keys(schema.items.properties).length > 0) ||
+      (schema.additionalProperties?.properties != null &&
+        Object.keys(schema.additionalProperties.properties).length > 0));
 
   const [expanded, setExpanded] = useState(depth === 0);
 
   const childSchema =
     schema.type === "array" && schema.items?.properties
       ? schema.items
-      : schema.properties
-        ? schema
-        : null;
+      : schema.additionalProperties?.properties
+        ? schema.additionalProperties
+        : schema.properties
+          ? schema
+          : null;
 
   return (
     <div className={!isLast ? "border-b border-[var(--border-subtle)]" : ""}>
