@@ -76,7 +76,7 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
       )}
 
       {/* 服务头部 */}
-      <header className="mb-14">
+      <header className="mb-10">
         <div className="flex items-start justify-between gap-4">
           <h1
             className="text-[clamp(1.8rem,3vw,2.6rem)] font-semibold leading-tight text-[var(--text-primary)]"
@@ -124,30 +124,11 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
         )}
       </header>
 
-      {/* 统计面板 */}
+      {/* 统计概览 */}
       <ServiceStats snapshot={snapshot} />
 
-      {/* 认证方式 */}
-      <ServiceSecuritySchemes securitySchemes={snapshot.securitySchemes ?? {}} />
-
-      {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
-      {!viewingOlder && (
-        <section className="mb-14">
-          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-            MCP 网关
-          </p>
-          <McpToggle
-            service={svc}
-            environment={env}
-            initialEnabled={mcpStatus?.serviceEnabled ?? false}
-            initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
-            initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
-          />
-        </section>
-      )}
-
-      {/* 接口分组 */}
-      <section>
+      {/* 接口分组 — 提前至首位，主要导航入口 */}
+      <section className="mb-14">
         <p className="mb-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
           接口分组 — {snapshot.groups.length}
         </p>
@@ -206,6 +187,25 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
           />
         )}
       </section>
+
+      {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
+      {!viewingOlder && (
+        <section className="mb-14">
+          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+            MCP 网关
+          </p>
+          <McpToggle
+            service={svc}
+            environment={env}
+            initialEnabled={mcpStatus?.serviceEnabled ?? false}
+            initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
+            initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
+          />
+        </section>
+      )}
+
+      {/* 认证方式 */}
+      <ServiceSecuritySchemes securitySchemes={snapshot.securitySchemes ?? {}} />
 
       {/* 危险区域：删除环境 */}
       {!viewingOlder && (

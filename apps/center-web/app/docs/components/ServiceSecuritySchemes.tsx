@@ -44,9 +44,17 @@ export function ServiceSecuritySchemes({ securitySchemes }: Props) {
 
   return (
     <section className="mb-14">
-      <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-        认证方式
-      </p>
+      <details open>
+        <summary className="mb-4 flex cursor-pointer list-none items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] marker:hidden">
+          认证方式
+          <svg
+            className="h-3 w-3 transition-transform [details[open]_&]:rotate-180"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+          >
+            <path d="M4.427 6.427a.75.75 0 011.06 0L8 8.94l2.513-2.513a.75.75 0 111.06 1.06L8 11.06 4.427 7.487a.75.75 0 010-1.06z" />
+          </svg>
+        </summary>
 
       <div className="rounded-xl bg-[var(--bg-surface)] v-card-full overflow-hidden">
         {entries.map(([name, scheme], idx) => {
@@ -116,6 +124,7 @@ export function ServiceSecuritySchemes({ securitySchemes }: Props) {
           );
         })}
       </div>
+      </details>
     </section>
   );
 }
