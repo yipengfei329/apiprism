@@ -56,7 +56,7 @@ export default async function OperationPage({ params, searchParams }: Props) {
                 icon: "group",
               },
               {
-                label: op.summary || opId,
+                label: op.summary,
                 icon: "operation",
               },
             ]}
