@@ -406,35 +406,58 @@ function SidebarRevisionButton({
         <div
           ref={dropdownRef}
           role="listbox"
-          className="fixed z-[9999] max-h-[280px] w-[268px] overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] py-1 shadow-lg"
+          className="fixed z-[9999] max-h-[320px] w-[300px] overflow-y-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] py-1 shadow-lg"
           style={dropdownPos}
         >
           {revisions.map((rev) => {
             const href = rev.current
               ? baseHref
               : `${baseHref}?revision=${encodeURIComponent(rev.id)}`;
+            const isSelected = active?.id === rev.id;
             return (
               <Link
                 key={rev.id}
                 href={href}
                 role="option"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-[var(--bg-subtle)]"
+                className={`relative flex flex-col gap-0.5 px-3 py-2.5 transition-colors hover:bg-[var(--bg-subtle)] ${isSelected ? "bg-[var(--bg-subtle)]" : ""}`}
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[12px] font-semibold text-[var(--text-primary)]">
-                    #{rev.seq}
-                  </span>
-                  {rev.current && (
-                    <span className="rounded bg-[var(--env-prod-bg)] px-1.5 py-[1px] font-mono text-[10px] font-medium text-[var(--env-prod-text)]">
-                      当前
+                {isSelected && (
+                  <span className="absolute inset-y-2 left-0 w-[2px] rounded-r-full bg-[var(--accent)]" />
+                )}
+                {/* 第一行：序号 + 当前徽章 + 时间 */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[13px] font-semibold text-[var(--text-primary)]">
+                      #{rev.seq}
                     </span>
-                  )}
+                    {rev.current && (
+                      <span className="rounded bg-[var(--env-prod-bg)] px-1.5 py-[1px] font-mono text-[10px] font-medium text-[var(--env-prod-text)]">
+                        当前
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-mono text-[11px] text-[var(--text-tertiary)]">
+                    {formatRelative(rev.registeredAt)}
+                  </span>
                 </div>
+                {/* 第二行：接口数 + diff + hash */}
                 <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
-                  <span className="font-mono">{rev.specHash.substring(0, 7)}</span>
-                  <span>·</span>
-                  <span>{formatRelative(rev.registeredAt)}</span>
+                  {rev.endpointCount != null && (
+                    <span>{rev.endpointCount} 接口</span>
+                  )}
+                  {(rev.addedCount ?? 0) > 0 && (
+                    <span className="font-medium text-[var(--color-success,#16a34a)]">+{rev.addedCount}</span>
+                  )}
+                  {(rev.removedCount ?? 0) > 0 && (
+                    <span className="font-medium text-[var(--color-danger,#dc2626)]">-{rev.removedCount}</span>
+                  )}
+                  {(rev.modifiedCount ?? 0) > 0 && (
+                    <span className="font-medium text-[var(--color-warning,#d97706)]">~{rev.modifiedCount}</span>
+                  )}
+                  <span className="ml-auto font-mono text-[var(--text-quaternary)]">
+                    {rev.specHash.substring(0, 7)}
+                  </span>
                 </div>
               </Link>
             );
