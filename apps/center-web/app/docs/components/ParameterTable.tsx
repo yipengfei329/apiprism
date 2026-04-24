@@ -20,8 +20,9 @@ function hasNestedSchema(parameter: CanonicalParameter): boolean {
     return true;
   }
 
-  if (schema.type === "array" && schema.items?.properties) {
-    return Object.keys(schema.items.properties).length > 0;
+  if (schema.type === "array") {
+    if (schema.items?.properties && Object.keys(schema.items.properties).length > 0) return true;
+    if (schema.items?.additionalProperties?.properties && Object.keys(schema.items.additionalProperties.properties).length > 0) return true;
   }
 
   if (schema.additionalProperties?.properties) {
