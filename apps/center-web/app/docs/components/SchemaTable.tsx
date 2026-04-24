@@ -44,16 +44,21 @@ function PropertyRow({
     depth < MAX_DEPTH &&
     ((schema.properties && Object.keys(schema.properties).length > 0) ||
       (schema.type === "array" &&
-        schema.items?.properties &&
-        Object.keys(schema.items.properties).length > 0) ||
+        ((schema.items?.properties && Object.keys(schema.items.properties).length > 0) ||
+          (schema.items?.additionalProperties?.properties != null &&
+            Object.keys(schema.items.additionalProperties.properties).length > 0))) ||
       (schema.additionalProperties?.properties != null &&
         Object.keys(schema.additionalProperties.properties).length > 0));
 
   const [expanded, setExpanded] = useState(depth <= 1);
 
   const childSchema =
-    schema.type === "array" && schema.items?.properties
-      ? schema.items
+    schema.type === "array"
+      ? (schema.items?.properties
+          ? schema.items
+          : schema.items?.additionalProperties?.properties
+            ? schema.items.additionalProperties
+            : null)
       : schema.additionalProperties?.properties
         ? schema.additionalProperties
         : schema.properties

@@ -7,7 +7,8 @@ export function schemaTypeLabel(schema: JsonSchema | null | undefined): string {
   if (type === "array" && items) {
     return `array<${schemaTypeLabel(items)}>`;
   }
-  if (additionalProperties) {
+  // 仅当 additionalProperties 有实际类型信息时才视为 map；空对象 {} 不算 map
+  if (additionalProperties && (additionalProperties.type || additionalProperties.properties || additionalProperties.items || additionalProperties.additionalProperties)) {
     return `map<${schemaTypeLabel(additionalProperties)}>`;
   }
   if (type && format) return `${type} (${format})`;
