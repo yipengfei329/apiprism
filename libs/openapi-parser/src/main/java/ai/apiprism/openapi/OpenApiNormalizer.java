@@ -363,6 +363,10 @@ public class OpenApiNormalizer {
                     if (!map.containsKey("description") && subMap.containsKey("description")) map.put("description", subMap.get("description"));
                 }
             }
+            // 推断隐式 object 类型：有 properties 或 additionalProperties 但无显式 type 时补充
+            if (!map.containsKey("type") && (map.containsKey("properties") || map.containsKey("additionalProperties"))) {
+                map.put("type", "object");
+            }
             return map;
         } finally {
             visited.remove(schema); // 回溯，允许同一 schema 在不同分支复用

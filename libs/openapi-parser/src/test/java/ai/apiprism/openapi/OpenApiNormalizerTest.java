@@ -705,6 +705,67 @@ class OpenApiNormalizerTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void inferesObjectTypeWhenPropertiesPresentWithoutExplicitType() {
+        // OpenAPI 规范允许只写 properties 而不写 type: object；parser 应推断为 object
+        String spec = """
+                openapi: 3.0.1
+                info:
+                  title: Test
+                  version: 1.0.0
+                paths:
+                  /users:
+                    post:
+                      operationId: createUser
+                      requestBody:
+                        required: true
+                        content:
+                          application/json:
+                            schema:
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  properties:
+                                    street:
+                                      type: string
+                                    city:
+                                      type: string
+                      responses:
+                        '201':
+                          description: Created
+                          content:
+                            application/json:
+                              schema:
+                                properties:
+                                  id:
+                                    type: integer
+                                    format: int64
+                                  name:
+                                    type: string
+                """;
+
+        NormalizationResult result = normalizer.normalize("user-service", "dev", null, null, null, spec);
+        CanonicalOperation op = result.getSnapshot().getGroups().getFirst().getOperations().getFirst();
+
+        // 请求体顶层 schema 应推断为 object
+        Map<String, Object> reqSchema = op.getRequestBody().getSchema();
+        assertNotNull(reqSchema);
+        assertEquals("object", reqSchema.get("type"), "无显式 type 但有 properties 的 schema 应推断为 object");
+
+        // 嵌套字段 address 也应推断为 object
+        Map<String, Object> props = (Map<String, Object>) reqSchema.get("properties");
+        Map<String, Object> addressSchema = (Map<String, Object>) props.get("address");
+        assertNotNull(addressSchema);
+        assertEquals("object", addressSchema.get("type"), "嵌套的隐式 object 也应被推断");
+
+        // 响应体顶层 schema 同样应推断为 object
+        Map<String, Object> respSchema = op.getResponses().getFirst().getSchema();
+        assertNotNull(respSchema);
+        assertEquals("object", respSchema.get("type"), "响应 schema 无显式 type 但有 properties 应推断为 object");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void extractsItemsFromNonArraySchemaInstance() {
         // setResolveFully 可能产生 type:"array" 的通用 Schema 而非 ArraySchema 子类；
         // 内联 $ref 后 items 仍应被正确提取。
