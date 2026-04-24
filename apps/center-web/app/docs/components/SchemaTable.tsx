@@ -194,8 +194,19 @@ function PropertyList({
 // ── 主组件 ──
 
 export function SchemaTable({ schema }: { schema: JsonSchema }) {
+  // 展开数组 → 取 items（无论 items 是否有 properties）
+  const inner = schema.type === "array" ? (schema.items ?? schema) : schema;
+
+  // 优先使用直接 properties；无直接 properties 但 additionalProperties 含 properties
+  // 时取后者，以支持 Map<K, ObjectType> 类型的响应体展示值字段
   const target =
-    schema.type === "array" && schema.items?.properties ? schema.items : schema;
+    inner.properties && Object.keys(inner.properties).length > 0
+      ? inner
+      : inner.additionalProperties?.properties &&
+          Object.keys(inner.additionalProperties.properties).length > 0
+        ? inner.additionalProperties
+        : inner;
+
   const properties = target.properties;
   if (!properties || Object.keys(properties).length === 0) {
     return <EmptyPanel message="暂无字段定义" />;
