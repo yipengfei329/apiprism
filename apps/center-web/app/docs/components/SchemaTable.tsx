@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { JsonSchema } from "../lib/api";
 import { HtmlText } from "./HtmlText";
 import { schemaTypeLabel } from "./schemaUtils";
+import { EmptyPanel } from "./EmptyPanel";
 
 export { schemaTypeLabel };
 
@@ -196,7 +197,9 @@ export function SchemaTable({ schema }: { schema: JsonSchema }) {
   const target =
     schema.type === "array" && schema.items?.properties ? schema.items : schema;
   const properties = target.properties;
-  if (!properties || Object.keys(properties).length === 0) return null;
+  if (!properties || Object.keys(properties).length === 0) {
+    return <EmptyPanel message="暂无字段定义" />;
+  }
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl">

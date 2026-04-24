@@ -7,6 +7,7 @@ import { ResponseTabs } from "./ResponseTabs";
 import { OnThisPage, type SectionItem } from "./OnThisPage";
 import { ParameterTable } from "./ParameterTable";
 import { RequestBodyTabs } from "./RequestBodyTabs";
+import { EmptyPanel } from "./EmptyPanel";
 import { SecuritySchemeBadge } from "./SecuritySchemeBadge";
 
 // ── 必填 / 选填标记 ──
@@ -113,9 +114,7 @@ export async function OperationWiki({
                     <SchemaTable schema={op.requestBody.schema} />
                   </div>
                 ) : (
-                  <div className="px-5 py-6 text-[13px] text-v-gray-400">
-                    暂无结构定义
-                  </div>
+                  <EmptyPanel message="暂无结构定义" />
                 )
               }
               examplePanel={
@@ -127,9 +126,7 @@ export async function OperationWiki({
                     className="!rounded-none !border-0"
                   />
                 ) : (
-                  <div className="px-5 py-6 text-[13px] leading-[1.7] text-v-gray-400">
-                    当前请求体没有可生成的 JSON 示例。
-                  </div>
+                  <EmptyPanel variant="example" message="暂无可生成的 JSON 示例" />
                 )
               }
             />

@@ -6,6 +6,7 @@ import { HtmlText } from "./HtmlText";
 import { StatusBadge } from "./StatusBadge";
 import { SchemaTable } from "./SchemaTable";
 import { RequestBodyTabs } from "./RequestBodyTabs";
+import { EmptyPanel } from "./EmptyPanel";
 import { schemaTypeLabel } from "./schemaUtils";
 
 function ResponseMeta({
@@ -91,17 +92,11 @@ export function ResponseTabs({
               <SchemaTable schema={active.schema} />
             </div>
           ) : (
-            <div className="px-5 py-6 text-[13px] text-v-gray-400">
-              当前响应没有结构定义。
-            </div>
+            <EmptyPanel message="暂无结构定义" />
           )
         }
         examplePanel={
-          activeExample ?? (
-            <div className="px-5 py-6 text-[13px] leading-[1.7] text-v-gray-400">
-              当前响应没有可生成的 JSON 示例。
-            </div>
-          )
+          activeExample ?? <EmptyPanel variant="example" message="暂无可生成的 JSON 示例" />
         }
       />
 
