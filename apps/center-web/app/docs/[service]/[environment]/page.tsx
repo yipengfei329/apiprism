@@ -51,14 +51,6 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
     ? revisions.find((r) => r.id === revisionParam) ?? null
     : null;
   const viewingOlder = Boolean(viewingRevision && !viewingRevision.current);
-  const shownRevision = viewingRevision ?? revisions.find((r) => r.current) ?? null;
-  // info.version 经常是 springdoc 默认值，只在有业务意义的时候显示
-  const businessVersion = snapshot.version?.trim();
-  const showBusinessVersion = Boolean(
-    businessVersion &&
-      !["v0", "V0", "unspecified", "1.0.0", "0.0.1"].includes(businessVersion)
-  );
-
   return (
     <div className="mx-auto max-w-[820px] px-4 py-8 sm:px-8 sm:py-14">
       {/* 面包屑 */}
@@ -84,7 +76,7 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
       )}
 
       {/* 服务头部 */}
-      <header className="mb-14">
+      <header className="mb-10">
         <div className="flex items-start justify-between gap-4">
           <h1
             className="text-[clamp(1.8rem,3vw,2.6rem)] font-semibold leading-tight text-[var(--text-primary)]"
@@ -92,36 +84,19 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
           >
             {svc}
           </h1>
-          <div className="mt-1 flex shrink-0 items-center gap-2">
-            {!viewingOlder && <ServiceActions service={svc} environment={env} />}
+          <div className="mt-1 shrink-0">
+            <AgentDocLink
+              path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/apidocs.md`}
+            />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {shownRevision && (
-            <span
-              title={`Revision #${shownRevision.seq}\nHash: ${shownRevision.specHash.substring(0, 12)}\nRegistered: ${new Date(shownRevision.registeredAt).toLocaleString()}`}
-              className="rounded-md bg-v-gray-50 px-2.5 py-0.5 font-mono text-[12px] font-semibold text-v-gray-500 v-ring-light"
-            >
-              #{shownRevision.seq}
-            </span>
-          )}
-          {showBusinessVersion && (
-            <span
-              title="API 契约版本号（来自 OpenAPI info.version）"
-              className="rounded-md bg-v-gray-50 px-2.5 py-0.5 font-mono text-[12px] font-medium text-v-gray-500"
-            >
-              {businessVersion}
-            </span>
-          )}
           <EnvSwitcher service={svc} currentEnv={env} environments={environments} />
           {environments.length <= 1 && (
             <span className="rounded-md bg-v-gray-50 px-2.5 py-0.5 font-mono text-[12px] font-medium text-v-gray-500">
               {env}
             </span>
           )}
-          <AgentDocLink
-            path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/apidocs.md`}
-          />
           <RevisionSwitcher
             service={svc}
             environment={env}
@@ -149,30 +124,11 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
         )}
       </header>
 
-      {/* 统计面板 */}
+      {/* 统计概览 */}
       <ServiceStats snapshot={snapshot} />
 
-      {/* 认证方式 */}
-      <ServiceSecuritySchemes securitySchemes={snapshot.securitySchemes ?? {}} />
-
-      {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
-      {!viewingOlder && (
-        <section className="mb-14">
-          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-            MCP 网关
-          </p>
-          <McpToggle
-            service={svc}
-            environment={env}
-            initialEnabled={mcpStatus?.serviceEnabled ?? false}
-            initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
-            initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
-          />
-        </section>
-      )}
-
-      {/* 分组卡片网格 */}
-      <section>
+      {/* 接口分组 — 提前至首位，主要导航入口 */}
+      <section className="mb-14">
         <p className="mb-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
           接口分组 — {snapshot.groups.length}
         </p>
@@ -231,6 +187,35 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
           />
         )}
       </section>
+
+      {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
+      {!viewingOlder && (
+        <section className="mb-14">
+          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+            MCP 网关
+          </p>
+          <McpToggle
+            service={svc}
+            environment={env}
+            initialEnabled={mcpStatus?.serviceEnabled ?? false}
+            initialSseEndpoint={mcpStatus?.sseEndpoint ?? null}
+            initialStreamableEndpoint={mcpStatus?.streamableEndpoint ?? null}
+          />
+        </section>
+      )}
+
+      {/* 认证方式 */}
+      <ServiceSecuritySchemes securitySchemes={snapshot.securitySchemes ?? {}} />
+
+      {/* 危险区域：删除环境 */}
+      {!viewingOlder && (
+        <section className="mt-14 border-t border-[var(--border-subtle)] pt-14">
+          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+            危险操作
+          </p>
+          <ServiceActions service={svc} environment={env} />
+        </section>
+      )}
     </div>
   );
 }
