@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getOperation, getRevisionOperation, getServiceSnapshot, getRevisionSnapshot, listRevisions } from "../../../../lib/api";
 import { OperationDetail } from "../../../../components/OperationDetail";
 import { OperationWiki } from "../../../../components/OperationWiki";
+import { CurlPanel } from "../../../../components/CurlPanel";
 import { Breadcrumb } from "../../../../components/Breadcrumb";
 import { RevisionBanner } from "../../../../components/RevisionBanner";
 
@@ -77,7 +78,19 @@ export default async function OperationPage({ params, searchParams }: Props) {
       )}
 
       {/* 接口详情：头部 + 选项卡 + 内容 */}
-      <OperationDetail op={op} service={svc} environment={env} group={grpSlug}>
+      <OperationDetail
+        op={op}
+        service={svc}
+        environment={env}
+        group={grpSlug}
+        debugPanel={
+          <CurlPanel
+            op={op}
+            serverUrls={snapshot?.serverUrls ?? []}
+            securitySchemes={snapshot?.securitySchemes ?? {}}
+          />
+        }
+      >
         <OperationWiki op={op} securitySchemes={snapshot?.securitySchemes} />
       </OperationDetail>
     </div>
