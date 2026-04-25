@@ -129,7 +129,7 @@ export default async function HomePage() {
           className="mt-4 text-[15px] italic text-v-gray-400 v-slide-up v-delay-2"
           style={{ letterSpacing: "0.01em" }}
         >
-          Every API deserves to be understood — by humans, by agents, by machines.
+          每一个 API，都值得被充分理解 — 无论是人类、AI Agent，还是自动化机器。
         </p>
         <div className="mt-7 flex flex-wrap items-center gap-3 v-slide-up v-delay-3">
           <Link
@@ -323,7 +323,7 @@ export default async function HomePage() {
       <footer className="border-t border-v-gray-100 px-6 py-8">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-xs text-v-gray-400">
-            &copy; {new Date().getFullYear()} APIPrism &middot; Every API deserves to be understood
+            &copy; {new Date().getFullYear()} APIPrism &middot; 每一个 API，都值得被充分理解
           </p>
           <nav className="flex items-center gap-4">
             <a

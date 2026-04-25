@@ -87,7 +87,7 @@ export function OperationDetail({
 
           {op.operationId && (
             <div className="mt-3">
-              <HeaderMetaPill label="Operation" value={op.operationId} />
+              <HeaderMetaPill label="接口 ID" value={op.operationId} />
             </div>
           )}
 
@@ -103,13 +103,13 @@ export function OperationDetail({
           <div className="mt-6 overflow-hidden rounded-xl border border-v-gray-100 bg-[var(--bg-surface)] v-fade-in">
             <div className="flex flex-wrap items-center gap-2 border-b border-v-gray-100 px-5 py-3">
               <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-v-gray-400">
-                Endpoint
+                端点
               </span>
               {op.requestBody?.contentType && (
-                <HeaderMetaPill label="Request" value={op.requestBody.contentType} />
+                <HeaderMetaPill label="请求类型" value={op.requestBody.contentType} />
               )}
               {op.responses?.[0]?.contentType && (
-                <HeaderMetaPill label="Response" value={op.responses[0].contentType} />
+                <HeaderMetaPill label="响应类型" value={op.responses[0].contentType} />
               )}
             </div>
             <div className="flex min-w-0 flex-col gap-3 px-5 py-5 md:flex-row md:items-center">

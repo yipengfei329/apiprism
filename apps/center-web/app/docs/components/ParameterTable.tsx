@@ -6,10 +6,10 @@ import { schemaTypeLabel } from "./schemaUtils";
 const LOCATION_ORDER = ["path", "query", "header", "cookie"] as const;
 
 const LOCATION_LABELS: Record<string, string> = {
-  path: "Path Parameters",
-  query: "Query Parameters",
-  header: "Headers",
-  cookie: "Cookies",
+  path: "路径参数",
+  query: "查询参数",
+  header: "请求头",
+  cookie: "Cookie",
 };
 
 function hasNestedSchema(parameter: CanonicalParameter): boolean {
@@ -55,7 +55,7 @@ function groupParameters(parameters: CanonicalParameter[]): Array<{
 
   return sortedLocations.map((location) => ({
     location,
-    label: LOCATION_LABELS[location] ?? `${location[0]?.toUpperCase() ?? ""}${location.slice(1)} Parameters`,
+    label: LOCATION_LABELS[location] ?? `${location} 参数`,
     parameters: (grouped.get(location) ?? []).sort((a, b) => {
       if (a.required !== b.required) {
         return a.required ? -1 : 1;
@@ -76,13 +76,13 @@ function ParameterMeta({ parameter }: { parameter: CanonicalParameter }) {
     <div className="mt-2 flex flex-wrap gap-1.5">
       {enumValues.length > 0 && (
         <span className="inline-flex flex-wrap items-center gap-1 rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 text-[11px] text-v-gray-500">
-          <span className="font-medium text-v-gray-400">Enum</span>
+          <span className="font-medium text-v-gray-400">枚举</span>
           <span className="font-mono">{enumValues.map((value) => String(value)).join(" | ")}</span>
         </span>
       )}
       {hasExample && (
         <span className="inline-flex items-center gap-1 rounded-full bg-v-gray-50 px-2.5 py-1 text-[11px] text-v-gray-500 v-ring-light">
-          <span className="font-medium text-v-gray-400">Example</span>
+          <span className="font-medium text-v-gray-400">示例</span>
           <code className="font-mono">{String(schema?.example)}</code>
         </span>
       )}
@@ -102,7 +102,7 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
           </code>
           {nested && (
             <span className="rounded-full bg-[var(--bg-subtle)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-v-gray-400">
-              object
+              对象
             </span>
           )}
         </div>
@@ -184,10 +184,10 @@ function ParameterGroup({
           </colgroup>
           <thead>
             <tr className="text-left">
-              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">Name</th>
-              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">Type</th>
-              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">Required</th>
-              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">Description</th>
+              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">名称</th>
+              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">类型</th>
+              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">必填</th>
+              <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">描述</th>
             </tr>
           </thead>
           <tbody>

@@ -101,9 +101,9 @@ export function ResponseTabs({
       />
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ResponseMeta label="Status" value={<code className="font-mono text-[12px] text-v-gray-500">{active.statusCode}</code>} />
+        <ResponseMeta label="状态码" value={<code className="font-mono text-[12px] text-v-gray-500">{active.statusCode}</code>} />
         <ResponseMeta
-          label="Content Type"
+          label="内容类型"
           value={
             <code className="font-mono text-[12px] text-v-gray-500">
               {active.contentType || "—"}

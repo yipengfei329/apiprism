@@ -4,11 +4,11 @@ import { ReactNode } from "react";
 import { ThemeProvider } from "./components/ThemeProvider";
 
 const siteUrl = "https://apiprism.ai";
-const description = "Every API deserves to be understood — by humans, by agents, by machines.";
+const description = "每一个 API，都值得被充分理解 — 无论是人类、AI Agent，还是自动化机器。";
 
 export const metadata: Metadata = {
   title: {
-    default: "APIPrism — API Spectrum for Humans, Agents & Machines",
+    default: "APIPrism — 一份 API，折射完整光谱",
     template: "%s | APIPrism",
   },
   description,
@@ -47,7 +47,7 @@ const themeInitScript = `(() => {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
