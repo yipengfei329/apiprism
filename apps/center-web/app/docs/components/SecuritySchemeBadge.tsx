@@ -17,7 +17,7 @@ function schemeTypeLabel(scheme: CanonicalSecurityScheme): string {
   if (t === "oauth2") return "OAuth 2.0";
   if (t === "openidconnect") return "OpenID Connect";
   if (t === "mutualtls") return "Mutual TLS";
-  return scheme.type ?? "Unknown";
+  return scheme.type ?? "未知";
 }
 
 // ── 使用方式代码块 ─────────────────────────────────────────────
@@ -57,10 +57,10 @@ function UsageBlock({ name, scheme }: { name: string; scheme: CanonicalSecurityS
 // ── OAuth2 流程卡 ─────────────────────────────────────────────
 
 const FLOW_LABELS: Record<string, string> = {
-  implicit: "Implicit",
-  password: "Resource Owner Password",
-  clientCredentials: "Client Credentials",
-  authorizationCode: "Authorization Code",
+  implicit: "隐式授权",
+  password: "密码授权",
+  clientCredentials: "客户端凭证",
+  authorizationCode: "授权码",
 };
 
 function OAuthFlowCard({ flow }: { flow: CanonicalOAuthFlow }) {
@@ -90,7 +90,7 @@ function OAuthFlowCard({ flow }: { flow: CanonicalOAuthFlow }) {
         {scopeEntries.length > 0 && (
           <div className="mt-3 space-y-1.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">
-              Scopes
+              权限范围
             </p>
             {scopeEntries.map(([scope, desc]) => (
               <div key={scope} className="flex gap-2 text-[12px]">
