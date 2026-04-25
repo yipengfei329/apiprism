@@ -59,6 +59,7 @@ export function OperationDetail({
   environment,
   group,
   children,
+  debugPanel,
 }: {
   op: CanonicalOperation;
   service: string;
@@ -66,6 +67,8 @@ export function OperationDetail({
   group: string;
   /** 由服务端预渲染的文档 Tab 内容（OperationWiki） */
   children: ReactNode;
+  /** 调试 Tab 插槽内容 */
+  debugPanel?: ReactNode;
 }) {
   const [active, setActive] = useState<TabKey>("doc");
 
@@ -156,11 +159,13 @@ export function OperationDetail({
       <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-8 sm:py-8">
         {active === "doc" && children}
         {active === "debug" && (
-          <PlaceholderPanel
-            icon={Bug}
-            title="调试测试"
-            description="在这里直接调试和测试该接口，发送请求并查看响应结果。即将上线。"
-          />
+          debugPanel ?? (
+            <PlaceholderPanel
+              icon={Bug}
+              title="调试测试"
+              description="在这里直接调试和测试该接口，发送请求并查看响应结果。即将上线。"
+            />
+          )
         )}
       </div>
     </div>
