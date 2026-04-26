@@ -143,6 +143,9 @@ public class CatalogService {
             groups = new ArrayList<>(groups);
             groups.sort(Comparator.comparingInt(g -> order.getOrDefault(g.getSlug(), Integer.MAX_VALUE)));
         }
+        int operationCount = groups.stream()
+                .mapToInt(g -> g.getOperations() == null ? 0 : g.getOperations().size())
+                .sum();
         return ServiceCatalogItem.builder()
                 .name(serviceName)
                 .environment(environment)
@@ -155,6 +158,7 @@ public class CatalogService {
                                 .slug(g.getSlug())
                                 .build())
                         .toList())
+                .operationCount(operationCount)
                 .build();
     }
 }

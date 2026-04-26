@@ -31,6 +31,9 @@ public class ServiceCatalogItem {
     /** 所属 API 分组摘要列表 */
     private final List<GroupRef> groups;
 
+    /** 接口（operation）总数，跨所有分组聚合 */
+    private final int operationCount;
+
     /**
      * 分组摘要：名称 + URL slug。
      */
