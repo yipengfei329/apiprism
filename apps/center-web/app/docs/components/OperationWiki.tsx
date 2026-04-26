@@ -19,15 +19,16 @@ function RequiredTag({ required }: { required: boolean }) {
   );
 }
 
-// ── 分区标题（极简：单行 H2，靠字重和留白构建层级） ──
+// ── 分区标题：短 rail + 字重建立章节边界 ──
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
-      className="mb-5 text-[15px] font-semibold text-[var(--text-primary)]"
+      className="mb-5 flex items-center gap-2.5 text-[15px] font-semibold text-[var(--text-primary)]"
       style={{ letterSpacing: "-0.01em" }}
     >
-      {children}
+      <span className="h-4 w-[2px] rounded-full bg-[var(--accent)]" aria-hidden />
+      <span>{children}</span>
     </h2>
   );
 }
@@ -85,7 +86,7 @@ export async function OperationWiki({
   return (
     <div className="flex gap-12">
       {/* ── 左侧：主内容 ── */}
-      <article className="min-w-0 flex-1 [&>section+section]:border-t [&>section+section]:border-[var(--border-subtle)] [&>section]:pb-8 [&>section+section]:pt-8 [&>section:last-of-type]:pb-0">
+      <article className="min-w-0 flex-1 [&>section+section]:mt-10 [&>section+section]:border-t [&>section+section]:border-[var(--border-subtle)] [&>section+section]:pt-10 [&>section]:pb-1">
         {/* ── 参数 ── */}
         {op.parameters && op.parameters.length > 0 && (
           <section id="parameters" className="scroll-mt-16">

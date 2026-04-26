@@ -25,7 +25,7 @@ export function RequestBodyTabs({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1.5">
+        <div className="inline-flex border-b border-[var(--border-subtle)]">
           {tabs.map((tab) => {
             const isActive = activeKey === tab.key;
 
@@ -33,10 +33,10 @@ export function RequestBodyTabs({
               <button
                 key={tab.key}
                 onClick={() => setActiveKey(tab.key)}
-                className={`cursor-pointer rounded-full px-3 py-1.5 text-[12px] font-medium transition-all duration-200 ${
+                className={`relative -mb-px cursor-pointer px-3.5 py-2 text-[12px] font-medium transition-colors duration-200 ${
                   isActive
-                    ? "bg-[var(--text-primary)] text-[var(--bg-surface)] shadow-[0_8px_20px_-14px_rgba(15,23,42,0.45)]"
-                    : "text-v-gray-400 hover:bg-v-gray-50 hover:text-v-gray-600"
+                    ? "border-b border-[var(--text-primary)] text-[var(--text-primary)]"
+                    : "border-b border-transparent text-v-gray-400 hover:text-v-gray-600"
                 }`}
               >
                 {tab.label}
@@ -46,7 +46,7 @@ export function RequestBodyTabs({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-[var(--bg-subtle)]/40">{activePanel}</div>
+      <div className="docs-table-shell overflow-hidden rounded-xl">{activePanel}</div>
     </div>
   );
 }

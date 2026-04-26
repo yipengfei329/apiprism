@@ -34,16 +34,16 @@ export function EndpointBar({ method, path, meta = [] }: EndpointBarProps) {
   }, [path]);
 
   return (
-    <div className="docs-copy-target group/endpoint mt-7 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-subtle)]/55">
-      <div className="flex min-w-0 items-center gap-3 px-5 py-4">
+    <div className="docs-copy-target docs-endpoint-object group/endpoint mt-8 overflow-hidden rounded-xl">
+      <div className="flex min-w-0 items-center gap-3 px-5 py-[18px] sm:px-6 sm:py-5">
         <MethodBadge method={method} size="lg" />
-        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[15px] font-medium leading-[1.5] text-[var(--text-primary)] md:text-[16px]">
+        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[15.5px] font-medium leading-[1.5] text-[var(--text-primary)] md:text-[17px]">
           {path}
         </code>
         <button
           type="button"
           onClick={handleCopy}
-          className="docs-copy-btn shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-tertiary)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)]"
+          className="docs-copy-btn inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--text-tertiary)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)]"
           aria-label="复制路径"
           title={copied ? "已复制" : "复制路径"}
           data-copied={copied || undefined}
@@ -56,7 +56,7 @@ export function EndpointBar({ method, path, meta = [] }: EndpointBarProps) {
         </button>
       </div>
       {meta.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-[var(--border-subtle)] px-5 py-2.5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)]/45 px-5 py-2.5 sm:px-6">
           {meta.map((m) => (
             <span key={m.label} className="inline-flex items-center gap-1.5 text-[12px]">
               <span className="text-[var(--text-tertiary)]">{m.label}</span>

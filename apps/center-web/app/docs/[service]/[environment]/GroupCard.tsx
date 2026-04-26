@@ -41,7 +41,7 @@ export function GroupCard({ group, href, agentDocPath, dragHandle }: GroupCardPr
   ].slice(0, 4);
 
   return (
-    <div className="docs-quiet-card group/card relative flex min-h-[152px] flex-col rounded-xl bg-[var(--bg-surface)] p-5">
+    <div className="docs-index-card group/card relative flex h-full min-h-[156px] flex-col rounded-xl p-5">
       <Link
         href={href}
         aria-label={group.name}
@@ -57,7 +57,7 @@ export function GroupCard({ group, href, agentDocPath, dragHandle }: GroupCardPr
         >
           {group.name}
         </h3>
-        <div className="mt-1.5 min-h-[2.5em]">
+        <div className="mt-2 min-h-[2.5em]">
           {group.description && (
             <HtmlText
               as="p"
@@ -68,7 +68,7 @@ export function GroupCard({ group, href, agentDocPath, dragHandle }: GroupCardPr
         </div>
       </div>
 
-      <div className="relative z-[1] mt-auto flex items-center justify-between gap-3 pt-4">
+      <div className="relative z-[1] mt-auto flex items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-4">
         <div className="pointer-events-none flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-[12px] text-[var(--text-tertiary)]">
           <span>
             <span className="font-semibold tabular-nums text-[var(--text-secondary)]">

@@ -12,8 +12,8 @@
  * ──────────────────────────────────────────────────────────── */
 @theme inline {
   /* ── 字体族 ── */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New", monospace;
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, "Courier New", monospace;
 
   /* ── 语义色暴露为 Tailwind utility（bg-accent / text-primary 等）── */
   --color-bg-canvas:     var(--bg-canvas);
@@ -71,18 +71,18 @@
  * ──────────────────────────────────────────────────────────── */
 :root {
   /* Surface */
-  --bg-canvas:   #FFFFFF;
+  --bg-canvas:   #F7F7F5;
   --bg-surface:  #FFFFFF;
-  --bg-elevated: #FAFAFA;
-  --bg-subtle:   #F5F5F5;
-  --bg-muted:    #F0F0F3;
-  --bg-inset:    #EBEBEB;
+  --bg-elevated: #FBFBFA;
+  --bg-subtle:   #F1F1EF;
+  --bg-muted:    #EAEAE7;
+  --bg-inset:    #E2E2DE;
 
   /* Border */
-  --border-subtle:  #F0F0F3;
-  --border-default: #EBEBEB;
-  --border-strong:  #D4D4D8;
-  --border-focus:   #A1A1AA;
+  --border-subtle:  rgba(24, 24, 27, 0.06);
+  --border-default: rgba(24, 24, 27, 0.10);
+  --border-strong:  rgba(24, 24, 27, 0.18);
+  --border-focus:   rgba(24, 24, 27, 0.30);
 
   /* Text */
   --text-primary:    #0A0A0A;
@@ -188,6 +188,14 @@
   /* 行级注释：用深灰 slate-700 提升对比度，承载字段语义但不刺眼 */
   --code-comment:        #334155;
   --code-comment-marker: rgba(51, 65, 85, 0.50);
+
+  /* Docs chrome — light */
+  --docs-sticky-bg:      rgba(255, 255, 255, 0.78);
+  --docs-sticky-border:  rgba(24, 24, 27, 0.10);
+  --docs-sticky-shadow:  0 10px 30px -24px rgba(24, 24, 27, 0.42);
+  --docs-panel-shadow:   0 24px 58px -46px rgba(24, 24, 27, 0.38);
+  --docs-surface-tint:   rgba(255, 255, 255, 0.68);
+  --docs-table-header:   rgba(255, 255, 255, 0.56);
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -312,6 +320,14 @@
   /* 暗色：slate-300，深背景上读得清又不抢眼 */
   --code-comment:        #CBD5E1;
   --code-comment-marker: rgba(203, 213, 225, 0.50);
+
+  /* Docs chrome — dark */
+  --docs-sticky-bg:      rgba(10, 10, 11, 0.76);
+  --docs-sticky-border:  rgba(255, 255, 255, 0.09);
+  --docs-sticky-shadow:  0 14px 34px -24px rgba(0, 0, 0, 0.86);
+  --docs-panel-shadow:   0 24px 58px -42px rgba(0, 0, 0, 0.88);
+  --docs-surface-tint:   rgba(255, 255, 255, 0.04);
+  --docs-table-header:   rgba(255, 255, 255, 0.035);
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -319,18 +335,27 @@
  * ──────────────────────────────────────────────────────────── */
 :root,
 .dark {
-  --sidebar-bg:              #0F0F11;
-  --sidebar-border:          rgba(255, 255, 255, 0.07);
-  --sidebar-divider:         rgba(255, 255, 255, 0.06);
-  --sidebar-text-primary:    rgba(255, 255, 255, 0.88);
-  --sidebar-text-secondary:  rgba(255, 255, 255, 0.55);
-  --sidebar-text-tertiary:   rgba(255, 255, 255, 0.35);
-  --sidebar-text-quaternary: rgba(255, 255, 255, 0.22);
-  --sidebar-hover-bg:        rgba(255, 255, 255, 0.05);
-  --sidebar-active-bg:       rgba(255, 255, 255, 0.06);
-  --sidebar-accent-bg:       rgba(45, 212, 191, 0.14);
-  --sidebar-accent-text:     #5EEAD4;
+  --sidebar-bg:              #111315;
+  --sidebar-bg-elevated:     #151719;
+  --sidebar-shell-bg:         linear-gradient(180deg, var(--sidebar-bg-elevated) 0%, var(--sidebar-bg) 42%);
+  --sidebar-border:          rgba(255, 255, 255, 0.075);
+  --sidebar-divider:         rgba(255, 255, 255, 0.065);
+  --sidebar-branch-line:     rgba(255, 255, 255, 0.085);
+  --sidebar-text-primary:    rgba(255, 255, 255, 0.90);
+  --sidebar-text-secondary:  rgba(255, 255, 255, 0.62);
+  --sidebar-text-tertiary:   rgba(255, 255, 255, 0.40);
+  --sidebar-text-quaternary: rgba(255, 255, 255, 0.25);
+  --sidebar-hover-bg:        rgba(255, 255, 255, 0.055);
+  --sidebar-active-bg:       rgba(255, 255, 255, 0.075);
+  --sidebar-accent-bg:       rgba(45, 212, 191, 0.13);
+  --sidebar-accent-text:     #7DDDD1;
   --sidebar-accent-rail:     #2DD4BF;
+  --sidebar-accent-muted:    rgba(45, 212, 191, 0.32);
+
+  /* Docs sticky layout */
+  --docs-header-height: 54px;
+  --docs-modebar-top: var(--docs-header-height);
+  --docs-toc-top: 124px;
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -576,6 +601,132 @@
   }
 
   /* ────────────────────────────────────────────────────────────
+   * Docs · sticky glass 工具条
+   * 统一文档中心顶部面包屑和 tab 的材质，避免每个页面散写 rgba。
+   * ──────────────────────────────────────────────────────────── */
+  .docs-sticky-bar {
+    background: var(--docs-sticky-bg);
+    border-bottom: 1px solid var(--docs-sticky-border);
+    box-shadow: var(--docs-sticky-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(16px) saturate(1.08);
+    -webkit-backdrop-filter: blur(16px) saturate(1.08);
+  }
+
+  .sidebar-service-card {
+    border: 1px solid transparent;
+    background: transparent;
+    box-shadow: none;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .sidebar-service-card:hover {
+    border-color: rgba(255, 255, 255, 0.065);
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .sidebar-service-mark {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--sidebar-text-tertiary);
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  }
+
+  .sidebar-service-card:hover .sidebar-service-mark {
+    border-color: rgba(125, 221, 209, 0.18);
+    background: rgba(45, 212, 191, 0.075);
+    color: var(--sidebar-accent-text);
+  }
+
+  .docs-surface-object {
+    border: 1px solid var(--border-default);
+    background: linear-gradient(180deg, var(--docs-surface-tint), transparent 140%), var(--bg-surface);
+    box-shadow: var(--docs-panel-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .docs-reference-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border-subtle);
+    background:
+      linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-canvas) 100%);
+  }
+
+  .docs-reference-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(760px 360px at 88% -10%, rgba(13, 148, 136, 0.07), transparent 68%),
+      linear-gradient(rgba(24, 24, 27, 0.020) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(24, 24, 27, 0.020) 1px, transparent 1px);
+    background-size: auto, 48px 48px, 48px 48px;
+    mask-image: linear-gradient(180deg, black 0%, transparent 88%);
+    -webkit-mask-image: linear-gradient(180deg, black 0%, transparent 88%);
+  }
+
+  .dark .docs-reference-hero::before {
+    background:
+      radial-gradient(760px 360px at 88% -10%, rgba(45, 212, 191, 0.10), transparent 68%),
+      linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+    background-size: auto, 48px 48px, 48px 48px;
+  }
+
+  .docs-route-kicker span:first-child {
+    border-color: var(--border-default);
+    background: var(--docs-surface-tint);
+  }
+
+  .docs-facts-strip {
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .docs-endpoint-object {
+    border: 1px solid var(--border-default);
+    background:
+      linear-gradient(180deg, var(--docs-surface-tint), transparent 125%),
+      var(--bg-surface);
+    box-shadow:
+      0 30px 80px -54px rgba(24, 24, 27, 0.58),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
+
+  .dark .docs-endpoint-object {
+    box-shadow:
+      0 30px 80px -48px rgba(0, 0, 0, 0.92),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .docs-index-card {
+    border: 1px solid var(--border-default);
+    background:
+      linear-gradient(180deg, var(--docs-surface-tint), transparent 150%),
+      var(--bg-surface);
+    box-shadow:
+      0 18px 50px -44px rgba(24, 24, 27, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  }
+
+  .docs-index-card:hover {
+    border-color: var(--border-strong);
+  }
+
+  .docs-index-card:active {
+    transform: translateY(1px);
+  }
+
+  .docs-table-shell {
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  }
+
+  /* ────────────────────────────────────────────────────────────
    * Docs · 签名 mono chip（路径 / ID / URL 的统一处理）
    *  hairline 边框 + 极淡背景，与普通容器形成可识别的「代码物件」感
    *  这是文档中心的 signature move——只有 mono 内容用
@@ -587,14 +738,17 @@
     font-size: 12.5px;
     line-height: 1.4;
     color: var(--text-primary);
-    background: var(--bg-subtle);
+    background: var(--docs-surface-tint);
     border: 1px solid var(--border-subtle);
     border-radius: 6px;
     padding: 3px 8px;
-    transition: border-color 160ms ease;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
   }
   .docs-mono-chip:hover {
     border-color: var(--border-default);
+  }
+  .docs-mono-chip:active {
+    transform: translateY(1px);
   }
   .docs-mono-chip-lg {
     font-size: 13.5px;
@@ -638,12 +792,128 @@
   }
   .docs-copy-btn {
     opacity: 0;
-    transition: opacity 140ms ease, color 140ms ease, background-color 140ms ease;
+    transition: opacity 140ms ease, color 140ms ease, background-color 140ms ease, transform 140ms ease;
   }
   .docs-copy-target:hover .docs-copy-btn,
   .docs-copy-btn:focus-visible,
   .docs-copy-btn[data-copied="true"] {
     opacity: 1;
+  }
+  .docs-copy-btn:active {
+    transform: translateY(1px);
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * Docs · Command-K 搜索面板
+   * 常暗材质，服务于文档阅读场景；只在 portal 打开时挂载。
+   * ──────────────────────────────────────────────────────────── */
+  .docs-command-trigger {
+    border: 1px solid var(--border-subtle);
+    background:
+      linear-gradient(180deg, var(--docs-surface-tint), transparent 140%),
+      var(--bg-surface);
+    box-shadow:
+      0 10px 24px -22px rgba(24, 24, 27, 0.48),
+      inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  }
+  .docs-command-trigger:hover {
+    border-color: var(--border-default);
+    background: var(--bg-elevated);
+  }
+
+  .docs-command-overlay {
+    background:
+      radial-gradient(900px 380px at 50% 0%, rgba(13, 148, 136, 0.12), transparent 68%),
+      rgba(5, 6, 8, 0.68);
+    backdrop-filter: blur(12px) saturate(1.06);
+    -webkit-backdrop-filter: blur(12px) saturate(1.06);
+    animation: command-overlay-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .docs-command-panel {
+    isolation: isolate;
+    border: 1px solid rgba(255, 255, 255, 0.095);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 32%),
+      linear-gradient(135deg, rgba(45, 212, 191, 0.055), transparent 42%),
+      #111315;
+    box-shadow:
+      0 34px 90px -30px rgba(0, 0, 0, 0.84),
+      0 0 0 1px rgba(255, 255, 255, 0.035),
+      inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    animation: command-panel-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .docs-command-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(125, 221, 209, 0.56), transparent);
+    opacity: 0.7;
+  }
+
+  .docs-command-input {
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.032)),
+      rgba(255, 255, 255, 0.026);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 12px 30px -26px rgba(0, 0, 0, 0.9);
+    transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+  }
+  .docs-command-input:focus-within {
+    border-color: rgba(125, 221, 209, 0.30);
+    box-shadow:
+      0 0 0 3px rgba(45, 212, 191, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .docs-command-result {
+    position: relative;
+    color: var(--sidebar-text-secondary);
+    transition: background-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+  }
+  .docs-command-result::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    border-radius: 999px;
+    background: var(--sidebar-accent-rail);
+    opacity: 0;
+    transform: scaleY(0.55);
+    transition: opacity 140ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .docs-command-result[data-active="true"] {
+    background:
+      linear-gradient(90deg, rgba(45, 212, 191, 0.12), rgba(255, 255, 255, 0.045) 58%, transparent),
+      rgba(255, 255, 255, 0.035);
+    box-shadow: inset 0 0 0 1px rgba(125, 221, 209, 0.12);
+  }
+  .docs-command-result[data-active="true"]::before {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  .docs-command-result:active {
+    transform: translateY(1px);
+  }
+
+  .docs-command-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.055);
+  }
+  .docs-command-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.10), transparent);
+    animation: command-skeleton 1.25s ease-in-out infinite;
   }
 }
 
@@ -666,8 +936,22 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+@keyframes command-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes command-panel-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes command-skeleton {
+  100% { transform: translateX(100%); }
+}
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .hero-gradient-text-1,
   .hero-gradient-text-2,
   .hero-chip-fade-in,
@@ -678,6 +962,23 @@
   .hud-tile,
   .hud-cursor,
   .registry-row {
+    animation: none !important;
+  }
+  .docs-copy-btn,
+  .docs-command-input,
+  .docs-command-result,
+  .docs-index-card,
+  .docs-mono-chip,
+  .docs-quiet-card,
+  .sidebar-service-card,
+  .sidebar-service-mark,
+  .sidebar-service-sheen,
+  .docs-sticky-bar {
+    transition: none !important;
+  }
+  .docs-command-overlay,
+  .docs-command-panel,
+  .docs-command-skeleton::after {
     animation: none !important;
   }
 }

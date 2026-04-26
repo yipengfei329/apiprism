@@ -17,16 +17,15 @@ export function SidebarLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  // 惰性初始化，避免 SSR 不匹配
-  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`).matches;
-  });
+  // 首次渲染固定为桌面结构，hydrate 后再同步真实断点，避免 SSR/CSR 树不一致
+  const [isDesktop, setIsDesktop] = useState(true);
   const pathname = usePathname();
 
   // 监听视口断点变化
   useEffect(() => {
     const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsDesktop(mq.matches);
     const handler = (e: MediaQueryListEvent) => {
       setIsDesktop(e.matches);
       if (e.matches) setMobileOpen(false);
@@ -49,10 +48,10 @@ export function SidebarLayout({
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
+      className="flex h-[100dvh] overflow-hidden"
       style={{
-        // Arc 风格外层"窗口": 桌面端使用 sidebar 深色作为外框，使主内容区看起来是嵌入式圆角面板
-        backgroundColor: isDesktop ? "var(--sidebar-bg)" : "var(--bg-canvas)",
+        // 桌面端外层 shell 与侧栏共用同一暗色背景，避免连接处出现色差
+        background: isDesktop ? "var(--sidebar-shell-bg)" : "var(--bg-canvas)",
       }}
     >
       {/* ── 移动端遮罩 ── */}
@@ -103,26 +102,25 @@ export function SidebarLayout({
         </div>
       )}
 
-      {/* ── 主内容区：桌面端以圆角浮动面板的形式嵌入 Arc 风格暗色 chrome 中 ──
-       * - 上/右/下 6px margin 让 sidebar-bg 形成包裹边框
-       * - 与侧边栏之间留 6px 凹槽，呼应 Arc 的"窗口分体"观感
-       * - 分层阴影：1px 外环 + 顶部高光 + 软投影 强化层次
+      {/* ── 主内容区：桌面端嵌入暗色 chrome 中 ──
+       * - 上/右/下保留暗色外框，左侧贴合侧栏，避免连接处出现独立暗槽
+       * - 分层阴影保持轻量，主要靠 1px 外环 + 顶部高光建立层级
        */}
       <main
         className="relative flex flex-1 flex-col overflow-hidden"
         style={{
           background: "var(--bg-canvas)",
-          marginTop: isDesktop ? 6 : 0,
-          marginRight: isDesktop ? 6 : 0,
-          marginBottom: isDesktop ? 6 : 0,
-          marginLeft: isDesktop ? 6 : 0,
-          borderRadius: isDesktop ? 10 : 0,
+          marginTop: isDesktop ? 8 : 0,
+          marginRight: isDesktop ? 8 : 0,
+          marginBottom: isDesktop ? 8 : 0,
+          marginLeft: 0,
+          borderRadius: isDesktop ? 12 : 0,
           boxShadow: isDesktop
             ? [
                 "0 0 0 1px var(--border-default)",
-                "0 1px 2px rgba(0, 0, 0, 0.4)",
-                "0 12px 28px -10px rgba(0, 0, 0, 0.55)",
-                "inset 0 1px 0 0 rgba(255, 255, 255, 0.04)",
+                "0 1px 2px rgba(0, 0, 0, 0.16)",
+                "0 14px 34px -26px rgba(0, 0, 0, 0.50)",
+                "inset 0 1px 0 0 rgba(255, 255, 255, 0.08)",
               ].join(", ")
             : "none",
         }}
@@ -162,7 +160,9 @@ export function SidebarLayout({
           <button
             onClick={() => setCollapsed(false)}
             aria-label="展开侧边栏"
-            className="absolute left-3 top-3 z-20 flex cursor-pointer items-center justify-center rounded-md p-1.5 text-[var(--text-tertiary)] transition-all duration-150 hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
+            aria-hidden={!collapsed}
+            tabIndex={collapsed ? 0 : -1}
+            className="absolute left-3 top-3 z-40 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[var(--text-tertiary)] transition-all duration-150 hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
             style={{
               opacity: collapsed ? 1 : 0,
               pointerEvents: collapsed ? "auto" : "none",

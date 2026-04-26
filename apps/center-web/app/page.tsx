@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getInternalApiUrl } from "@/app/lib/internal-api";
 import { ParticleField } from "./components/ParticleField";
 
-type GroupRef = { name: string; slug: string };
+type GroupRef = { name: string; slug: string; operationCount: number };
 
 type ServiceCatalogItem = {
   name: string;

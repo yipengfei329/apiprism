@@ -5,12 +5,7 @@ type Props = { snapshot: CanonicalServiceSnapshot };
 const METHOD_ORDER = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 
 /**
- * 服务统计：左侧三个安静大数字 + 右侧方法分布紧凑列表
- *
- * 思路：
- *  - 数字主导，靠字号承担视觉重量
- *  - 方法分布回归——程序员真正在意 GET/POST 的比例，不能省
- *  - 不画条形图（dashboardy），用 mono `4 · GET` 紧凑列出，按 method 颜色着色
+ * 服务统计：与接口详情页的 facts strip 统一，用细分割承载扫描信息。
  */
 export function ServiceStats({ snapshot }: Props) {
   const allOps = snapshot.groups.flatMap((g) => g.operations);
@@ -39,36 +34,31 @@ export function ServiceStats({ snapshot }: Props) {
   ];
 
   return (
-    <section className="mb-14 grid gap-10 sm:grid-cols-[auto_1fr] sm:items-end sm:gap-14">
-      {/* ── 左：三个安静大数字 ── */}
-      <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
+    <section className="docs-facts-strip">
+      <div className="grid grid-cols-2 gap-0 md:grid-cols-[1fr_1fr_1fr_2fr]">
         <Stat value={total} label="接口" />
         <Stat value={groupCount} label="分组" />
-        {securedPct > 0 && <Stat value={`${securedPct}%`} label="认证覆盖" />}
-      </div>
-
-      {/* ── 右：方法分布紧凑列表 ── */}
-      <div className="min-w-0 sm:pb-1">
-        <div className="mb-3 docs-eyebrow">方法分布</div>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[12.5px]">
-          {methods.map(({ method, count }) => {
-            const m = method.toLowerCase();
-            return (
-              <span key={method} className="inline-flex items-baseline gap-1.5">
-                <span
-                  className="font-semibold tabular-nums text-[var(--text-primary)]"
-                >
-                  {count}
+        <Stat value={`${securedPct}%`} label="认证覆盖" />
+        <div className="min-w-0 px-4 py-3 first:pl-0 md:border-l md:border-[var(--border-subtle)]">
+          <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--text-quaternary)]">方法分布</div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[12.5px]">
+            {methods.map(({ method, count }) => {
+              const m = method.toLowerCase();
+              return (
+                <span key={method} className="inline-flex items-baseline gap-1.5">
+                  <span className="font-semibold tabular-nums text-[var(--text-secondary)]">
+                    {count}
+                  </span>
+                  <span
+                    className="text-[11px] font-semibold tracking-wider"
+                    style={{ color: `var(--method-${m}-text, var(--text-tertiary))` }}
+                  >
+                    {method}
+                  </span>
                 </span>
-                <span
-                  className="text-[11.5px] font-medium tracking-wider"
-                  style={{ color: `var(--method-${m}-text, var(--text-tertiary))` }}
-                >
-                  {method}
-                </span>
-              </span>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
@@ -77,14 +67,11 @@ export function ServiceStats({ snapshot }: Props) {
 
 function Stat({ value, label }: { value: number | string; label: string }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span
-        className="text-[clamp(2rem,3.4vw,2.7rem)] font-semibold leading-none tabular-nums text-[var(--text-primary)]"
-        style={{ letterSpacing: "-0.035em" }}
-      >
+    <div className="min-w-0 px-4 py-3 first:pl-0 md:border-l md:border-[var(--border-subtle)] md:first:border-l-0 md:first:pl-0">
+      <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--text-quaternary)]">{label}</div>
+      <span className="mt-1.5 block text-[13px] font-semibold leading-snug tabular-nums text-[var(--text-secondary)]">
         {value}
       </span>
-      <span className="text-[12.5px] text-[var(--text-tertiary)]">{label}</span>
     </div>
   );
 }

@@ -42,10 +42,12 @@ export function AgentDocLink({ path }: AgentDocLinkProps) {
         href={path}
         target="_blank"
         rel="noreferrer"
+        title="Agent 文档"
+        aria-label="Agent 文档"
         className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-v-gray-400 transition-colors hover:bg-v-gray-50 hover:text-v-gray-600"
       >
         <Robot size={13} weight="duotone" />
-        Agent 文档
+        <span className="hidden sm:inline">Agent 文档</span>
       </a>
       {/* 分隔线 */}
       <span className="h-4 w-px bg-v-gray-100" />

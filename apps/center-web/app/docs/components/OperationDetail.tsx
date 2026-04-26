@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
-  ArrowUp,
   BookOpen,
   Bug,
 } from "@phosphor-icons/react";
 import { CanonicalOperation } from "../lib/api";
 import { HtmlText } from "./HtmlText";
-import { AgentDocLink } from "./AgentDocLink";
 import { EndpointBar } from "./EndpointBar";
 
 type TabKey = "doc" | "debug";
@@ -25,67 +23,87 @@ const tabs: TabDef[] = [
 ];
 
 /**
- * 接口快速摘要：在标题/描述与 endpoint 卡之间，一行小灰色 dotted 列表，
- * 让程序员扫一眼就能 grasp:「需认证 · application/json · 200 + 4 错误码」
+ * 接口概览摘要：用细分割线组织，不再额外堆卡片，让 endpoint object 成为视觉主角。
  */
-function QuickFacts({ op }: { op: CanonicalOperation }) {
-  const facts: ReactNode[] = [];
+function OperationFactsStrip({ op }: { op: CanonicalOperation }) {
+  const okCount = op.responses?.filter((r) => {
+    const code = parseInt(r.statusCode, 10);
+    return code >= 200 && code < 300;
+  }).length ?? 0;
+  const errorCount = (op.responses?.length ?? 0) - okCount;
 
-  if (op.securityRequirements && op.securityRequirements.length > 0) {
-    facts.push(
-      <span key="auth" className="inline-flex items-center gap-1.5">
-        <span className="docs-status-dot" style={{ color: "var(--accent)" }} aria-hidden />
-        需认证
-      </span>,
-    );
-  }
-
-  if (op.requestBody?.contentType) {
-    facts.push(
-      <span key="req">
-        请求 <span className="font-mono text-[var(--text-secondary)]">{op.requestBody.contentType}</span>
-      </span>,
-    );
-  }
-
-  if (op.responses && op.responses.length > 0) {
-    const okCount = op.responses.filter((r) => {
-      const code = parseInt(r.statusCode, 10);
-      return code >= 200 && code < 300;
-    }).length;
-    const errorCount = op.responses.length - okCount;
-    facts.push(
-      <span key="resp" className="tabular-nums">
-        {op.responses.length} 个响应
-        {errorCount > 0 && (
-          <span className="text-[var(--text-quaternary)]">
-            {" "}（{okCount} 成功 + {errorCount} 错误）
+  const facts: Array<{ label: string; value: ReactNode }> = [
+    {
+      label: "认证",
+      value: op.securityRequirements && op.securityRequirements.length > 0
+        ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="docs-status-dot" style={{ color: "var(--accent)" }} aria-hidden />
+            需认证
           </span>
-        )}
-      </span>,
-    );
-  }
-
-  if (op.parameters && op.parameters.length > 0) {
-    facts.push(
-      <span key="params" className="tabular-nums">
-        {op.parameters.length} 个参数
-      </span>,
-    );
-  }
-
-  if (facts.length === 0) return null;
-
-  return (
-    <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] text-[var(--text-tertiary)]">
-      {facts.map((fact, i) => (
-        <span key={i} className="inline-flex items-center">
-          {fact}
-          {i < facts.length - 1 && (
-            <span className="ml-3 text-[var(--text-quaternary)]">·</span>
+        )
+        : "未声明",
+    },
+    {
+      label: "请求体",
+      value: op.requestBody?.contentType ? (
+        <span className="font-mono">{op.requestBody.contentType}</span>
+      ) : "无",
+    },
+    {
+      label: "响应",
+      value: (
+        <span className="tabular-nums">
+          {op.responses?.length ?? 0} 个
+          {errorCount > 0 && (
+            <span className="text-[var(--text-quaternary)]">
+              {" "}({okCount} 成功 + {errorCount} 错误)
+            </span>
           )}
         </span>
-      ))}
+      ),
+    },
+    {
+      label: "参数",
+      value: <span className="tabular-nums">{op.parameters?.length ?? 0} 个</span>,
+    },
+  ];
+
+  return (
+    <div className="docs-facts-strip mt-7">
+      <dl className="grid grid-cols-2 gap-0 md:grid-cols-4">
+        {facts.map((fact) => (
+          <div key={fact.label} className="min-w-0 px-4 py-3 first:pl-0 md:border-l md:border-[var(--border-subtle)] md:first:border-l-0 md:first:pl-0">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--text-quaternary)]">{fact.label}</dt>
+            <dd className="mt-1.5 text-[12.5px] font-medium leading-snug text-[var(--text-secondary)] [overflow-wrap:anywhere]">
+              {fact.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+/**
+ * 标题上方的 eyebrow：一行 mono 路由身份标记
+ *   ▎GET · /api/users/{id}
+ *
+ * 比 endpoint 卡更轻，承担「这一页是哪个路由」的快速识别。
+ * Method 着色继承全站方法色谱，扫一眼就能区分类型。
+ */
+function OperationEyebrow({ method, path }: { method: string; path: string }) {
+  const m = method.toLowerCase();
+  return (
+    <div className="docs-route-kicker mb-5 inline-flex max-w-full items-center gap-2.5 font-mono text-[11.5px]">
+      <span
+        className="rounded-md border px-2 py-1 font-semibold uppercase tracking-[0.12em]"
+        style={{ color: `var(--method-${m}-text, var(--text-secondary))` }}
+      >
+        {method}
+      </span>
+      <span className="text-[var(--text-quaternary)]">/</span>
+      <span className="truncate text-[var(--text-tertiary)]">{path}</span>
     </div>
   );
 }
@@ -99,11 +117,11 @@ function PlaceholderPanel({ icon: Icon, title, description }: {
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 py-36 text-center">
-      <div className="mb-5 rounded-2xl bg-v-gray-50 p-5">
-        <Icon size={32} className="text-v-gray-400" />
+      <div className="mb-5 rounded-2xl bg-[var(--bg-subtle)] p-5">
+        <Icon size={32} className="text-[var(--text-quaternary)]" />
       </div>
-      <h2 className="text-[17px] font-semibold text-v-black">{title}</h2>
-      <p className="mt-2.5 max-w-[36ch] text-[14px] leading-relaxed text-v-gray-400">
+      <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{title}</h2>
+      <p className="mt-2.5 max-w-[36ch] text-[14px] leading-relaxed text-[var(--text-tertiary)]">
         {description}
       </p>
     </div>
@@ -112,81 +130,49 @@ function PlaceholderPanel({ icon: Icon, title, description }: {
 
 export function OperationDetail({
   op,
-  service,
-  environment,
-  group,
   children,
   debugPanel,
 }: {
   op: CanonicalOperation;
-  service: string;
-  environment: string;
-  group: string;
   /** 由服务端预渲染的文档 Tab 内容（OperationWiki） */
   children: ReactNode;
   /** 调试 Tab 插槽内容 */
   debugPanel?: ReactNode;
 }) {
   const [active, setActive] = useState<TabKey>("doc");
-  const [stuck, setStuck] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // 通过哨兵元素是否离开视口来判断 Tab 栏是否吸顶
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setStuck(!entry.isIntersecting),
-      { threshold: 0 },
-    );
-    obs.observe(sentinel);
-    return () => obs.disconnect();
-  }, []);
-
-  const scrollToTop = useCallback(() => {
-    const el = document.getElementById("operation-top");
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
 
   return (
     <div>
-      {/* 顶部锚点：供"返回顶部"按钮和页内导航的"概览"项跳转 */}
+      {/* 顶部锚点：供 OnThisPage 的「概览」项跳转 */}
       <span id="operation-top" aria-hidden />
 
-      {/* ── 头部区域 ── */}
-      <div className="border-b border-[var(--border-default)]">
-        <div className="mx-auto max-w-[1100px] px-6 pb-10 pt-16 sm:px-10 sm:pt-20">
-          {/* 标题：纯字重，无渐变、无装饰 */}
-          <div className="flex items-start justify-between gap-4">
-            <h1
-              className="text-[clamp(1.6rem,2.8vw,2.2rem)] font-semibold leading-[1.15] text-[var(--text-primary)]"
-              style={{ letterSpacing: "-0.03em" }}
-            >
+      {/* Frontmatter：克制的 API reference 头部，让 endpoint object 承担主视觉。 */}
+      <div className="docs-reference-hero">
+        <div className="mx-auto max-w-[1100px] px-6 pb-8 pt-12 sm:px-10 sm:pt-16">
+          <OperationEyebrow method={op.method} path={op.path} />
+
+          <div className="max-w-[820px]">
+            <h1 className="text-[clamp(1.75rem,3vw,2.35rem)] font-semibold leading-[1.08] tracking-tight text-[var(--text-primary)]">
               {op.summary || op.operationId}
             </h1>
-            <AgentDocLink path={`/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group)}/${encodeURIComponent(op.operationId)}/apidocs.md`} />
+
+            {op.operationId && (
+              <code className="docs-mono-chip mt-4 max-w-full truncate">
+                {op.operationId}
+              </code>
+            )}
+
+            {op.description && (
+              <HtmlText
+                as="div"
+                text={op.description}
+                className="mt-5 max-w-[70ch] text-[15px] leading-[1.78] text-[var(--text-secondary)] [&>p]:mt-2.5 [&>p:first-child]:mt-0 [&_ul]:mt-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mt-0.5 [&_code]:rounded [&_code]:bg-[var(--bg-subtle)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[13px]"
+              />
+            )}
           </div>
 
-          {op.operationId && (
-            <p className="mt-3 font-mono text-[12.5px] text-[var(--text-tertiary)]">
-              {op.operationId}
-            </p>
-          )}
+          <OperationFactsStrip op={op} />
 
-          {/* 描述 */}
-          {op.description && (
-            <HtmlText
-              as="div"
-              text={op.description}
-              className="mt-5 max-w-[68ch] text-[15px] leading-[1.75] text-[var(--text-secondary)] [&>p]:mt-2.5 [&>p:first-child]:mt-0 [&_ul]:mt-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mt-0.5 [&_code]:rounded [&_code]:bg-[var(--bg-subtle)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[13px]"
-            />
-          )}
-
-          {/* Quick facts：一行小灰色摘要——程序员一眼扫到关键事实 */}
-          <QuickFacts op={op} />
-
-          {/* Endpoint 物件：method + path + 复制按钮 */}
           <EndpointBar
             method={op.method}
             path={op.path}
@@ -199,37 +185,9 @@ export function OperationDetail({
                 : null,
             ].filter((m): m is { label: string; value: string } => Boolean(m))}
           />
-        </div>
-      </div>
 
-      {/* 哨兵元素：用于检测 Tab 栏是否进入吸顶状态 */}
-      <div ref={sentinelRef} aria-hidden className="h-0" />
-
-      {/* ── Tab 栏（吸顶） ── */}
-      <div className="sticky top-0 z-20">
-        {/* 吸顶时淡入的背景层（半透明 + 模糊） */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 transition-opacity duration-200"
-          style={{
-            backgroundColor: "var(--bg-canvas)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            borderBottom: "1px solid var(--border-default)",
-            opacity: stuck ? 0.92 : 0,
-          }}
-        />
-        <div className="mx-auto max-w-[1100px] px-4 sm:px-8">
-          <div
-            className="flex items-center justify-between gap-3"
-            style={{
-              marginTop: stuck ? 0 : -16,
-              paddingTop: stuck ? 10 : 0,
-              paddingBottom: stuck ? 10 : 0,
-              transition: "margin-top 200ms ease, padding 200ms ease",
-            }}
-          >
-            <div className="inline-flex rounded-full bg-[var(--bg-subtle)] p-1">
+          <div className="mt-7 border-t border-[var(--border-subtle)] pt-5">
+            <div className="inline-flex items-center gap-1 rounded-xl border border-[var(--border-subtle)] bg-[var(--docs-surface-tint)] p-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = active === tab.key;
@@ -237,40 +195,27 @@ export function OperationDetail({
                   <button
                     key={tab.key}
                     onClick={() => setActive(tab.key)}
-                    className={`relative flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-300 ${
+                    className={`relative flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-all duration-200 active:translate-y-px ${
                       isActive
-                        ? "bg-[var(--text-primary)] text-[var(--bg-surface)]"
-                        : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]"
+                        ? "bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[0_10px_22px_-20px_rgba(24,24,27,0.65)]"
+                        : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                     }`}
                   >
                     <Icon
                       size={15}
                       weight={isActive ? "fill" : "regular"}
-                      className={`transition-colors duration-200 ${isActive ? "text-[var(--bg-surface)]" : "text-[var(--text-quaternary)]"}`}
+                      className={`transition-colors duration-200 ${isActive ? "text-[var(--accent)]" : "text-[var(--text-quaternary)]"}`}
                     />
                     {tab.label}
                   </button>
                 );
               })}
             </div>
-            <button
-              onClick={scrollToTop}
-              aria-label="返回顶部"
-              title="返回顶部"
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-[var(--text-tertiary)] transition-all duration-200 hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
-              style={{
-                opacity: stuck ? 1 : 0,
-                pointerEvents: stuck ? "auto" : "none",
-              }}
-            >
-              <ArrowUp size={14} weight="bold" />
-            </button>
           </div>
         </div>
       </div>
 
-      {/* ── 内容区域 ── */}
-      <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto max-w-[1100px] px-6 pb-16 pt-11 sm:px-10 sm:pt-12">
         {active === "doc" && children}
         {active === "debug" && (
           debugPanel ?? (

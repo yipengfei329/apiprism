@@ -6,6 +6,7 @@ import { getInternalApiUrl } from "@/app/lib/internal-api";
 export type GroupRef = {
   name: string;
   slug: string;
+  operationCount: number;
 };
 
 export type ServiceCatalogItem = {
@@ -15,6 +16,7 @@ export type ServiceCatalogItem = {
   version: string;
   updatedAt: string;
   groups: GroupRef[];
+  operationCount: number;
 };
 
 /** 标准 JSON Schema 子集类型 */
@@ -348,4 +350,3 @@ export async function getMcpGroupStatus(
     return null;
   }
 }
-

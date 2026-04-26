@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { RevisionSummary } from "../lib/api";
 
 interface RevisionSwitcherProps {
@@ -34,17 +35,45 @@ export function RevisionSwitcher({
   viewingRevisionId,
 }: RevisionSwitcherProps) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const updatePos = () => {
+      const rect = buttonRef.current!.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      });
+    };
+    updatePos();
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    const onClick = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!buttonRef.current?.contains(target) && !dropdownRef.current?.contains(target)) {
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [open]);
 
   if (revisions.length === 0) return null;
@@ -57,8 +86,9 @@ export function RevisionSwitcher({
   const baseHref = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}`;
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-1.5 rounded-md bg-[var(--bg-subtle)] px-2.5 py-0.5 font-mono text-[12px] font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--accent-bg)] hover:text-[var(--accent)]"
         aria-haspopup="listbox"
@@ -84,10 +114,12 @@ export function RevisionSwitcher({
         </svg>
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
+          ref={dropdownRef}
           role="listbox"
-          className="absolute right-0 z-20 mt-2 max-h-[320px] w-[300px] overflow-y-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] py-1 shadow-lg"
+          className="fixed z-[9999] max-h-[320px] w-[300px] overflow-y-auto rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] py-1 shadow-lg"
+          style={{ top: dropdownPos.top, right: dropdownPos.right }}
         >
           {revisions.map((rev) => {
             const href = rev.current
@@ -143,8 +175,9 @@ export function RevisionSwitcher({
               </Link>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

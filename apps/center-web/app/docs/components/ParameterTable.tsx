@@ -94,7 +94,7 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
   const nested = hasNestedSchema(parameter);
 
   return (
-    <tr className="border-t border-[var(--border-subtle)] align-top">
+    <tr className="border-t border-[var(--border-subtle)] align-top transition-colors hover:bg-[var(--bg-subtle)]/45">
       <td className="px-4 py-4 md:px-5">
         <div className="flex flex-wrap items-center gap-2">
           <code className="font-mono text-[13px] font-semibold text-v-black">
@@ -133,11 +133,11 @@ function ParameterRow({ parameter }: { parameter: CanonicalParameter }) {
         )}
         <ParameterMeta parameter={parameter} />
         {nested && parameter.schema && (
-          <details className="mt-3 overflow-hidden rounded-xl border border-v-gray-100 bg-v-gray-50/40">
+          <details className="mt-3 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--docs-surface-tint)]">
             <summary className="cursor-pointer list-none px-4 py-3 text-[12px] font-medium text-v-gray-500 marker:hidden">
               查看字段结构
             </summary>
-            <div className="border-t border-v-gray-100 px-3 pb-2">
+            <div className="border-t border-[var(--border-subtle)] px-3 pb-2">
               <SchemaTable schema={parameter.schema} />
             </div>
           </details>
@@ -174,7 +174,7 @@ function ParameterGroup({
         </div>
       </header>
 
-      <div className="overflow-x-auto">
+      <div className="docs-table-shell overflow-x-auto rounded-xl">
         <table className="min-w-full table-fixed">
           <colgroup>
             <col className="w-[20%]" />
@@ -182,7 +182,7 @@ function ParameterGroup({
             <col className="w-[12%]" />
             <col className="w-[50%]" />
           </colgroup>
-          <thead>
+          <thead className="bg-[var(--docs-table-header)]">
             <tr className="text-left">
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">名称</th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-v-gray-400 md:px-5">类型</th>

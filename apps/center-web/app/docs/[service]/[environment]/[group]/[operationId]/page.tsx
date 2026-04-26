@@ -5,6 +5,8 @@ import { OperationWiki } from "../../../../components/OperationWiki";
 import { CurlPanel } from "../../../../components/CurlPanel";
 import { Breadcrumb } from "../../../../components/Breadcrumb";
 import { RevisionBanner } from "../../../../components/RevisionBanner";
+import { AgentDocLink } from "../../../../components/AgentDocLink";
+import { DocsHeaderSearch } from "../../../../components/DocsHeaderSearch";
 
 
 type Props = {
@@ -42,26 +44,32 @@ export default async function OperationPage({ params, searchParams }: Props) {
   return (
     <div>
       {/* 面包屑导航：sticky，毛玻璃 */}
-      <div className="sticky top-0 z-10 border-b border-v-gray-100 bg-[var(--bg-surface)] px-4 py-3 sm:px-8">
-        <div className="mx-auto max-w-[1100px]">
-          <Breadcrumb
-            items={[
-              {
-                label: svc,
-                href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}${querySuffix}`,
-                icon: "service",
-              },
-              {
-                label: grpSlug,
-                href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}${querySuffix}`,
-                icon: "group",
-              },
-              {
-                label: op.summary,
-                icon: "operation",
-              },
-            ]}
-          />
+      <div className="docs-sticky-bar sticky top-0 z-30 min-h-[var(--docs-header-height)] px-4 py-3 sm:px-8">
+        <div className="mx-auto flex max-w-[1100px] items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Breadcrumb
+              items={[
+                {
+                  label: svc,
+                  href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}${querySuffix}`,
+                  icon: "service",
+                },
+                {
+                  label: grpSlug,
+                  href: `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}${querySuffix}`,
+                  icon: "group",
+                },
+                {
+                  label: op.summary,
+                  icon: "operation",
+                },
+              ]}
+            />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <DocsHeaderSearch service={svc} environment={env} revision={revisionParam ?? null} />
+            <AgentDocLink path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(grpSlug)}/${encodeURIComponent(op.operationId)}/apidocs.md`} />
+          </div>
         </div>
       </div>
 
@@ -80,9 +88,6 @@ export default async function OperationPage({ params, searchParams }: Props) {
       {/* 接口详情：头部 + 选项卡 + 内容 */}
       <OperationDetail
         op={op}
-        service={svc}
-        environment={env}
-        group={grpSlug}
         debugPanel={
           <CurlPanel
             op={op}

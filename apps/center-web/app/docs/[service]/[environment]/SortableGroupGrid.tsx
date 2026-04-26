@@ -61,6 +61,7 @@ function SortableGroupCard({
   return (
     <div
       ref={setNodeRef}
+      className="h-full"
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -165,7 +166,7 @@ export function SortableGroupGrid({
         items={groups.map((g) => g.slug)}
         strategy={rectSortingStrategy}
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
           {groups.map((group) => (
             <SortableGroupCard
               key={group.slug}

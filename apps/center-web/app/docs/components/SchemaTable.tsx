@@ -68,7 +68,7 @@ function PropertyRow({
   return (
     <div className={!isLast ? "border-b border-[var(--border-subtle)]" : ""}>
       {/* 属性主体 */}
-      <div className="flex items-start gap-2 px-4 py-3.5">
+      <div className="flex items-start gap-2 px-4 py-3.5 transition-colors hover:bg-[var(--bg-subtle)]/45">
         {/* 展开按钮 */}
         <div className="flex shrink-0 items-center pt-[3px]" style={{ width: 18 }}>
           {hasChildren && (
@@ -218,7 +218,7 @@ export function SchemaTable({ schema }: { schema: JsonSchema }) {
   }
 
   return (
-    <div className="mt-3 overflow-hidden rounded-xl">
+    <div className="overflow-hidden">
       <PropertyList
         properties={properties}
         requiredFields={target.required ?? []}

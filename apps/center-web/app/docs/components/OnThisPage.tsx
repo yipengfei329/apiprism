@@ -84,18 +84,18 @@ export function OnThisPage({ sections }: { sections: SectionItem[] }) {
   const items: SectionItem[] = [{ id: OVERVIEW_ID, label: OVERVIEW_LABEL }, ...sections];
 
   return (
-    <nav ref={navRefCallback} className="sticky top-20">
+    <nav ref={navRefCallback} className="sticky top-[var(--docs-toc-top)]">
       <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
         页内导航
       </h4>
-      <ul className="space-y-1">
+      <ul className="space-y-1 border-l border-[var(--border-subtle)] py-0.5">
         {items.map((s) => (
           <li key={s.id}>
             <button
               onClick={() => handleClick(s.id)}
-              className={`block w-full cursor-pointer border-l-2 py-1 pl-3 text-left text-[13px] transition-colors ${
+              className={`-ml-px block w-full cursor-pointer border-l py-1.5 pl-3 text-left text-[13px] transition-colors active:translate-y-px ${
                 activeId === s.id
-                  ? "border-[var(--accent)] font-semibold text-[var(--accent)]"
+                  ? "border-[var(--accent)] font-medium text-[var(--text-primary)]"
                   : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
               }`}
             >

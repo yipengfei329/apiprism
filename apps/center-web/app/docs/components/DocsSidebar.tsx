@@ -28,6 +28,8 @@ import {
   Plugs,
   ArrowLeft,
   CaretRight,
+  CaretDoubleDown,
+  CaretDoubleUp,
   SidebarSimple,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
@@ -115,15 +117,19 @@ function GroupItem({
   environment,
   group,
   groupDisplayName,
+  operationCount,
   currentPath,
   revision,
+  bulkSignal,
 }: {
   service: string;
   environment: string;
   group: string;
   groupDisplayName: string;
+  operationCount: number;
   currentPath: string;
   revision: string | null;
+  bulkSignal: { open: boolean; nonce: number } | null;
 }) {
   // 当存在 revision 查询参数时，所有导航都带上该参数，保证在历史版本上下文中浏览
   const querySuffix = revision ? `?revision=${encodeURIComponent(revision)}` : "";
@@ -136,6 +142,12 @@ function GroupItem({
   const isUrlActive = currentPath.startsWith(groupBasePath);
   const [localOpen, setLocalOpen] = useState<boolean | null>(null);
   const isOpen = localOpen ?? isUrlActive;
+
+  // 响应外部"全部展开/折叠"信号；nonce 变化触发，避免初始 mount 时误触
+  useEffect(() => {
+    if (!bulkSignal) return;
+    setLocalOpen(bulkSignal.open);
+  }, [bulkSignal]);
 
   const isGroupPageActive = currentPath === groupBasePath;
 
@@ -184,6 +196,7 @@ function GroupItem({
 
   const isHighlighted = isGroupPageActive || hasActiveChild;
   const GroupIcon = getGroupIcon(groupDisplayName);
+  const visibleOperationCount = operations?.length ?? operationCount;
 
   return (
     <li>
@@ -191,11 +204,18 @@ function GroupItem({
       <Link
         href={groupHref}
         onClick={() => setLocalOpen((prev) => !(prev ?? isUrlActive))}
-        className="group/nav flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)]"
+        className="group/nav relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)] active:translate-y-px"
         style={{
           backgroundColor: isHighlighted ? "var(--sidebar-active-bg)" : undefined,
         }}
       >
+        {isHighlighted && (
+          <span
+            aria-hidden
+            className="absolute bottom-1.5 left-0 top-1.5 w-[2px] rounded-r-full"
+            style={{ backgroundColor: "var(--sidebar-accent-rail)" }}
+          />
+        )}
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all duration-200"
           style={{
@@ -216,9 +236,9 @@ function GroupItem({
         >
           {groupDisplayName}
         </span>
-        {operations && operations.length > 0 && (
+        {visibleOperationCount > 0 && (
           <span className="shrink-0 font-mono text-[10px] tabular-nums text-[var(--sidebar-text-quaternary)]">
-            {operations.length}
+            {visibleOperationCount}
           </span>
         )}
         <CaretRight
@@ -235,7 +255,7 @@ function GroupItem({
         style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
       >
         <div className="overflow-hidden">
-          <ul className="mt-0.5 space-y-px pl-[18px]">
+          <ul className="ml-[11px] mt-1 space-y-px border-l pl-[9px]" style={{ borderColor: "var(--sidebar-branch-line)" }}>
             {/* 加载骨架 */}
             {loading &&
               [0, 1, 2].map((i) => (
@@ -268,14 +288,18 @@ function GroupItem({
                     <Link
                       href={opHref}
                       title={op.summary || op.operationId}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-[7px] transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)]"
+                      className="relative flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-[7px] transition-colors duration-150 hover:bg-[var(--sidebar-hover-bg)] active:translate-y-px"
                       style={{
                         backgroundColor: isActive ? "var(--sidebar-accent-bg)" : undefined,
-                        borderLeft: isActive
-                          ? "2px solid var(--sidebar-accent-rail)"
-                          : "2px solid transparent",
                       }}
                     >
+                      {isActive && (
+                        <span
+                          aria-hidden
+                          className="absolute bottom-1.5 left-[-10px] top-1.5 w-[2px] rounded-full"
+                          style={{ backgroundColor: "var(--sidebar-accent-muted)" }}
+                        />
+                      )}
                       <MethodBadge method={op.method} size="sm" />
                       <span
                         className="truncate text-[12.5px] leading-snug transition-colors duration-150"
@@ -491,11 +515,21 @@ export function DocsSidebar({
 
   const envTheme = activeService ? getEnvTheme(activeService.environment) : null;
 
+  // ── 全部展开/折叠分组的信号 ──
+  const [bulkSignal, setBulkSignal] = useState<{ open: boolean; nonce: number } | null>(null);
+  const [lastBulkOpen, setLastBulkOpen] = useState(false);
+
+  const handleBulkToggle = () => {
+    const nextOpen = !lastBulkOpen;
+    setBulkSignal({ open: nextOpen, nonce: Date.now() });
+    setLastBulkOpen(nextOpen);
+  };
+
   return (
     <aside
       className="flex h-full w-[288px] shrink-0 flex-col"
       style={{
-        backgroundColor: "var(--sidebar-bg)",
+        background: "var(--sidebar-shell-bg)",
       }}
     >
       {/* ── 头部：品牌 + 服务信息 ── */}
@@ -530,47 +564,54 @@ export function DocsSidebar({
             )}
           </div>
 
-          {/* 服务名：可点击，跳回服务概览页 */}
-          <Link
-            href={`/docs/${encodeURIComponent(activeService.name)}/${encodeURIComponent(activeService.environment)}`}
-            className="group/svc-hd block truncate"
-            title={`返回 ${activeService.name} 服务首页`}
-          >
-            <h2
-              className="truncate text-[17px] font-bold leading-snug"
-              style={{
-                letterSpacing: "-0.025em",
-                background: "linear-gradient(90deg, rgba(255,255,255,0.95) 0%, rgba(134,239,172,0.8) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
+          {/* 服务身份物件：可点击，跳回服务概览页 */}
+          <div className="sidebar-service-card group/svc-hd relative overflow-hidden rounded-lg px-2.5 py-2.5">
+            <Link
+              href={`/docs/${encodeURIComponent(activeService.name)}/${encodeURIComponent(activeService.environment)}`}
+              className="relative block"
+              title={`返回 ${activeService.name} 服务首页`}
             >
-              {activeService.name}
-            </h2>
-            <span className="mt-0.5 block h-px w-0 bg-[rgba(134,239,172,0.35)] transition-all duration-200 group-hover/svc-hd:w-full" />
-          </Link>
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className="sidebar-service-mark flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
+                  aria-hidden
+                >
+                  <Database size={13} weight="regular" />
+                </span>
+                <h2
+                  className="min-w-0 flex-1 truncate text-[13.5px] font-semibold leading-snug text-[var(--sidebar-text-primary)] transition-colors duration-150 group-hover/svc-hd:text-white"
+                >
+                  {activeService.name}
+                </h2>
+                <CaretRight
+                  size={12}
+                  weight="bold"
+                  className="shrink-0 text-[var(--sidebar-text-quaternary)] opacity-0 transition-opacity duration-150 group-hover/svc-hd:opacity-70"
+                />
+              </div>
+            </Link>
 
-          {/* 环境 + 版本 */}
-          <div className="mt-2.5 flex items-center gap-2">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-[3px] font-mono text-[10px] font-medium uppercase tracking-wider"
-              style={{
-                backgroundColor: envTheme.bg,
-                border: `1px solid ${envTheme.border}`,
-                color: envTheme.text,
-              }}
-            >
+            <div className="relative mt-2 flex items-center gap-2 pl-8">
               <span
-                className="inline-flex h-[5px] w-[5px] shrink-0 rounded-full"
-                style={{ backgroundColor: envTheme.dot }}
+                className="inline-flex items-center gap-1.5 rounded-md px-2 py-[2px] font-mono text-[9.5px] font-medium uppercase tracking-wider"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.035)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  color: envTheme.text,
+                }}
+              >
+                <span
+                  className="inline-flex h-[5px] w-[5px] shrink-0 rounded-full"
+                  style={{ backgroundColor: envTheme.dot }}
+                />
+                {activeService.environment}
+              </span>
+              <SidebarRevisionButton
+                service={activeService.name}
+                environment={activeService.environment}
+                viewingRevisionId={revision}
               />
-              {activeService.environment}
-            </span>
-            <SidebarRevisionButton
-              service={activeService.name}
-              environment={activeService.environment}
-              viewingRevisionId={revision}
-            />
+            </div>
           </div>
         </div>
       ) : (
@@ -610,11 +651,26 @@ export function DocsSidebar({
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {activeService ? (
           <>
-            {/* 区域标签 */}
-            <div className="mb-2 px-2.5">
+            {/* 区域标签 + 全部展开/折叠按钮 */}
+            <div className="mb-2 flex items-center justify-between px-2.5">
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-text-quaternary)]">
                 接口列表
               </span>
+              {activeService.groups.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBulkToggle}
+                  aria-label={lastBulkOpen ? "全部折叠" : "全部展开"}
+                  title={lastBulkOpen ? "全部折叠" : "全部展开"}
+                  className="flex h-5 w-5 cursor-pointer items-center justify-center rounded text-[var(--sidebar-text-quaternary)] transition-colors hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-secondary)]"
+                >
+                  {lastBulkOpen ? (
+                    <CaretDoubleUp size={11} weight="bold" />
+                  ) : (
+                    <CaretDoubleDown size={11} weight="bold" />
+                  )}
+                </button>
+              )}
             </div>
 
             {activeService.groups.length === 0 ? (
@@ -632,8 +688,10 @@ export function DocsSidebar({
                     environment={activeService.environment}
                     group={group.slug}
                     groupDisplayName={group.name}
+                    operationCount={group.operationCount ?? 0}
                     currentPath={pathname}
                     revision={revision}
+                    bulkSignal={bulkSignal}
                   />
                 ))}
               </ul>
@@ -709,3 +767,4 @@ export function DocsSidebar({
     </aside>
   );
 }
+
