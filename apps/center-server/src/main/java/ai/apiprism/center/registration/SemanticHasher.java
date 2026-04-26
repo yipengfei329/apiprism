@@ -10,6 +10,8 @@ import ai.apiprism.model.CanonicalSecurityScheme;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -32,7 +34,11 @@ public class SemanticHasher {
      */
     public static final String VERSION = "smh:2";
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    // 必须注册 JSR310 才能序列化 OpenAPI schema 中 example 字段对应 Instant/OffsetDateTime 等类型；
+    // 关闭时间戳形式输出，确保哈希值在不同 JVM/时区下保持稳定。
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private SemanticHasher() {
     }

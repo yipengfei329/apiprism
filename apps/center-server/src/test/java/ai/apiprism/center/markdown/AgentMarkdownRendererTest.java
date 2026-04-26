@@ -201,10 +201,10 @@ class AgentMarkdownRendererTest {
         assertTrue(md.contains("## orders"));
         assertTrue(md.contains("## payments"));
 
-        // 表格行和相对链接
-        assertTrue(md.contains("[createOrder](http://localhost:8080/order-service/prod/createOrder/apidocs.md)"));
-        assertTrue(md.contains("[getOrder](http://localhost:8080/order-service/prod/getOrder/apidocs.md)"));
-        assertTrue(md.contains("[createPayment](http://localhost:8080/order-service/prod/createPayment/apidocs.md)"));
+        // 表格行和相对链接（URL 含 group slug 段，与前端路由 [service]/[environment]/[group]/[operationId] 对齐）
+        assertTrue(md.contains("[createOrder](http://localhost:8080/order-service/prod/orders/createOrder/apidocs.md)"));
+        assertTrue(md.contains("[getOrder](http://localhost:8080/order-service/prod/orders/getOrder/apidocs.md)"));
+        assertTrue(md.contains("[createPayment](http://localhost:8080/order-service/prod/payments/createPayment/apidocs.md)"));
 
         // 方法和路径
         assertTrue(md.contains("| POST | `/orders`"));

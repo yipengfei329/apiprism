@@ -9,6 +9,9 @@ import ai.apiprism.model.CanonicalServiceSnapshot;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -24,11 +27,17 @@ import java.util.Map;
 @Component
 public class AgentMarkdownRenderer {
 
+    private static final Logger log = LoggerFactory.getLogger(AgentMarkdownRenderer.class);
+
     private final ObjectMapper objectMapper;
 
     public AgentMarkdownRenderer() {
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        // 注册 JSR310 以支持 OpenAPI schema 中 Instant/OffsetDateTime 等 example 字段；
+        // 输出 ISO-8601 字符串而非数值时间戳，与 Markdown 文档可读性要求一致。
+        this.objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     /**
@@ -326,6 +335,9 @@ public class AgentMarkdownRenderer {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
+            // 静默降级会让 markdown 出现空 schema 而难以排查；显式 warn 便于线上发现
+            log.warn("Failed to serialize schema for agent markdown, falling back to empty object: {}",
+                    e.getMessage());
             return "{}";
         }
     }

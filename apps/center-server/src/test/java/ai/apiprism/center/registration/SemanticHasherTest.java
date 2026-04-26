@@ -10,6 +10,8 @@ import ai.apiprism.model.ServiceRef;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -101,8 +103,25 @@ class SemanticHasherTest {
     }
 
     @Test
-    void versionPrefixIsSmh1() {
-        assertEquals("smh:1", SemanticHasher.VERSION);
+    void versionPrefixIsSmh2() {
+        assertEquals("smh:2", SemanticHasher.VERSION);
+    }
+
+    @Test
+    void schemaExampleWithJavaTimeValueDoesNotBreakHashing() {
+        // 回归用例：SpringDoc 把 @Schema(example="2024-01-01T09:00:00Z") 标在 Instant 字段上时，
+        // 会把 example 字段值具化为 OffsetDateTime 对象写入 OpenAPI 模型；
+        // SemanticHasher 序列化时如果 ObjectMapper 没注册 JSR310 模块会直接抛 InvalidDefinitionException，
+        // 导致整个注册请求 500。
+        Map<String, Object> schemaWithDateExample = Map.of(
+                "type", "string",
+                "format", "date-time",
+                "example", OffsetDateTime.of(2024, 1, 1, 9, 0, 0, 0, ZoneOffset.UTC));
+        CanonicalServiceSnapshot s = snapshotWithSchema(schemaWithDateExample);
+
+        String h = SemanticHasher.hash(s);
+        assertNotNull(h);
+        assertEquals(64, h.length());
     }
 
     // ---- 辅助方法 ----
