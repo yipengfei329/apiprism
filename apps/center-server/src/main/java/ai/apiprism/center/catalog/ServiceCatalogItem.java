@@ -35,12 +35,13 @@ public class ServiceCatalogItem {
     private final int operationCount;
 
     /**
-     * 分组摘要：名称 + URL slug。
+     * 分组摘要：名称 + URL slug + 接口数量。
      */
     @Getter
     @Builder
     public static class GroupRef {
         private final String name;
         private final String slug;
+        private final int operationCount;
     }
 }

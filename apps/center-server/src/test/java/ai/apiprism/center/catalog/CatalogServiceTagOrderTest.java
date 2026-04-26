@@ -3,6 +3,7 @@ package ai.apiprism.center.catalog;
 import ai.apiprism.center.repository.RegistrationRepository;
 import ai.apiprism.center.repository.StoredRegistration;
 import ai.apiprism.model.CanonicalGroup;
+import ai.apiprism.model.CanonicalOperation;
 import ai.apiprism.model.CanonicalServiceSnapshot;
 import ai.apiprism.model.ServiceRef;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,13 +83,46 @@ class CatalogServiceTagOrderTest {
         assertEquals(List.of("a-slug", "b-slug"), groups.stream().map(CanonicalGroup::getSlug).toList());
     }
 
+    @Test
+    void listServices_includesOperationCountPerGroup() {
+        CanonicalGroup groupA = group("a", "a-slug", 2);
+        CanonicalGroup groupB = group("b", "b-slug", 1);
+        StoredRegistration registration = registration("svc", "dev", List.of(groupA, groupB));
+        when(registrationRepository.findAll()).thenReturn(List.of(registration));
+        when(tagOrderRepository.findOrder("svc", "dev")).thenReturn(Map.of());
+
+        ServiceCatalogItem item = catalogService.listServices().getFirst();
+
+        assertEquals(3, item.getOperationCount());
+        assertEquals(List.of(2, 1), item.getGroups().stream()
+                .map(ServiceCatalogItem.GroupRef::getOperationCount)
+                .toList());
+    }
+
     // ── helpers ──
 
     private CanonicalGroup group(String name, String slug) {
         return CanonicalGroup.builder().name(name).slug(slug).build();
     }
 
+    private CanonicalGroup group(String name, String slug, int operationCount) {
+        CanonicalGroup.CanonicalGroupBuilder builder = CanonicalGroup.builder().name(name).slug(slug);
+        for (int i = 0; i < operationCount; i++) {
+            builder.operation(CanonicalOperation.builder()
+                    .operationId(name + "-" + i)
+                    .method("GET")
+                    .path("/" + name + "/" + i)
+                    .build());
+        }
+        return builder.build();
+    }
+
     private void stubService(String serviceName, String environment, List<CanonicalGroup> groups) {
+        StoredRegistration reg = registration(serviceName, environment, groups);
+        when(registrationRepository.findByRef(serviceName, environment)).thenReturn(Optional.of(reg));
+    }
+
+    private StoredRegistration registration(String serviceName, String environment, List<CanonicalGroup> groups) {
         CanonicalServiceSnapshot snapshot = CanonicalServiceSnapshot.builder()
                 .ref(ServiceRef.builder().name(serviceName).environment(environment).build())
                 .title("Test")
@@ -96,7 +130,7 @@ class CatalogServiceTagOrderTest {
                 .updatedAt(Instant.now())
                 .groups(groups)
                 .build();
-        StoredRegistration reg = StoredRegistration.builder()
+        return StoredRegistration.builder()
                 .id("test-id")
                 .snapshot(snapshot)
                 .specHash("hash")
@@ -104,6 +138,5 @@ class CatalogServiceTagOrderTest {
                 .adapterType("test")
                 .rawSpec("{}")
                 .build();
-        when(registrationRepository.findByRef(serviceName, environment)).thenReturn(Optional.of(reg));
     }
 }

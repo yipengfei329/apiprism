@@ -156,6 +156,7 @@ public class CatalogService {
                         .map(g -> ServiceCatalogItem.GroupRef.builder()
                                 .name(g.getName())
                                 .slug(g.getSlug())
+                                .operationCount(g.getOperations() == null ? 0 : g.getOperations().size())
                                 .build())
                         .toList())
                 .operationCount(operationCount)
