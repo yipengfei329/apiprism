@@ -12,6 +12,9 @@ import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider;
 import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
@@ -134,8 +137,12 @@ public class PerServiceMcpRouter {
 
         // 构建工具规格列表
         List<McpServerFeatures.SyncToolSpecification> toolSpecs = buildToolSpecs(snapshot, operations);
-        JacksonMcpJsonMapper jsonMapper = new JacksonMcpJsonMapper(
-                new com.fasterxml.jackson.databind.ObjectMapper());
+        // 注册 JSR310 以支持工具返回值/参数 schema 中 Instant/OffsetDateTime 等类型的序列化；
+        // 关闭时间戳形式输出，让客户端拿到 ISO-8601 字符串。
+        ObjectMapper mcpObjectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMcpJsonMapper jsonMapper = new JacksonMcpJsonMapper(mcpObjectMapper);
 
         // --- SSE 传输 ---
         HttpServletSseServerTransportProvider sseTransport = HttpServletSseServerTransportProvider.builder()

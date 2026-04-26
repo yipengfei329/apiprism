@@ -22,6 +22,7 @@ mcpSdk                    = "1.1.1"
 # Jackson
 jackson-annotations              = { module = "com.fasterxml.jackson.core:jackson-annotations",         version.ref = "jackson" }
 jackson-databind                 = { module = "com.fasterxml.jackson.core:jackson-databind",             version.ref = "jackson" }
+jackson-datatype-jsr310          = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",  version.ref = "jackson" }
 
 # OpenAPI 解析
 swagger-parser                   = { module = "io.swagger.parser.v3:swagger-parser",                    version.ref = "swaggerParser" }

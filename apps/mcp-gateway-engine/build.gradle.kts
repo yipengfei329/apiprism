@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
     implementation(libs.spring.web)
     implementation(libs.jackson.databind)
+    implementation(libs.jackson.datatype.jsr310)
     implementation(libs.mcp.core)
     implementation(libs.mcp.json.jackson2)
     compileOnly("jakarta.servlet:jakarta.servlet-api:6.0.0")
