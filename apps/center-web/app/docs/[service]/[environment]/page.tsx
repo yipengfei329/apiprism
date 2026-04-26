@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   getServiceSnapshot,
@@ -8,7 +7,6 @@ import {
   getRevisionSnapshot,
 } from "../../lib/api";
 import { Breadcrumb } from "../../components/Breadcrumb";
-import { HtmlText } from "../../components/HtmlText";
 import { McpToggle } from "../../components/McpToggle";
 import { EnvSwitcher } from "../../components/EnvSwitcher";
 import { RevisionSwitcher } from "../../components/RevisionSwitcher";
@@ -17,7 +15,10 @@ import { ServiceActions } from "./ServiceActions";
 import { ServiceStats } from "../../components/ServiceStats";
 import { ServiceSecuritySchemes } from "../../components/ServiceSecuritySchemes";
 import { SortableGroupGrid } from "./SortableGroupGrid";
+import { GroupCard } from "./GroupCard";
 import { AgentDocLink } from "../../components/AgentDocLink";
+import { SectionLabel } from "../../components/SectionLabel";
+import { CopyableMono } from "../../components/CopyableMono";
 
 
 type Props = {
@@ -25,13 +26,27 @@ type Props = {
   searchParams: Promise<{ revision?: string }>;
 };
 
+function fmtSync(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  }
+  return d.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default async function ServiceOverviewPage({ params, searchParams }: Props) {
   const { service, environment } = await params;
   const { revision: revisionParam } = await searchParams;
   const svc = decodeURIComponent(service);
   const env = decodeURIComponent(environment);
 
-  // 并行拉取：当前/历史 snapshot、MCP 状态、服务列表（环境切换用）、版本历史列表
   const [snapshot, mcpStatus, allServices, revisions] = await Promise.all([
     revisionParam
       ? getRevisionSnapshot(svc, env, revisionParam)
@@ -51,18 +66,15 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
     ? revisions.find((r) => r.id === revisionParam) ?? null
     : null;
   const viewingOlder = Boolean(viewingRevision && !viewingRevision.current);
+
+  const serviceVersion = snapshot.version;
+  const lastSync = snapshot.updatedAt ?? "";
+
   return (
-    <div className="mx-auto max-w-[820px] px-4 py-8 sm:px-8 sm:py-14">
+    <div className="mx-auto max-w-[860px] px-6 pb-20 pt-12 sm:px-10 sm:pt-16">
       {/* 面包屑 */}
       <div className="mb-8">
-        <Breadcrumb
-          items={[
-            {
-              label: svc,
-              icon: "service",
-            },
-          ]}
-        />
+        <Breadcrumb items={[{ label: svc, icon: "service" }]} />
       </div>
 
       {viewingOlder && viewingRevision && (
@@ -75,28 +87,56 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
         />
       )}
 
-      {/* 服务头部 */}
-      <header className="mb-10">
+      {/* ─── 服务头部 ─── */}
+      <header className="mb-12">
         <div className="flex items-start justify-between gap-4">
-          <h1
-            className="text-[clamp(1.8rem,3vw,2.6rem)] font-semibold leading-tight text-[var(--text-primary)]"
-            style={{ letterSpacing: "-0.035em" }}
-          >
-            {svc}
-          </h1>
+          <div className="min-w-0 flex-1">
+            <h1
+              className="text-[clamp(1.9rem,3.2vw,2.8rem)] font-semibold leading-[1.05] text-[var(--text-primary)]"
+              style={{ letterSpacing: "-0.035em" }}
+            >
+              {svc}
+            </h1>
+
+            {/* 副标题：env · v1.0 · 同步于 14:32 ——单行小灰，但 env 是真组件 */}
+            <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-[var(--text-tertiary)]">
+              {/* 在副标题里嵌一个真 env badge，比纯文字立体 */}
+              <EnvInlineBadge env={env} />
+              {serviceVersion && (
+                <>
+                  <span className="text-[var(--text-quaternary)]">·</span>
+                  <span>
+                    v<span className="tabular-nums">{serviceVersion}</span>
+                  </span>
+                </>
+              )}
+              {lastSync && (
+                <>
+                  <span className="text-[var(--text-quaternary)]">·</span>
+                  <span>同步于 {fmtSync(lastSync)}</span>
+                </>
+              )}
+            </div>
+          </div>
           <div className="mt-1 shrink-0">
             <AgentDocLink
               path={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/apidocs.md`}
             />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+
+        {/* 服务地址：直接展示在头部，hover 出 copy ——程序员第一眼想抓的信息 */}
+        {snapshot.serverUrls?.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {snapshot.serverUrls.map((url) => (
+              <CopyableMono key={url} value={url} size="lg" ariaLabel={`复制服务地址 ${url}`} />
+            ))}
+          </div>
+        )}
+
+        {/* 切换器单独一行 */}
+        <div className="mt-6 flex flex-wrap items-center gap-2">
           <EnvSwitcher service={svc} currentEnv={env} environments={environments} />
-          {environments.length <= 1 && (
-            <span className="rounded-md bg-v-gray-50 px-2.5 py-0.5 font-mono text-[12px] font-medium text-v-gray-500">
-              {env}
-            </span>
-          )}
           <RevisionSwitcher
             service={svc}
             environment={env}
@@ -104,39 +144,20 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
             viewingRevisionId={viewingOlder ? revisionParam ?? null : null}
           />
         </div>
-
-        {snapshot.serverUrls?.length > 0 && (
-          <div className="mt-8">
-            <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-              服务地址
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {snapshot.serverUrls.map((url) => (
-                <code
-                  key={url}
-                  className="rounded-lg bg-v-gray-50 px-3 py-1.5 font-mono text-[13px] text-[var(--text-primary)]"
-                >
-                  {url}
-                </code>
-              ))}
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* 统计概览 */}
+      {/* ─── 统计概览 ─── */}
       <ServiceStats snapshot={snapshot} />
 
-      {/* 接口分组 — 提前至首位，主要导航入口 */}
+      {/* ─── 接口分组 ─── */}
       <section className="mb-14">
-        <p className="mb-6 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-          接口分组 — {snapshot.groups.length}
-        </p>
+        <div className="mb-5">
+          <SectionLabel counter={snapshot.groups.length}>分组</SectionLabel>
+        </div>
 
         {snapshot.groups.length === 0 ? (
-          <p className="text-[var(--text-tertiary)]">该服务下暂无接口分组。</p>
+          <p className="text-[14px] text-[var(--text-tertiary)]">该服务下暂无接口分组。</p>
         ) : viewingOlder ? (
-          // 历史版本：只读，分组卡片保留 revision 查询参数，不展示拖拽手柄
           <div className="grid gap-3 sm:grid-cols-2">
             {snapshot.groups.map((group) => {
               const querySuffix = revisionParam
@@ -144,56 +165,26 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
                 : "";
               const href = `/docs/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}${querySuffix}`;
               return (
-                <Link
-                  key={group.name}
+                <GroupCard
+                  key={group.slug}
+                  group={group}
                   href={href}
-                  className="group rounded-xl bg-[var(--bg-surface)] p-5 transition-all v-card-full v-card-full-hover"
-                >
-                  <h3
-                    className="font-semibold text-[var(--text-primary)]"
-                    style={{ letterSpacing: "-0.015em" }}
-                  >
-                    {group.name}
-                  </h3>
-                  {group.description && (
-                    <HtmlText
-                      as="p"
-                      text={group.description}
-                      className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[var(--text-secondary)]"
-                    />
-                  )}
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="font-mono text-[12px] text-[var(--text-tertiary)]">
-                      {group.operations.length} 个接口
-                    </p>
-                    <svg
-                      className="h-3.5 w-3.5 text-[var(--text-tertiary)] opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                    >
-                      <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </Link>
+                  agentDocPath={`/${encodeURIComponent(svc)}/${encodeURIComponent(env)}/${encodeURIComponent(group.slug)}/apidocs.md`}
+                />
               );
             })}
           </div>
         ) : (
-          // 当前版本：支持拖拽排序
-          <SortableGroupGrid
-            service={svc}
-            environment={env}
-            groups={snapshot.groups}
-          />
+          <SortableGroupGrid service={svc} environment={env} groups={snapshot.groups} />
         )}
       </section>
 
-      {/* MCP 服务开关：查看旧版本时隐藏，避免基于过期快照操作 */}
+      {/* ─── MCP 网关 ─── */}
       {!viewingOlder && (
         <section className="mb-14">
-          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-            MCP 网关
-          </p>
+          <div className="mb-4">
+            <SectionLabel>MCP 网关</SectionLabel>
+          </div>
           <McpToggle
             service={svc}
             environment={env}
@@ -204,18 +195,46 @@ export default async function ServiceOverviewPage({ params, searchParams }: Prop
         </section>
       )}
 
-      {/* 认证方式 */}
+      {/* ─── 认证方式 ─── */}
       <ServiceSecuritySchemes securitySchemes={snapshot.securitySchemes ?? {}} />
 
-      {/* 危险区域：删除环境 */}
+      {/* ─── 危险操作 ─── */}
       {!viewingOlder && (
-        <section className="mt-14 border-t border-[var(--border-subtle)] pt-14">
-          <p className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
-            危险操作
-          </p>
+        <section className="mt-14 border-t border-[var(--border-subtle)] pt-10">
+          <div className="mb-4">
+            <SectionLabel>危险操作</SectionLabel>
+          </div>
           <ServiceActions service={svc} environment={env} />
         </section>
       )}
     </div>
+  );
+}
+
+/**
+ * 副标题里使用的紧凑 env 标记：状态点（带环）+ 文字
+ * 比 EnvBadge 整体的 chip 更轻，只在已经有上下文时使用
+ */
+function EnvInlineBadge({ env }: { env: string }) {
+  const lower = env.toLowerCase();
+  let color = "var(--env-default-dot)";
+  let textColor = "var(--text-secondary)";
+  if (lower === "production" || lower === "prod") {
+    color = "var(--env-prod-dot)";
+    textColor = "var(--env-prod-text)";
+  } else if (lower === "staging" || lower === "preview" || lower === "pre") {
+    color = "var(--env-staging-dot)";
+    textColor = "var(--env-staging-text)";
+  } else if (lower === "test" || lower === "testing") {
+    color = "var(--env-test-dot)";
+    textColor = "var(--env-test-text)";
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="docs-status-dot" style={{ color }} aria-hidden />
+      <span className="font-mono text-[11.5px] font-medium uppercase tracking-wider" style={{ color: textColor }}>
+        {env}
+      </span>
+    </span>
   );
 }

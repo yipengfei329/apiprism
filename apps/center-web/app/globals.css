@@ -185,10 +185,9 @@
   --code-bg:       #FAFAFA;
   --code-border:   rgba(10, 10, 10, 0.06);
   --code-label:    rgba(10, 10, 10, 0.45);
-  --code-comment:  #6E7681;
-
-  /* chip-on-inverse：显示在 text-primary 背景上的小徽章（如激活响应 tab 里的状态码） */
-  --chip-on-inverse-bg: rgba(255, 255, 255, 0.16);
+  /* 行级注释：用深灰 slate-700 提升对比度，承载字段语义但不刺眼 */
+  --code-comment:        #334155;
+  --code-comment-marker: rgba(51, 65, 85, 0.50);
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -310,10 +309,9 @@
   --code-bg:       #18181B;
   --code-border:   rgba(255, 255, 255, 0.06);
   --code-label:    rgba(255, 255, 255, 0.35);
-  --code-comment:  #7F848E;
-
-  /* chip-on-inverse：深色模式下激活 tab 背景是亮色，徽章反过来用暗色 */
-  --chip-on-inverse-bg: rgba(0, 0, 0, 0.22);
+  /* 暗色：slate-300，深背景上读得清又不抢眼 */
+  --code-comment:        #CBD5E1;
+  --code-comment-marker: rgba(203, 213, 225, 0.50);
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -387,6 +385,301 @@
   .v-delay-2 { animation-delay: 120ms; }
   .v-delay-3 { animation-delay: 180ms; }
   .v-delay-4 { animation-delay: 240ms; }
+
+  /* ────────────────────────────────────────────────────────────
+   * Hero · 粒子场附属视觉层（径向辉光、网格、暗角、渐变文字）
+   * 始终深色，与主题切换解耦——保证「未来感」不会因 light 主题被稀释
+   * ──────────────────────────────────────────────────────────── */
+  .hero-radial-glow {
+    background:
+      radial-gradient(900px 520px at 18% 28%, rgba(45, 212, 191, 0.18), transparent 60%),
+      radial-gradient(720px 480px at 82% 72%, rgba(139, 92, 246, 0.18), transparent 60%),
+      radial-gradient(560px 360px at 50% 0%, rgba(56, 189, 248, 0.10), transparent 70%);
+  }
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 95%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 95%);
+  }
+  .hero-vignette {
+    background:
+      radial-gradient(120% 80% at 50% 100%, rgba(5, 6, 12, 0.75), transparent 60%),
+      radial-gradient(100% 70% at 50% 0%, rgba(5, 6, 12, 0.55), transparent 60%);
+  }
+
+  /* 标题渐变：双行不同色谱，呼应「光谱」主题 */
+  .hero-gradient-text-1 {
+    background: linear-gradient(120deg, #ffffff 0%, #e0fbf6 45%, #5eead4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    background-size: 200% auto;
+    animation: hero-shimmer 6s ease-in-out infinite;
+  }
+  .hero-gradient-text-2 {
+    background: linear-gradient(120deg, #67e8f9 0%, #a5b4fc 45%, #f0abfc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    background-size: 200% auto;
+    animation: hero-shimmer 6s ease-in-out infinite;
+    animation-delay: 1.2s;
+  }
+
+  /* hero 内逐元素入场（不依赖 v-slide-up，以便单独控延迟） */
+  .hero-chip-fade-in { animation: hero-fade-up 0.7s ease both 0.1s; }
+  .hero-title-fade-in { animation: hero-fade-up 0.9s ease both 0.25s; }
+  .hero-sub-fade-in { animation: hero-fade-up 0.7s ease both 0.55s; }
+  .hero-cta-fade-in { animation: hero-fade-up 0.7s ease both 0.75s; }
+
+  /* 滚动暗示线：上下脉冲 */
+  .hero-scroll-line { animation: hero-scroll 2.4s ease-in-out infinite; }
+
+  /* ────────────────────────────────────────────────────────────
+   * 服务卡片：hover 时浮现渐变描边
+   * ──────────────────────────────────────────────────────────── */
+  .service-card-glow {
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.55), rgba(139, 92, 246, 0.55));
+    padding: 1px;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * HUD：角标（四个 L 型 bracket）+ 入场 + 终端光标
+   * ──────────────────────────────────────────────────────────── */
+  .hud-tile {
+    animation: hero-fade-up 0.7s ease both;
+    animation-delay: var(--enter-delay, 0s);
+  }
+
+  .hud-corner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    border-color: rgba(255, 255, 255, 0.22);
+    transition: border-color 0.2s ease;
+  }
+  .hud-tile:hover .hud-corner { border-color: rgba(94, 234, 212, 0.85); }
+  .hud-corner-tl { top: 6px;    left: 6px;    border-top: 1px solid; border-left: 1px solid; }
+  .hud-corner-tr { top: 6px;    right: 6px;   border-top: 1px solid; border-right: 1px solid; }
+  .hud-corner-bl { bottom: 6px; left: 6px;    border-bottom: 1px solid; border-left: 1px solid; }
+  .hud-corner-br { bottom: 6px; right: 6px;   border-bottom: 1px solid; border-right: 1px solid; }
+
+  .hud-cursor { animation: hud-blink 1.05s steps(2, end) infinite; }
+
+  /* ────────────────────────────────────────────────────────────
+   * Registry 行：无卡片，靠左轨道 + 名字色变 + 行底亮线表达 hover
+   * ──────────────────────────────────────────────────────────── */
+  .registry-row {
+    animation: hero-fade-up 0.6s ease both;
+  }
+  .registry-rail {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 2px;
+    height: 28%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.14);
+    transition: height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+                background 0.35s ease,
+                box-shadow 0.35s ease;
+  }
+  .registry-row:hover .registry-rail {
+    height: 78%;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--tone-dot, #5EEAD4) 20%,
+      var(--tone-dot, #5EEAD4) 80%,
+      transparent 100%
+    );
+    box-shadow: 0 0 14px var(--tone-ring, rgba(94, 234, 212, 0.45));
+  }
+  /* 名字 hover：渐变色填充 */
+  .registry-row:hover .registry-name {
+    background: linear-gradient(120deg, #ffffff 0%, #5eead4 60%, #67e8f9 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+  /* 行底部 hover scan 线 */
+  .registry-row::after {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--tone-dot, #5EEAD4) 25%,
+      var(--tone-dot, #5EEAD4) 75%,
+      transparent
+    );
+    opacity: 0;
+    transform: scaleX(0.4);
+    transform-origin: center;
+    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+  }
+  .registry-row:hover::after {
+    opacity: 0.7;
+    transform: scaleX(1);
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * Docs · eyebrow 小标签（FRAMEWORK / ARTICLE 那种）
+   *  - 无 bar：纯小灰
+   *  - 带 bar：左侧 2px accent 短杠（Linear 风），让眼睛能定位章节
+   * ──────────────────────────────────────────────────────────── */
+  .docs-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+  .docs-eyebrow-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+  .docs-eyebrow-bar::before {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 1px;
+    opacity: 0.85;
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * Docs · 卡片：极轻 hover（边框深一档，无位移、无发光）
+   * ──────────────────────────────────────────────────────────── */
+  .docs-quiet-card {
+    border: 1px solid var(--border-default);
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+  .docs-quiet-card:hover {
+    border-color: var(--border-strong);
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * Docs · 签名 mono chip（路径 / ID / URL 的统一处理）
+   *  hairline 边框 + 极淡背景，与普通容器形成可识别的「代码物件」感
+   *  这是文档中心的 signature move——只有 mono 内容用
+   * ──────────────────────────────────────────────────────────── */
+  .docs-mono-chip {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 3px 8px;
+    transition: border-color 160ms ease;
+  }
+  .docs-mono-chip:hover {
+    border-color: var(--border-default);
+  }
+  .docs-mono-chip-lg {
+    font-size: 13.5px;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * Docs · 状态点（环 + 实心，无 glow，避免 cyberpunk 感）
+   * ──────────────────────────────────────────────────────────── */
+  .docs-status-dot {
+    position: relative;
+    display: inline-flex;
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+  }
+  .docs-status-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.18;
+    transform: scale(1.55);
+  }
+  .docs-status-dot::after {
+    content: "";
+    position: absolute;
+    inset: 1.5px;
+    border-radius: 9999px;
+    background: currentColor;
+  }
+
+  /* ────────────────────────────────────────────────────────────
+   * Docs · 行内「copy on hover」按钮显隐
+   *  父元素 group hover 时显出，单独 focus 也显出（键盘可达性）
+   * ──────────────────────────────────────────────────────────── */
+  .docs-copy-target {
+    position: relative;
+  }
+  .docs-copy-btn {
+    opacity: 0;
+    transition: opacity 140ms ease, color 140ms ease, background-color 140ms ease;
+  }
+  .docs-copy-target:hover .docs-copy-btn,
+  .docs-copy-btn:focus-visible,
+  .docs-copy-btn[data-copied="true"] {
+    opacity: 1;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+ * 6b) Hero 关键帧
+ * ──────────────────────────────────────────────────────────── */
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes hero-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes hero-scroll {
+  0%, 100% { transform: scaleY(0.4); transform-origin: top; opacity: 0.4; }
+  50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+}
+@keyframes hud-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-gradient-text-1,
+  .hero-gradient-text-2,
+  .hero-chip-fade-in,
+  .hero-title-fade-in,
+  .hero-sub-fade-in,
+  .hero-cta-fade-in,
+  .hero-scroll-line,
+  .hud-tile,
+  .hud-cursor,
+  .registry-row {
+    animation: none !important;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────

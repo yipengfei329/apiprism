@@ -43,12 +43,12 @@ export function ServiceSecuritySchemes({ securitySchemes }: Props) {
   if (entries.length === 0) return null;
 
   return (
-    <section className="mb-14">
-      <details open>
-        <summary className="mb-4 flex cursor-pointer list-none items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] marker:hidden">
-          认证方式
+    <section className="mb-20">
+      <details open className="group">
+        <summary className="mb-5 flex cursor-pointer list-none items-center gap-2 marker:hidden">
+          <span className="docs-eyebrow">认证方式</span>
           <svg
-            className="h-3 w-3 transition-transform [details[open]_&]:rotate-180"
+            className="h-3 w-3 text-[var(--text-quaternary)] transition-transform group-open:rotate-180"
             viewBox="0 0 16 16"
             fill="currentColor"
           >

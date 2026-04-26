@@ -103,15 +103,27 @@ export function SidebarLayout({
         </div>
       )}
 
-      {/* ── 主内容区：桌面端以圆角浮动面板的形式嵌入，呈现 Arc/macOS 层次感 ── */}
+      {/* ── 主内容区：桌面端以圆角浮动面板的形式嵌入 Arc 风格暗色 chrome 中 ──
+       * - 上/右/下 6px margin 让 sidebar-bg 形成包裹边框
+       * - 与侧边栏之间留 6px 凹槽，呼应 Arc 的"窗口分体"观感
+       * - 分层阴影：1px 外环 + 顶部高光 + 软投影 强化层次
+       */}
       <main
         className="relative flex flex-1 flex-col overflow-hidden"
         style={{
           background: "var(--bg-canvas)",
-          borderTopLeftRadius: isDesktop ? 14 : 0,
-          borderBottomLeftRadius: isDesktop ? 14 : 0,
+          marginTop: isDesktop ? 6 : 0,
+          marginRight: isDesktop ? 6 : 0,
+          marginBottom: isDesktop ? 6 : 0,
+          marginLeft: isDesktop ? 6 : 0,
+          borderRadius: isDesktop ? 10 : 0,
           boxShadow: isDesktop
-            ? "inset 1px 1px 0 0 var(--border-subtle)"
+            ? [
+                "0 0 0 1px var(--border-default)",
+                "0 1px 2px rgba(0, 0, 0, 0.4)",
+                "0 12px 28px -10px rgba(0, 0, 0, 0.55)",
+                "inset 0 1px 0 0 rgba(255, 255, 255, 0.04)",
+              ].join(", ")
             : "none",
         }}
       >

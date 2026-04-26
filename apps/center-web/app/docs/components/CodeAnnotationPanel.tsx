@@ -57,12 +57,12 @@ export function CodeAnnotationPanel({
             return (
               <div
                 key={i}
-                className="flex items-center text-[11px] text-[var(--code-comment)]"
+                className="flex items-center text-[12px] font-medium text-[var(--code-comment)]"
                 style={{ height: LINE_HEIGHT }}
               >
                 {text && (
                   <span className="truncate" title={text}>
-                    <span className="mr-1 font-mono opacity-70">{"//"}</span>
+                    <span className="mr-1 font-mono text-[var(--code-comment-marker)]">{"//"}</span>
                     {text}
                   </span>
                 )}

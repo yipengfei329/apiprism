@@ -159,11 +159,11 @@ function ParameterGroup({
   const requiredCount = parameters.filter((parameter) => parameter.required).length;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-v-gray-100 bg-[var(--bg-surface)]">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] bg-v-gray-50/50 px-5 py-4">
+    <section>
+      <header className="mb-1 flex flex-wrap items-center justify-between gap-3 px-1 py-2">
         <div className="flex items-center gap-3">
           <h3 className="text-[14px] font-semibold text-v-black">{label}</h3>
-          <code className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-v-gray-400">
+          <code className="rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-v-gray-400">
             {location}
           </code>
         </div>

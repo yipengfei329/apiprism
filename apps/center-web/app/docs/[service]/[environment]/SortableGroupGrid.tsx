@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Link from "next/link";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -21,8 +22,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { DotsSixVertical } from "@phosphor-icons/react";
 import { getPublicApiUrl } from "@/app/lib/public-api";
-import { HtmlText } from "../../components/HtmlText";
 import type { CanonicalGroup } from "../../lib/api";
+import { GroupCard } from "./GroupCard";
 
 interface SortableGroupGridProps {
   service: string;
@@ -30,12 +31,22 @@ interface SortableGroupGridProps {
   groups: CanonicalGroup[];
 }
 
+function buildAgentDocPath(service: string, environment: string, slug: string) {
+  return `/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(slug)}/apidocs.md`;
+}
+
+function buildGroupHref(service: string, environment: string, slug: string) {
+  return `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(slug)}`;
+}
+
 function SortableGroupCard({
+  service,
+  environment,
   group,
-  href,
 }: {
+  service: string;
+  environment: string;
   group: CanonicalGroup;
-  href: string;
 }) {
   const {
     attributes,
@@ -53,58 +64,27 @@ function SortableGroupCard({
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
-        position: "relative",
+        // 拖拽中原位置仅保留占位轮廓，悬浮副本由 DragOverlay 渲染
+        opacity: isDragging ? 0.35 : 1,
       }}
-      className="group/card"
     >
-      {/* 拖拽手柄：悬停时显示 */}
-      <button
-        ref={setActivatorNodeRef}
-        {...attributes}
-        {...listeners}
-        aria-label={`拖拽排序: ${group.name}`}
-        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 cursor-grab rounded p-1 opacity-0 transition-opacity duration-150 group-hover/card:opacity-60 active:cursor-grabbing text-[var(--text-tertiary)] hover:opacity-100"
-      >
-        <DotsSixVertical size={16} weight="bold" />
-      </button>
-
-      <Link
-        href={href}
-        className="group block rounded-xl bg-[var(--bg-surface)] p-5 pl-9 transition-all v-card-full v-card-full-hover"
-      >
-        <h3
-          className="font-semibold text-[var(--text-primary)]"
-          style={{ letterSpacing: "-0.015em" }}
-        >
-          {group.name}
-        </h3>
-        {group.description && (
-          <HtmlText
-            as="p"
-            text={group.description}
-            className="mt-1.5 line-clamp-2 text-[13px] leading-[1.65] text-[var(--text-secondary)]"
-          />
-        )}
-        <div className="mt-4 flex items-center justify-between">
-          <p className="font-mono text-[12px] text-[var(--text-tertiary)]">
-            {group.operations.length} 个接口
-          </p>
-          <svg
-            className="h-3.5 w-3.5 text-[var(--text-tertiary)] opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100"
-            viewBox="0 0 14 14"
-            fill="none"
+      <GroupCard
+        group={group}
+        href={buildGroupHref(service, environment, group.slug)}
+        agentDocPath={buildAgentDocPath(service, environment, group.slug)}
+        dragHandle={
+          <button
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            type="button"
+            aria-label={`拖拽排序: ${group.name}`}
+            className="absolute right-2 top-2 z-10 cursor-grab touch-none rounded-md p-1 text-[var(--text-tertiary)] opacity-25 transition-opacity duration-150 hover:bg-[var(--bg-subtle)] hover:opacity-80 active:cursor-grabbing"
           >
-            <path
-              d="M3 7h8M7.5 3.5L11 7l-3.5 3.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </Link>
+            <DotsSixVertical size={16} weight="bold" />
+          </button>
+        }
+      />
     </div>
   );
 }
@@ -115,10 +95,11 @@ export function SortableGroupGrid({
   groups: initialGroups,
 }: SortableGroupGridProps) {
   const [groups, setGroups] = useState(initialGroups);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      // 5px 拖拽阈值，防止与卡片点击冲突
+      // 5px 拖拽阈值，防止与卡片点击/Agent 文档按钮冲突
       activationConstraint: { distance: 5 },
     }),
     useSensor(KeyboardSensor, {
@@ -144,8 +125,13 @@ export function SortableGroupGrid({
     [service, environment]
   );
 
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setActiveId(null);
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -160,25 +146,48 @@ export function SortableGroupGrid({
     [persistOrder]
   );
 
+  const handleDragCancel = useCallback(() => setActiveId(null), []);
+
+  const activeGroup = activeId
+    ? groups.find((g) => g.slug === activeId) ?? null
+    : null;
+
   return (
     <DndContext
+      id="sortable-group-grid"
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <SortableContext
         items={groups.map((g) => g.slug)}
         strategy={rectSortingStrategy}
       >
         <div className="grid gap-3 sm:grid-cols-2">
-          {groups.map((group) => {
-            const href = `/docs/${encodeURIComponent(service)}/${encodeURIComponent(environment)}/${encodeURIComponent(group.slug)}`;
-            return (
-              <SortableGroupCard key={group.slug} group={group} href={href} />
-            );
-          })}
+          {groups.map((group) => (
+            <SortableGroupCard
+              key={group.slug}
+              service={service}
+              environment={environment}
+              group={group}
+            />
+          ))}
         </div>
       </SortableContext>
+      {/* 拖拽悬浮层：让被拖卡片"浮起"跟随光标，体感比单纯透明化原位更顺滑 */}
+      <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
+        {activeGroup ? (
+          <div className="rotate-[1.5deg] cursor-grabbing shadow-2xl">
+            <GroupCard
+              group={activeGroup}
+              href={buildGroupHref(service, environment, activeGroup.slug)}
+              agentDocPath={buildAgentDocPath(service, environment, activeGroup.slug)}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

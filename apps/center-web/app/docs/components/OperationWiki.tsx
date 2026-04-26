@@ -7,7 +7,6 @@ import { ResponseTabs } from "./ResponseTabs";
 import { OnThisPage, type SectionItem } from "./OnThisPage";
 import { ParameterTable } from "./ParameterTable";
 import { RequestBodyTabs } from "./RequestBodyTabs";
-import { EmptyPanel } from "./EmptyPanel";
 import { SecuritySchemeBadge } from "./SecuritySchemeBadge";
 
 // ── 必填 / 选填标记 ──
@@ -20,12 +19,14 @@ function RequiredTag({ required }: { required: boolean }) {
   );
 }
 
-// ── 分区标题 ──
+// ── 分区标题（极简：单行 H2，靠字重和留白构建层级） ──
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-4 flex items-center gap-2.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-v-gray-400">
-      <span className="inline-block h-4 w-[3px] rounded-full bg-v-link/70" />
+    <h2
+      className="mb-5 text-[15px] font-semibold text-[var(--text-primary)]"
+      style={{ letterSpacing: "-0.01em" }}
+    >
       {children}
     </h2>
   );
@@ -33,12 +34,17 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 // ── 计算页面有哪些可跳转分区 ──
 
+function hasRequestBodyContent(op: CanonicalOperation): boolean {
+  // 仅当存在结构定义时才算有内容；空 body 的 contentType 属于噪音，不展示
+  return Boolean(op.requestBody?.schema);
+}
+
 function buildSectionList(op: CanonicalOperation): SectionItem[] {
   const sections: SectionItem[] = [];
   if (op.parameters && op.parameters.length > 0) {
     sections.push({ id: "parameters", label: "请求参数" });
   }
-  if (op.requestBody) {
+  if (hasRequestBodyContent(op)) {
     sections.push({ id: "request-body", label: "请求体" });
   }
   if (op.responses && op.responses.length > 0) {
@@ -89,33 +95,25 @@ export async function OperationWiki({
         )}
 
         {/* ── 请求体 ── */}
-        {op.requestBody && (
+        {op.requestBody?.schema && (
           <section id="request-body" className="scroll-mt-16">
             <SectionTitle>请求体</SectionTitle>
-            <div className="mb-4 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-subtle)]/35 px-5 py-4">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <RequiredTag required={op.requestBody.required} />
-                {op.requestBody.contentType && (
-                  <code className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
-                    {op.requestBody.contentType}
-                  </code>
-                )}
-                {op.requestBody.schema && (
-                  <span className="rounded-full bg-v-gray-50 px-2.5 py-1 font-mono text-[11px] text-v-link">
-                    {schemaTypeLabel(op.requestBody.schema)}
-                  </span>
-                )}
-              </div>
+            <div className="mb-4 flex flex-wrap items-center gap-2.5">
+              <RequiredTag required={op.requestBody.required} />
+              {op.requestBody.contentType && (
+                <code className="rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
+                  {op.requestBody.contentType}
+                </code>
+              )}
+              <span className="rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 font-mono text-[11px] text-v-link">
+                {schemaTypeLabel(op.requestBody.schema)}
+              </span>
             </div>
             <RequestBodyTabs
               schemaPanel={
-                op.requestBody.schema ? (
-                  <div className="bg-v-gray-50/30 px-5 py-1">
-                    <SchemaTable schema={op.requestBody.schema} />
-                  </div>
-                ) : (
-                  <EmptyPanel message="暂无结构定义" />
-                )
+                <div className="px-5 py-1">
+                  <SchemaTable schema={op.requestBody.schema} />
+                </div>
               }
               examplePanel={
                 requestBodyExample ? (
@@ -125,9 +123,7 @@ export async function OperationWiki({
                     schema={op.requestBody.schema}
                     className="!rounded-none !border-0"
                   />
-                ) : (
-                  <EmptyPanel variant="example" message="暂无可生成的 JSON 示例" />
-                )
+                ) : undefined
               }
             />
           </section>

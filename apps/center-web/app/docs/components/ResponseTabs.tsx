@@ -9,23 +9,6 @@ import { RequestBodyTabs } from "./RequestBodyTabs";
 import { EmptyPanel } from "./EmptyPanel";
 import { schemaTypeLabel } from "./schemaUtils";
 
-function ResponseMeta({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-v-gray-100 bg-v-gray-50 px-4 py-3">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-v-gray-400">
-        {label}
-      </p>
-      <div className="mt-2 text-[13px] text-v-black">{value}</div>
-    </div>
-  );
-}
-
 export function ResponseTabs({
   responses,
   examples,
@@ -43,36 +26,35 @@ export function ResponseTabs({
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-1.5">
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
         {responses.map((response, index) => {
           const isActive = index === activeIndex;
 
           return (
             <button
               key={response.statusCode}
+              type="button"
               onClick={() => setActiveIndex(index)}
-              className={`cursor-pointer rounded-full px-3.5 py-2 font-mono text-[13px] font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-[var(--text-primary)] text-[var(--bg-surface)]"
-                  : "bg-[var(--bg-surface)] text-v-gray-400 hover:bg-v-gray-50 hover:text-v-gray-600"
+              aria-pressed={isActive}
+              className={`cursor-pointer rounded-md transition-opacity duration-200 ${
+                isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
               }`}
             >
-              <StatusBadge code={response.statusCode} inverted={isActive} />
+              <StatusBadge code={response.statusCode} />
             </button>
           );
         })}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-v-gray-100 bg-v-gray-50 px-5 py-4">
+      <div className="mb-4">
         <div className="flex flex-wrap items-center gap-2.5">
-          <StatusBadge code={active.statusCode} />
           {active.contentType && (
-            <code className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
+            <code className="rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
               {active.contentType}
             </code>
           )}
           {active.schema && (
-            <span className="rounded-full bg-v-gray-50 px-2.5 py-1 font-mono text-[11px] text-v-gray-500 v-ring-light">
+            <span className="rounded-full bg-[var(--bg-subtle)] px-2.5 py-1 font-mono text-[11px] text-v-gray-500">
               {schemaTypeLabel(active.schema)}
             </span>
           )}
@@ -88,7 +70,7 @@ export function ResponseTabs({
       <RequestBodyTabs
         schemaPanel={
           active.schema ? (
-            <div className="bg-v-gray-50/30 px-5 py-1">
+            <div className="px-5 py-1">
               <SchemaTable schema={active.schema} />
             </div>
           ) : (
@@ -99,18 +81,6 @@ export function ResponseTabs({
           activeExample ?? <EmptyPanel variant="example" message="暂无可生成的 JSON 示例" />
         }
       />
-
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ResponseMeta label="状态码" value={<code className="font-mono text-[12px] text-v-gray-500">{active.statusCode}</code>} />
-        <ResponseMeta
-          label="内容类型"
-          value={
-            <code className="font-mono text-[12px] text-v-gray-500">
-              {active.contentType || "—"}
-            </code>
-          }
-        />
-      </div>
     </div>
   );
 }

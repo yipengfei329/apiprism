@@ -1,6 +1,6 @@
-// HTTP 状态码徽章（语义色）
+// HTTP 状态码徽章（极简：只用语义色块，无装饰）
 
-export function StatusBadge({ code, inverted = false }: { code: string; inverted?: boolean }) {
+export function StatusBadge({ code }: { code: string }) {
   const n = parseInt(code, 10);
   let bg = "var(--status-3xx-bg)";
   let text = "var(--status-3xx-text)";
@@ -19,12 +19,8 @@ export function StatusBadge({ code, inverted = false }: { code: string; inverted
   }
   return (
     <span
-      className="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[12px] font-semibold"
-      style={
-        inverted
-          ? { backgroundColor: "var(--chip-on-inverse-bg)", color: "var(--text-on-inverse)" }
-          : { backgroundColor: bg, color: text }
-      }
+      className="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[12px] font-semibold tabular-nums"
+      style={{ backgroundColor: bg, color: text }}
     >
       {code}
     </span>

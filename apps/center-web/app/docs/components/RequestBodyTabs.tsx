@@ -23,8 +23,8 @@ export function RequestBodyTabs({
   const activePanel = activeKey === "schema" ? schemaPanel : examplePanel;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-5 py-3">
+    <div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1.5">
           {tabs.map((tab) => {
             const isActive = activeKey === tab.key;
@@ -46,7 +46,7 @@ export function RequestBodyTabs({
         </div>
       </div>
 
-      <div>{activePanel}</div>
+      <div className="overflow-hidden rounded-xl bg-[var(--bg-subtle)]/40">{activePanel}</div>
     </div>
   );
 }
