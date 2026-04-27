@@ -1,7 +1,7 @@
 [versions]
 springBoot                = "3.3.6"
 springDependencyManagement = "1.1.6"
-jackson                   = "2.18.2"
+jackson                   = "2.21"
 swaggerParser             = "2.1.24"
 swaggerCore               = "2.2.22"
 junitBom                  = "5.11.3"
