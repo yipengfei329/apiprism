@@ -4,7 +4,7 @@ plugins {
 
 description = "Spring Boot 4.x 环境下的 APIPrism starter 集成验证 Demo。"
 
-val springBoot4Version = "4.0.3"
+val springBoot4Version = "4.0.6"
 val springdoc3Version = "3.0.3"
 
 dependencies {
