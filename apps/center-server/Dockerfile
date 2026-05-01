@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM gradle:9.4.1-jdk21 AS builder
+FROM gradle:9.5.0-jdk21 AS builder
 WORKDIR /workspace
 
 # 第一层：仅复制构建脚本，依赖不变时可命中 Docker 层缓存
